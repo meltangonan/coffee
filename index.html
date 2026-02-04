@@ -115,7 +115,7 @@ body {
 .form-group { margin-bottom: 18px; }
 .form-label { display: block; font-size: 13px; font-weight: 500; color: var(--text-secondary); margin-bottom: 6px; letter-spacing: 0.3px; text-transform: uppercase; }
 .form-label .required { color: var(--freshness-past); margin-left: 2px; }
-.form-input { width: 100%; padding: 12px 14px; min-height: 44px; border: 1.5px solid rgba(44,24,16,0.12); border-radius: var(--radius); font-family: var(--font-body); font-size: 16px; color: var(--text-primary); background: white; transition: border-color 0.2s ease, box-shadow 0.2s ease; -webkit-appearance: none; }
+.form-input { width: 100%; padding: 12px 14px; min-height: 44px; border: 1.5px solid rgba(44,24,16,0.12); border-radius: var(--radius); font-family: var(--font-body); font-size: 16px; color: var(--text-primary); background: white; transition: border-color 0.2s ease, box-shadow 0.2s ease; -webkit-appearance: none; appearance: none; }
 .form-input:focus { outline: none; border-color: var(--amber); box-shadow: 0 0 0 3px rgba(212,165,116,0.15); }
 .form-input::placeholder { color: var(--text-muted); }
 textarea.form-input { min-height: 80px; resize: vertical; line-height: 1.5; }
@@ -125,8 +125,8 @@ textarea.form-input { min-height: 80px; resize: vertical; line-height: 1.5; }
 .stepper-btn:hover:not(:disabled) { background: rgba(44,24,16,0.06); }
 .stepper-btn:active:not(:disabled) { background: rgba(44,24,16,0.1); }
 .stepper-btn:disabled { opacity: 0.4; cursor: not-allowed; }
-.stepper-input { flex: 1; min-width: 0; padding: 12px 8px; border: none; border-left: 1.5px solid rgba(44,24,16,0.08); border-right: 1.5px solid rgba(44,24,16,0.08); font-family: var(--font-body); font-size: 16px; color: var(--text-primary); background: transparent; text-align: center; -webkit-appearance: none; -moz-appearance: textfield; }
-.stepper-input::-webkit-outer-spin-button, .stepper-input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+.stepper-input { flex: 1; min-width: 0; padding: 12px 8px; border: none; border-left: 1.5px solid rgba(44,24,16,0.08); border-right: 1.5px solid rgba(44,24,16,0.08); font-family: var(--font-body); font-size: 16px; color: var(--text-primary); background: transparent; text-align: center; -webkit-appearance: none; -moz-appearance: textfield; appearance: textfield; }
+.stepper-input::-webkit-outer-spin-button, .stepper-input::-webkit-inner-spin-button { -webkit-appearance: none; appearance: none; margin: 0; }
 .stepper-input:focus { outline: none; }
 .stepper-input::placeholder { color: var(--text-muted); }
 
