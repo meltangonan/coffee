@@ -49,9 +49,9 @@
   --shadow-xl: 0 8px 30px rgba(44,24,16,0.14), 0 4px 10px rgba(44,24,16,0.08);
   --font-heading: 'Playfair Display', 'Georgia', serif;
   --font-body: 'DM Sans', 'Helvetica Neue', sans-serif;
-  --tab-height: 64px;
+  --tab-height: 76px;
   --safe-top: env(safe-area-inset-top, 0px);
-  --safe-bottom: 0px; /* no bottom inset: tab bar flush to screen edge */
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
 }
 
 html {
@@ -75,7 +75,7 @@ body {
 
 .content-area { flex: 1; overflow-y: auto; overflow-x: hidden; padding: 20px 16px; padding-bottom: calc(var(--tab-height) + var(--safe-bottom) + 24px); -webkit-overflow-scrolling: touch; }
 
-.tab-bar { position: fixed; bottom: 0; left: 50%; transform: translateX(-50%); width: 100%; max-width: 600px; height: calc(var(--tab-height) + var(--safe-bottom)); padding-bottom: var(--safe-bottom); background: var(--espresso); display: flex; align-items: center; justify-content: space-around; z-index: 100; box-shadow: 0 -2px 20px rgba(44,24,16,0.15); }
+.tab-bar { position: fixed; bottom: 0; left: 50%; transform: translateX(-50%); width: 100%; max-width: 600px; height: calc(var(--tab-height) + var(--safe-bottom)); padding-bottom: var(--safe-bottom); background: var(--espresso); display: flex; align-items: center; justify-content: space-around; z-index: 100; box-shadow: 0 -2px 20px rgba(44,24,16,0.15); box-sizing: border-box; }
 .tab-btn { display: flex; flex-direction: column; align-items: center; gap: 3px; padding: 8px 16px; min-width: 64px; min-height: 44px; background: none; border: none; color: rgba(245,240,232,0.5); font-family: var(--font-body); font-size: 11px; font-weight: 500; letter-spacing: 0.3px; cursor: pointer; transition: color 0.2s ease; -webkit-tap-highlight-color: transparent; }
 .tab-btn.active { color: var(--amber); }
 .tab-btn:hover { color: var(--amber-light); }
