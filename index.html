@@ -395,7 +395,7 @@ textarea.form-input { min-height: 80px; resize: vertical; line-height: 1.5; }
 
       <!-- Bean List -->
       <div x-show="beansView === 'list'" class="fade-in">
-        <h1 class="heading-xl mb-20">Your Beans</h1>
+        <h1 class="heading-xl mb-20">Your Coffee Beans.</h1>
 
         <!-- Current Beans -->
         <div x-show="currentBeans.length > 0">
@@ -762,7 +762,7 @@ textarea.form-input { min-height: 80px; resize: vertical; line-height: 1.5; }
     </button>
     <button class="tab-btn" :class="{ 'active': currentTab === 'beans' }" @click="currentTab = 'beans'; if(beansView !== 'list') { beansView = 'list'; selectedBeanId = null; showBeanLogShotOptions = false; }">
       <span class="tab-icon">&#127793;</span>
-      <span>Your Coffee Beans?</span>
+      <span>Coffee</span>
     </button>
     <button class="tab-btn" :class="{ 'active': currentTab === 'calendar' }" @click="currentTab = 'calendar'">
       <span class="tab-icon">&#128197;</span>
