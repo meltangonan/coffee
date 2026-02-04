@@ -4,6 +4,25 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>Coffee Journal</title>
+<script>
+(function() {
+  function setWindowHeight() {
+    var h = (window.visualViewport && window.visualViewport.height) || window.innerHeight;
+    document.documentElement.style.setProperty('--window-height', h + 'px');
+  }
+  setWindowHeight();
+  window.addEventListener('resize', setWindowHeight);
+  window.addEventListener('orientationchange', setWindowHeight);
+  if (window.visualViewport) window.visualViewport.addEventListener('resize', setWindowHeight);
+  window.addEventListener('load', function() {
+    setWindowHeight();
+    requestAnimationFrame(function() { setWindowHeight(); });
+    setTimeout(setWindowHeight, 50);
+    setTimeout(setWindowHeight, 200);
+    setTimeout(setWindowHeight, 500);
+  });
+})();
+</script>
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0%25' y1='0%25' x2='0%25' y2='100%25'%3E%3Cstop offset='0%25' style='stop-color:%232C1810'/%3E%3Cstop offset='100%25' style='stop-color:%233D2820'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect x='6' y='6' width='20' height='20' rx='2' fill='none' stroke='url(%23g)' stroke-width='2'/%3E%3Crect x='8' y='14' width='16' height='10' rx='1' fill='%232C1810'/%3E%3Crect x='8' y='8' width='16' height='6' rx='1' fill='%23D4A574'/%3E%3C/svg%3E">
 <link rel="manifest" href="/manifest.json">
 <meta name="theme-color" content="#2C1810">
@@ -52,6 +71,7 @@
   --tab-height: 76px;
   --safe-top: env(safe-area-inset-top, 0px);
   --safe-bottom: env(safe-area-inset-bottom, 0px);
+  --window-height: 100dvh; /* JS sets px value for iOS standalone */
 }
 
 html {
@@ -72,8 +92,8 @@ body {
     url("data:image/svg+xml,%3Csvg width='100' height='100' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100' height='100' filter='url(%23n)' opacity='0.03'/%3E%3C/svg%3E");
 }
 
-/* Pin to viewport so iOS standalone always fills screen (no white strip at bottom) */
-.app-shell { display: flex; flex-direction: column; position: fixed; top: 0; right: 0; bottom: 0; left: 0; max-width: 600px; margin: 0 auto; padding-top: var(--safe-top); overflow: hidden; }
+/* Pin to viewport; height from JS on iOS so standalone fills screen (no white strip) */
+.app-shell { display: flex; flex-direction: column; position: fixed; top: 0; right: 0; left: 0; height: var(--window-height); max-width: 600px; margin: 0 auto; padding-top: var(--safe-top); overflow: hidden; }
 @media (min-width: 768px) { .app-shell { border-left: 1px solid rgba(44,24,16,0.06); border-right: 1px solid rgba(44,24,16,0.06); } }
 
 .content-area { flex: 1; overflow-y: auto; overflow-x: hidden; padding: 20px 16px; padding-bottom: calc(var(--tab-height) + var(--safe-bottom) + 24px); -webkit-overflow-scrolling: touch; }
