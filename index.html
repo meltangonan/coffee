@@ -97,8 +97,12 @@ body {
 .btn-amber:hover { background: var(--amber-dark); color: white; }
 .btn-ghost { background: transparent; color: var(--text-secondary); padding: 12px 16px; }
 .btn-ghost:hover { background: rgba(44,24,16,0.04); }
+.btn-secondary-solid { background: rgba(44,24,16,0.08); color: var(--text-primary); padding: 12px 16px; }
+.btn-secondary-solid:hover { background: rgba(44,24,16,0.14); color: var(--text-primary); }
 .btn-danger { background: transparent; color: var(--freshness-past); font-size: 14px; }
 .btn-danger:hover { background: var(--freshness-past-bg); }
+.btn-danger-solid { background: var(--freshness-past); color: var(--cream); font-size: 14px; }
+.btn-danger-solid:hover { background: #8B5A4F; color: var(--cream); }
 
 /* Bean detail actions: archive = light gray, delete = red highlight */
 .btn-archive-highlight { background: rgba(0,0,0,0.06) !important; color: var(--text-secondary); }
@@ -155,9 +159,9 @@ textarea.form-input { min-height: 80px; resize: vertical; line-height: 1.5; }
 .toggle::after { content: ''; position: absolute; top: 3px; left: 3px; width: 22px; height: 22px; background: white; border-radius: 50%; box-shadow: var(--shadow-sm); transition: transform 0.2s ease; }
 .toggle.active::after { transform: translateX(20px); }
 
-.overlay { position: fixed; inset: 0; background: rgba(44,24,16,0.4); z-index: 200; display: flex; align-items: flex-end; justify-content: center; backdrop-filter: blur(2px); -webkit-backdrop-filter: blur(2px); }
-.panel { background: var(--cream); border-radius: var(--radius-lg) var(--radius-lg) 0 0; width: 100%; max-width: 600px; max-height: 85vh; overflow-y: auto; padding: 24px 16px; padding-bottom: calc(24px + var(--safe-bottom)); box-shadow: var(--shadow-xl); animation: slideUp 0.25s ease-out; }
-@keyframes slideUp { from { transform: translateY(100%); opacity: 0.8; } to { transform: translateY(0); opacity: 1; } }
+.overlay { position: fixed; inset: 0; background: rgba(44,24,16,0.4); z-index: 200; display: flex; align-items: center; justify-content: center; backdrop-filter: blur(2px); -webkit-backdrop-filter: blur(2px); padding: 16px; }
+.panel { background: var(--cream); border-radius: var(--radius-lg); width: 100%; max-width: 600px; max-height: 85vh; overflow-y: auto; padding: 24px 16px; padding-bottom: calc(24px + var(--safe-bottom)); box-shadow: var(--shadow-xl); animation: modalIn 0.25s ease-out; }
+@keyframes modalIn { from { transform: scale(0.96); opacity: 0; } to { transform: scale(1); opacity: 1; } }
 .panel-handle { width: 36px; height: 4px; background: rgba(44,24,16,0.15); border-radius: 2px; margin: 0 auto 16px; }
 
 .divider { height: 1px; background: rgba(44,24,16,0.08); margin: 16px 0; }
@@ -224,11 +228,13 @@ textarea.form-input { min-height: 80px; resize: vertical; line-height: 1.5; }
 .reuse-card { background: white; border: 2px solid var(--amber-light); border-radius: var(--radius-lg); padding: 20px; margin-bottom: 20px; }
 .reuse-card-header { display: flex; align-items: center; gap: 8px; margin-bottom: 14px; font-size: 14px; font-weight: 500; color: var(--text-secondary); }
 .reuse-settings { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-bottom: 16px; }
-.reuse-stat { text-align: center; padding: 10px 8px; background: var(--cream); border-radius: var(--radius-sm); }
+.reuse-stat { display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; min-height: 52px; padding: 10px 8px; background: var(--cream); border-radius: var(--radius-sm); }
 .reuse-stat-label { font-size: 11px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; }
 .reuse-stat-value { font-family: var(--font-heading); font-size: 20px; font-weight: 600; color: var(--espresso); margin-top: 2px; }
-.reuse-actions { display: flex; gap: 10px; }
-.reuse-actions .btn { flex: 1; }
+.reuse-actions { display: flex; gap: 10px; align-items: stretch; }
+.reuse-actions .btn { flex: 1; min-height: 52px; min-width: 0; }
+.reuse-actions .btn.btn-action-small { flex: 0 0 auto; min-height: 44px; padding: 8px 14px; font-size: 14px; }
+.btn.btn-action-small { flex: 0 0 auto; min-height: 44px; padding: 8px 14px; font-size: 14px; }
 
 .today-shot-item { display: flex; align-items: center; justify-content: space-between; padding: 14px 16px; background: white; border-radius: var(--radius); margin-bottom: 8px; box-shadow: var(--shadow-sm); }
 .today-shot-content { flex: 1; min-width: 0; cursor: pointer; }
@@ -330,14 +336,18 @@ textarea.form-input { min-height: 80px; resize: vertical; line-height: 1.5; }
         </div>
         <div class="reuse-actions">
           <button class="btn btn-amber" @click="logQuickShot()">Log it &#10003;</button>
-          <button class="btn btn-ghost" @click="openShotFormFromDaily()">Adjust</button>
+          <button class="btn btn-secondary-solid" @click="openShotFormFromDaily()">Adjust</button>
+          <button class="btn btn-danger-solid btn-action-small" @click="dailySelectedBeanId = ''">Cancel</button>
         </div>
       </div>
 
       <!-- Manual Entry (no previous shot) -->
       <div x-show="dailySelectedBeanId && !dailyLastShot" class="fade-in mb-20">
         <p class="text-secondary mb-12">No previous shots for this bean. Enter your settings:</p>
-        <button class="btn btn-primary btn-full" @click="openShotFormFromDaily()">Log Shot</button>
+        <div class="reuse-actions">
+          <button class="btn btn-primary" @click="openShotFormFromDaily()">Log Shot</button>
+          <button class="btn btn-danger-solid btn-action-small" @click="dailySelectedBeanId = ''">Cancel</button>
+        </div>
       </div>
 
       <!-- Today's Shots Summary -->
@@ -509,7 +519,7 @@ textarea.form-input { min-height: 80px; resize: vertical; line-height: 1.5; }
             </div>
             <div style="display: flex; gap: 8px; margin-top: 12px;">
               <button type="button" class="btn btn-amber" @click="saveOptimalSettings()">Save</button>
-              <button type="button" class="btn btn-ghost" @click="cancelEditingOptimal()">Cancel</button>
+              <button type="button" class="btn btn-danger-solid btn-action-small" @click="cancelEditingOptimal()">Cancel</button>
             </div>
           </div>
         </div>
@@ -524,7 +534,7 @@ textarea.form-input { min-height: 80px; resize: vertical; line-height: 1.5; }
           <div style="display: flex; align-items: center; justify-content: space-between;" class="mb-12">
             <h3 class="heading-md">Shot History</h3>
             <button x-show="!showBeanLogShotOptions" class="btn btn-amber" style="padding: 8px 16px; font-size: 14px;" @click="showBeanLogShotOptions = true">+ Log Shot</button>
-            <button x-show="showBeanLogShotOptions" class="btn btn-ghost" style="padding: 8px 16px; font-size: 14px;" @click="showBeanLogShotOptions = false">Cancel</button>
+            <button x-show="showBeanLogShotOptions" class="btn btn-danger-solid btn-action-small" @click="showBeanLogShotOptions = false">Cancel</button>
           </div>
 
           <!-- Reuse last settings (only after user taps "+ Log Shot") -->
@@ -549,7 +559,7 @@ textarea.form-input { min-height: 80px; resize: vertical; line-height: 1.5; }
             </div>
             <div class="reuse-actions">
               <button class="btn btn-amber" @click="logQuickShotForBean(selectedBeanId); showBeanLogShotOptions = false">Log it &#10003;</button>
-              <button class="btn btn-ghost" @click="openShotFormFromBean(); showBeanLogShotOptions = false">Adjust</button>
+              <button class="btn btn-secondary-solid" @click="openShotFormFromBean(); showBeanLogShotOptions = false">Adjust</button>
             </div>
           </div>
 
@@ -583,7 +593,7 @@ textarea.form-input { min-height: 80px; resize: vertical; line-height: 1.5; }
           </template>
         </div>
 
-        <!-- Rating (last content block) -->
+        <!-- Rating (editable only here, not on Edit Bean form) -->
         <div class="bean-detail-stars mb-16">
           <div class="text-secondary" style="font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px;">Rating</div>
           <div class="star-rating">
@@ -616,18 +626,8 @@ textarea.form-input { min-height: 80px; resize: vertical; line-height: 1.5; }
           <input type="text" class="form-input" placeholder="e.g. Dark Matter" x-model="beanForm.roaster">
         </div>
         <div class="form-group">
-          <label class="form-label">Roast Date <span class="required">*</span></label>
+          <label class="form-label">Roast Date</label>
           <input type="date" class="form-input" x-model="beanForm.roastDate">
-        </div>
-        <div class="form-group">
-          <label class="form-label">Rating</label>
-          <div class="star-rating">
-            <template x-for="n in 5">
-              <span class="star" :class="n <= (beanForm.rating || 0) ? 'filled' : ''"
-                    x-text="n <= (beanForm.rating || 0) ? '\u2605' : '\u2606'"
-                    @click="beanForm.rating = (beanForm.rating === n ? null : n)"></span>
-            </template>
-          </div>
         </div>
         <div class="form-group">
           <label class="form-label">Notes</label>
@@ -635,7 +635,7 @@ textarea.form-input { min-height: 80px; resize: vertical; line-height: 1.5; }
         </div>
         <div class="form-actions">
           <button class="btn btn-primary" @click="saveBean()">Save</button>
-          <button class="btn btn-ghost" @click="cancelBeanForm()">Cancel</button>
+          <button class="btn btn-danger-solid btn-action-small" @click="cancelBeanForm()">Cancel</button>
         </div>
       </div>
 
@@ -739,7 +739,7 @@ textarea.form-input { min-height: 80px; resize: vertical; line-height: 1.5; }
       </div>
       <div class="form-actions">
         <button class="btn btn-primary" @click="saveShot()">Save Shot</button>
-        <button class="btn btn-ghost" @click="editingShotId = null; showShotForm = false">Cancel</button>
+        <button class="btn btn-danger-solid btn-action-small" @click="editingShotId = null; showShotForm = false">Cancel</button>
       </div>
     </div>
   </div>
@@ -937,7 +937,8 @@ function app() {
       this.editingBeanId = id;
       if (id) {
         const b = this.getBeanById(id);
-        this.beanForm = { name: b.name, roaster: b.roaster, roastDate: b.roastDate, rating: b.rating, notes: b.notes || '' };
+        const roastDate = b.roastDate ? String(b.roastDate).slice(0, 10) : '';
+        this.beanForm = { name: b.name, roaster: b.roaster, roastDate, rating: b.rating, notes: b.notes ?? '' };
       } else {
         this.beanForm = { name: '', roaster: '', roastDate: '', rating: null, notes: '' };
       }
@@ -945,12 +946,22 @@ function app() {
     },
 
     saveBean() {
-      if (!this.beanForm.name || !this.beanForm.roaster || !this.beanForm.roastDate) return;
+      const name = (this.beanForm.name || '').trim();
+      const roaster = (this.beanForm.roaster || '').trim();
+      const roastDate = this.beanForm.roastDate ? String(this.beanForm.roastDate).slice(0, 10) : '';
+      if (!name || !roaster) return;
       if (this.editingBeanId) {
         const idx = this.beans.findIndex(b => b.id === this.editingBeanId);
-        if (idx !== -1) this.beans[idx] = { ...this.beans[idx], ...this.beanForm };
+        if (idx !== -1) {
+          const updated = { ...this.beans[idx], name, roaster, roastDate, notes: this.beanForm.notes ?? '' };
+          this.beans[idx] = updated;
+        }
       } else {
-        this.beans.push({ id: crypto.randomUUID(), ...this.beanForm, isArchived: false, createdAt: new Date().toISOString() });
+        this.beans.push({
+          id: crypto.randomUUID(), name, roaster, roastDate,
+          rating: null, notes: this.beanForm.notes ?? '',
+          isArchived: false, createdAt: new Date().toISOString()
+        });
       }
       this.saveBeans();
       this.beansView = this.editingBeanId ? 'detail' : 'list';
