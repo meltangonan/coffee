@@ -51,7 +51,7 @@
   --font-body: 'DM Sans', 'Helvetica Neue', sans-serif;
   --tab-height: 64px;
   --safe-top: env(safe-area-inset-top, 0px);
-  --safe-bottom: env(safe-area-inset-bottom, 0px);
+  --safe-bottom: 0px; /* no bottom inset: tab bar flush to screen edge */
 }
 
 html {
@@ -251,6 +251,14 @@ textarea.form-input { min-height: 80px; resize: vertical; line-height: 1.5; }
 .today-shot-meta { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
 .today-shot-edit { padding: 4px 10px; font-size: 13px; color: var(--text-muted); }
 .today-shot-edit:hover { color: var(--espresso); }
+.today-shot-delete { padding: 4px 8px; font-size: 12px; color: var(--text-muted); }
+.today-shot-delete:hover { color: var(--freshness-past); }
+/* Swipe-to-delete wrapper (touch) */
+.today-shot-swipe { position: relative; overflow: hidden; border-radius: var(--radius); margin-bottom: 8px; }
+.today-shot-swipe-actions { position: absolute; top: 0; right: 0; bottom: 0; width: 72px; display: flex; align-items: center; justify-content: center; background: var(--freshness-past); color: white; font-size: 13px; font-weight: 500; }
+.today-shot-swipe-content { position: relative; z-index: 1; background: white; border-radius: var(--radius); box-shadow: var(--shadow-sm); transition: transform 0.2s ease; touch-action: pan-y; }
+.today-shot-swipe-content.reveal { transform: translateX(-72px); }
+.bean-shot-swipe-row { padding: 14px 16px; border-bottom: none; }
 
 .calendar-card { background: white; border-radius: var(--radius-lg); box-shadow: var(--shadow); padding: 24px; max-width: 460px; margin: 0 auto; }
 .calendar-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; }
@@ -361,18 +369,28 @@ textarea.form-input { min-height: 80px; resize: vertical; line-height: 1.5; }
       <div x-show="todayShots.length > 0" class="mt-24">
         <h3 class="heading-md mb-12">Today's Shots</h3>
         <template x-for="shot in todayShots" :key="shot.id">
-          <div class="today-shot-item fade-in">
-            <div class="today-shot-content" @click="openShotFormForEdit(shot)">
-              <div class="today-shot-bean" x-text="getBeanById(shot.beanId)?.name || 'Unknown'"></div>
-              <div class="today-shot-details">
-                <span x-text="'Grind ' + shot.grindSize"></span>
-                <span x-show="shot.doseIn"> &middot; <span x-text="shot.doseIn + 'g'"></span></span>
-                <span x-show="shot.yieldOut"> &#8594; <span x-text="shot.yieldOut + 'g'"></span></span>
+          <div class="today-shot-swipe fade-in" x-data="{ swipeStart: 0, swipeX: 0, reveal: false }"
+               @touchstart="swipeStart = $event.touches[0].clientX; swipeX = 0"
+               @touchmove="swipeX = Math.min(0, $event.touches[0].clientX - swipeStart)"
+               @touchend="if (swipeX < -60) { deleteShot(shot.id); } else { reveal = swipeX < -36; swipeX = reveal ? -72 : 0; }"
+               :class="{ 'reveal': reveal }">
+            <div class="today-shot-swipe-actions" @click="deleteShot(shot.id)" role="button" tabindex="0" @keydown.enter="deleteShot(shot.id)">Delete</div>
+            <div class="today-shot-swipe-content" :style="'transform: translateX(' + (reveal ? -72 : swipeX) + 'px)'">
+              <div class="today-shot-item" style="margin-bottom:0;">
+                <div class="today-shot-content" @click="openShotFormForEdit(shot)">
+                  <div class="today-shot-bean" x-text="getBeanById(shot.beanId)?.name || 'Unknown'"></div>
+                  <div class="today-shot-details">
+                    <span x-text="'Grind ' + shot.grindSize"></span>
+                    <span x-show="shot.doseIn"> &middot; <span x-text="shot.doseIn + 'g'"></span></span>
+                    <span x-show="shot.yieldOut"> &#8594; <span x-text="shot.yieldOut + 'g'"></span></span>
+                  </div>
+                </div>
+                <div class="today-shot-meta">
+                  <span x-show="shotQualityLabel(shot.rating)" class="shot-quality-badge" :class="shotQualityClass(shot.rating)" x-text="shotQualityLabel(shot.rating)"></span>
+                  <button type="button" class="btn btn-ghost today-shot-edit" @click.stop="openShotFormForEdit(shot)" title="Edit shot">Edit</button>
+                  <button type="button" class="btn btn-ghost today-shot-delete" @click.stop="deleteShot(shot.id)" title="Delete shot">&#10005;</button>
+                </div>
               </div>
-            </div>
-            <div class="today-shot-meta">
-              <span x-show="shotQualityLabel(shot.rating)" class="shot-quality-badge" :class="shotQualityClass(shot.rating)" x-text="shotQualityLabel(shot.rating)"></span>
-              <button type="button" class="btn btn-ghost today-shot-edit" @click.stop="openShotFormForEdit(shot)" title="Edit shot">Edit</button>
             </div>
           </div>
         </template>
@@ -580,20 +598,29 @@ textarea.form-input { min-height: 80px; resize: vertical; line-height: 1.5; }
             <div class="empty-state-text">Log your first shot to start dialing in.</div>
           </div>
           <template x-for="shot in getShotsForBean(selectedBeanId)" :key="shot.id">
-            <div class="shot-row">
-              <div class="shot-info">
-                <div class="shot-settings">
-                  Grind <span x-text="shot.grindSize"></span>
-                  <span x-show="shot.doseIn"> &middot; <span x-text="shot.doseIn + 'g'"></span></span>
-                  <span x-show="shot.yieldOut"> &#8594; <span x-text="shot.yieldOut + 'g'"></span></span>
+            <div class="today-shot-swipe fade-in" x-data="{ swipeStart: 0, swipeX: 0, reveal: false }"
+                 @touchstart="swipeStart = $event.touches[0].clientX; swipeX = 0"
+                 @touchmove="swipeX = Math.min(0, $event.touches[0].clientX - swipeStart)"
+                 @touchend="if (swipeX < -60) { deleteShot(shot.id); } else { reveal = swipeX < -36; swipeX = reveal ? -72 : 0; }"
+                 :class="{ 'reveal': reveal }">
+              <div class="today-shot-swipe-actions" @click="deleteShot(shot.id)" role="button" tabindex="0" @keydown.enter="deleteShot(shot.id)">Delete</div>
+              <div class="today-shot-swipe-content today-shot-content" :style="'transform: translateX(' + (reveal ? -72 : swipeX) + 'px)'" @click="openShotFormForEdit(shot)">
+                <div class="shot-row bean-shot-swipe-row">
+                  <div class="shot-info">
+                    <div class="shot-settings">
+                      Grind <span x-text="shot.grindSize"></span>
+                      <span x-show="shot.doseIn"> &middot; <span x-text="shot.doseIn + 'g'"></span></span>
+                      <span x-show="shot.yieldOut"> &#8594; <span x-text="shot.yieldOut + 'g'"></span></span>
+                    </div>
+                    <div class="shot-date" x-text="formatDate(shot.createdAt)"></div>
+                    <div x-show="shot.notes" class="text-muted" style="margin-top:2px; font-style:italic;" x-text="shot.notes"></div>
+                  </div>
+                  <div class="shot-meta">
+                    <span x-show="shotQualityLabel(shot.rating)" class="shot-quality-badge" :class="shotQualityClass(shot.rating)" x-text="shotQualityLabel(shot.rating)"></span>
+                    <button type="button" class="btn btn-ghost today-shot-edit" @click.stop="openShotFormForEdit(shot)" title="Edit shot">Edit</button>
+                    <button type="button" class="btn btn-ghost today-shot-delete" @click.stop="deleteShot(shot.id)" title="Delete shot">&#10005;</button>
+                  </div>
                 </div>
-                <div class="shot-date" x-text="formatDate(shot.createdAt)"></div>
-                <div x-show="shot.notes" class="text-muted" style="margin-top:2px; font-style:italic;" x-text="shot.notes"></div>
-              </div>
-              <div class="shot-meta">
-                <span x-show="shotQualityLabel(shot.rating)" class="shot-quality-badge" :class="shotQualityClass(shot.rating)" x-text="shotQualityLabel(shot.rating)"></span>
-                <button type="button" class="btn btn-ghost today-shot-edit" @click.stop="openShotFormForEdit(shot)" title="Edit shot">Edit</button>
-                <button class="btn btn-ghost" style="padding:4px 8px; font-size:12px; color: var(--text-muted);" @click="deleteShot(shot.id)">&#10005;</button>
               </div>
             </div>
           </template>
@@ -704,7 +731,10 @@ textarea.form-input { min-height: 80px; resize: vertical; line-height: 1.5; }
   <div x-show="showShotForm" class="overlay" @click.self="editingShotId = null; showShotForm = false" x-cloak>
     <div class="panel" @click.stop :key="'shot-form-' + (shotFormBeanId || '') + '-' + showShotForm">
       <div class="panel-handle"></div>
-      <h3 class="heading-lg mb-20" x-text="editingShotId ? 'Edit Shot' : 'Log Shot'"></h3>
+      <div style="display: flex; align-items: center; gap: 12px;" class="mb-20">
+        <button class="back-btn" @click="editingShotId = null; showShotForm = false">&#8592;</button>
+        <h3 class="heading-lg" x-text="editingShotId ? 'Edit Shot' : 'Log Shot'"></h3>
+      </div>
       <div class="form-group" x-data="stepper()" x-init="stInit('grindSize', 1, 30, getLastShot(shotFormBeanId)?.grindSize ?? 5)">
         <label class="form-label">Grind Size</label>
         <div class="stepper">
@@ -744,8 +774,7 @@ textarea.form-input { min-height: 80px; resize: vertical; line-height: 1.5; }
         <textarea class="form-input" placeholder="How did it taste?" x-model="shotForm.notes"></textarea>
       </div>
       <div class="form-actions">
-        <button class="btn btn-primary" @click="saveShot()">Save Shot</button>
-        <button class="btn btn-danger-solid btn-action-small" @click="editingShotId = null; showShotForm = false">Cancel</button>
+        <button class="btn btn-primary" style="flex: 1;" @click="saveShot()">Save Shot</button>
       </div>
     </div>
   </div>
