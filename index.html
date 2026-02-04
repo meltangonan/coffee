@@ -1,0 +1,1221 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Bean Journal</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,400&display=swap" rel="stylesheet">
+<script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3/dist/cdn.min.js"></script>
+<style>
+/* ═══════════════════════════════════════════
+   BEAN JOURNAL — Warm Industrial Cafe
+   ═══════════════════════════════════════════ */
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --espresso: #2C1810;
+  --espresso-light: #3D2820;
+  --cream: #F5F0E8;
+  --cream-dark: #EDE6DA;
+  --amber: #D4A574;
+  --amber-light: #E8C9A0;
+  --amber-dark: #B8864E;
+  --text-primary: #2C1810;
+  --text-secondary: #6B5B4E;
+  --text-muted: #9B8B7E;
+  --freshness-resting: #8B9DAF;
+  --freshness-resting-bg: rgba(139,157,175,0.12);
+  --freshness-optimal: #7BA05B;
+  --freshness-optimal-bg: rgba(123,160,91,0.12);
+  --freshness-past: #A0695B;
+  --freshness-past-bg: rgba(160,105,91,0.12);
+  /* Bar colors are defined in JS BAR_COLORS array */
+  --radius: 10px;
+  --radius-sm: 6px;
+  --radius-lg: 14px;
+  --shadow-sm: 0 1px 3px rgba(44,24,16,0.06), 0 1px 2px rgba(44,24,16,0.04);
+  --shadow: 0 2px 8px rgba(44,24,16,0.08), 0 1px 3px rgba(44,24,16,0.06);
+  --shadow-lg: 0 4px 16px rgba(44,24,16,0.10), 0 2px 6px rgba(44,24,16,0.06);
+  --shadow-xl: 0 8px 30px rgba(44,24,16,0.14), 0 4px 10px rgba(44,24,16,0.08);
+  --font-heading: 'Playfair Display', 'Georgia', serif;
+  --font-body: 'DM Sans', 'Helvetica Neue', sans-serif;
+  --tab-height: 64px;
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+html {
+  font-size: 16px;
+  -webkit-text-size-adjust: 100%;
+  -webkit-tap-highlight-color: transparent;
+}
+
+body {
+  font-family: var(--font-body);
+  background: var(--cream);
+  color: var(--text-primary);
+  overflow-x: hidden;
+  min-height: 100dvh;
+  background-image:
+    url("data:image/svg+xml,%3Csvg width='100' height='100' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100' height='100' filter='url(%23n)' opacity='0.03'/%3E%3C/svg%3E");
+}
+
+.app-shell { display: flex; flex-direction: column; height: 100dvh; max-width: 600px; margin: 0 auto; position: relative; }
+@media (min-width: 768px) { .app-shell { border-left: 1px solid rgba(44,24,16,0.06); border-right: 1px solid rgba(44,24,16,0.06); } }
+
+.content-area { flex: 1; overflow-y: auto; overflow-x: hidden; padding: 20px 16px; padding-bottom: calc(var(--tab-height) + var(--safe-bottom) + 24px); -webkit-overflow-scrolling: touch; }
+
+.tab-bar { position: fixed; bottom: 0; left: 50%; transform: translateX(-50%); width: 100%; max-width: 600px; height: calc(var(--tab-height) + var(--safe-bottom)); padding-bottom: var(--safe-bottom); background: var(--espresso); display: flex; align-items: center; justify-content: space-around; z-index: 100; box-shadow: 0 -2px 20px rgba(44,24,16,0.15); }
+.tab-btn { display: flex; flex-direction: column; align-items: center; gap: 3px; padding: 8px 16px; min-width: 64px; min-height: 44px; background: none; border: none; color: rgba(245,240,232,0.5); font-family: var(--font-body); font-size: 11px; font-weight: 500; letter-spacing: 0.3px; cursor: pointer; transition: color 0.2s ease; -webkit-tap-highlight-color: transparent; }
+.tab-btn.active { color: var(--amber); }
+.tab-btn:hover { color: var(--amber-light); }
+.tab-icon { font-size: 22px; line-height: 1; display: block; }
+
+.heading-xl { font-family: var(--font-heading); font-size: 28px; font-weight: 700; line-height: 1.2; color: var(--espresso); }
+.heading-lg { font-family: var(--font-heading); font-size: 22px; font-weight: 600; line-height: 1.3; color: var(--espresso); }
+.heading-md { font-family: var(--font-heading); font-size: 18px; font-weight: 600; line-height: 1.3; color: var(--espresso); }
+.text-secondary { color: var(--text-secondary); font-size: 14px; }
+.text-muted { color: var(--text-muted); font-size: 13px; }
+.text-small { font-size: 13px; }
+
+
+
+.badge { display: inline-flex; align-items: center; gap: 5px; padding: 4px 10px; border-radius: 20px; font-size: 12px; font-weight: 500; letter-spacing: 0.2px; }
+.badge-resting { background: var(--freshness-resting-bg); color: var(--freshness-resting); }
+.badge-optimal { background: var(--freshness-optimal-bg); color: var(--freshness-optimal); }
+.badge-past { background: var(--freshness-past-bg); color: var(--freshness-past); }
+.badge-archived { background: rgba(44,24,16,0.06); color: var(--text-muted); }
+.badge-dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+
+.btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; padding: 12px 24px; min-height: 44px; border: none; border-radius: var(--radius); font-family: var(--font-body); font-size: 15px; font-weight: 500; cursor: pointer; transition: all 0.2s ease; -webkit-tap-highlight-color: transparent; }
+.btn-primary { background: var(--espresso); color: var(--cream); }
+.btn-primary:hover { background: var(--espresso-light); transform: translateY(-1px); box-shadow: var(--shadow); }
+.btn-primary:active { transform: translateY(0); }
+.btn-amber { background: var(--amber); color: var(--espresso); font-weight: 600; }
+.btn-amber:hover { background: var(--amber-dark); color: white; }
+.btn-ghost { background: transparent; color: var(--text-secondary); padding: 12px 16px; }
+.btn-ghost:hover { background: rgba(44,24,16,0.04); }
+.btn-danger { background: transparent; color: var(--freshness-past); font-size: 14px; }
+.btn-danger:hover { background: var(--freshness-past-bg); }
+
+/* Bean detail actions: archive = light gray, delete = red highlight */
+.btn-archive-highlight { background: rgba(0,0,0,0.06) !important; color: var(--text-secondary); }
+.btn-archive-highlight:hover { background: rgba(0,0,0,0.10) !important; }
+.btn-delete-highlight { background: rgba(180, 70, 60, 0.15) !important; color: #a04038; }
+.btn-delete-highlight:hover { background: rgba(180, 70, 60, 0.25) !important; }
+
+.btn-full { width: 100%; }
+
+.fab { position: fixed; bottom: calc(var(--tab-height) + var(--safe-bottom) + 20px); right: max(16px, calc(50% - 284px)); width: 56px; height: 56px; border-radius: 50%; background: var(--amber); color: var(--espresso); border: none; font-size: 28px; display: flex; align-items: center; justify-content: center; box-shadow: var(--shadow-xl); cursor: pointer; z-index: 50; transition: all 0.2s ease; -webkit-tap-highlight-color: transparent; }
+.fab:hover { transform: scale(1.08); background: var(--amber-dark); color: white; }
+.fab:active { transform: scale(0.95); }
+
+.form-group { margin-bottom: 18px; }
+.form-label { display: block; font-size: 13px; font-weight: 500; color: var(--text-secondary); margin-bottom: 6px; letter-spacing: 0.3px; text-transform: uppercase; }
+.form-label .required { color: var(--freshness-past); margin-left: 2px; }
+.form-input { width: 100%; padding: 12px 14px; min-height: 44px; border: 1.5px solid rgba(44,24,16,0.12); border-radius: var(--radius); font-family: var(--font-body); font-size: 16px; color: var(--text-primary); background: white; transition: border-color 0.2s ease, box-shadow 0.2s ease; -webkit-appearance: none; }
+.form-input:focus { outline: none; border-color: var(--amber); box-shadow: 0 0 0 3px rgba(212,165,116,0.15); }
+.form-input::placeholder { color: var(--text-muted); }
+textarea.form-input { min-height: 80px; resize: vertical; line-height: 1.5; }
+
+.stepper { display: flex; align-items: center; gap: 0; border: 1.5px solid rgba(44,24,16,0.12); border-radius: var(--radius); background: white; overflow: hidden; }
+.stepper-btn { width: 44px; min-height: 44px; display: flex; align-items: center; justify-content: center; font-size: 18px; font-weight: 600; color: var(--text-primary); background: transparent; border: none; cursor: pointer; transition: background 0.15s ease; -webkit-tap-highlight-color: transparent; }
+.stepper-btn:hover:not(:disabled) { background: rgba(44,24,16,0.06); }
+.stepper-btn:active:not(:disabled) { background: rgba(44,24,16,0.1); }
+.stepper-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+.stepper-input { flex: 1; min-width: 0; padding: 12px 8px; border: none; border-left: 1.5px solid rgba(44,24,16,0.08); border-right: 1.5px solid rgba(44,24,16,0.08); font-family: var(--font-body); font-size: 16px; color: var(--text-primary); background: transparent; text-align: center; -webkit-appearance: none; -moz-appearance: textfield; }
+.stepper-input::-webkit-outer-spin-button, .stepper-input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+.stepper-input:focus { outline: none; }
+.stepper-input::placeholder { color: var(--text-muted); }
+
+.star-rating { display: inline-flex; gap: 2px; }
+.star { font-size: 20px; cursor: pointer; color: var(--text-muted); transition: color 0.15s ease, transform 0.15s ease; user-select: none; -webkit-tap-highlight-color: transparent; padding: 2px; min-width: 28px; min-height: 28px; display: inline-flex; align-items: center; justify-content: center; }
+.star.filled { color: var(--amber); filter: drop-shadow(0 0 0.5px rgba(44,24,16,0.2)); }
+.star:hover { transform: scale(1.15); }
+.star-display { display: inline-flex; gap: 1px; font-size: 14px; }
+.star-display .star { font-size: 14px; cursor: default; padding: 0; min-width: auto; min-height: auto; }
+.star-display .star:hover { transform: none; }
+.bean-detail-stars { padding: 12px 14px; background: var(--cream-dark); border-radius: var(--radius-sm); border: 1px solid rgba(44,24,16,0.06); }
+
+/* Shot quality: Bad / Okay / Perfect */
+.shot-quality-options { display: flex; gap: 8px; flex-wrap: wrap; }
+.shot-quality-btn { padding: 10px 18px; border-radius: var(--radius); border: 1.5px solid rgba(44,24,16,0.15); background: white; font-family: var(--font-body); font-size: 14px; font-weight: 500; color: var(--text-secondary); cursor: pointer; transition: all 0.2s ease; -webkit-tap-highlight-color: transparent; }
+.shot-quality-btn:hover { border-color: var(--amber); color: var(--text-primary); }
+.shot-quality-btn.active { border-color: var(--amber); background: rgba(212,165,116,0.15); color: var(--amber-dark); }
+.shot-quality-badge { display: inline-block; padding: 4px 10px; border-radius: 20px; font-size: 12px; font-weight: 500; }
+.shot-quality-badge.bad { background: var(--freshness-past-bg); color: var(--freshness-past); }
+.shot-quality-badge.okay { background: rgba(139,157,175,0.2); color: var(--freshness-resting); }
+.shot-quality-badge.perfect { background: var(--freshness-optimal-bg); color: var(--freshness-optimal); }
+
+.toggle-row { display: flex; align-items: center; justify-content: space-between; padding: 12px 0; }
+.toggle { position: relative; width: 48px; height: 28px; background: rgba(44,24,16,0.12); border-radius: 14px; border: none; cursor: pointer; transition: background 0.2s ease; -webkit-tap-highlight-color: transparent; }
+.toggle.active { background: var(--amber); }
+.toggle::after { content: ''; position: absolute; top: 3px; left: 3px; width: 22px; height: 22px; background: white; border-radius: 50%; box-shadow: var(--shadow-sm); transition: transform 0.2s ease; }
+.toggle.active::after { transform: translateX(20px); }
+
+.overlay { position: fixed; inset: 0; background: rgba(44,24,16,0.4); z-index: 200; display: flex; align-items: flex-end; justify-content: center; backdrop-filter: blur(2px); -webkit-backdrop-filter: blur(2px); }
+.panel { background: var(--cream); border-radius: var(--radius-lg) var(--radius-lg) 0 0; width: 100%; max-width: 600px; max-height: 85vh; overflow-y: auto; padding: 24px 16px; padding-bottom: calc(24px + var(--safe-bottom)); box-shadow: var(--shadow-xl); animation: slideUp 0.25s ease-out; }
+@keyframes slideUp { from { transform: translateY(100%); opacity: 0.8; } to { transform: translateY(0); opacity: 1; } }
+.panel-handle { width: 36px; height: 4px; background: rgba(44,24,16,0.15); border-radius: 2px; margin: 0 auto 16px; }
+
+.divider { height: 1px; background: rgba(44,24,16,0.08); margin: 16px 0; }
+
+.empty-state { text-align: center; padding: 48px 24px; }
+.empty-state-icon { font-size: 48px; margin-bottom: 16px; opacity: 0.6; }
+.empty-state-title { font-family: var(--font-heading); font-size: 20px; color: var(--text-secondary); margin-bottom: 8px; }
+.empty-state-text { color: var(--text-muted); font-size: 14px; margin-bottom: 20px; line-height: 1.5; }
+
+.date-header { margin-bottom: 24px; }
+.date-header .day-name { font-family: var(--font-heading); font-size: 32px; font-weight: 700; color: var(--espresso); line-height: 1.1; }
+.date-header .date-sub { font-size: 15px; color: var(--text-secondary); margin-top: 4px; }
+
+.bean-card { background: white; border-radius: var(--radius); padding: 16px; box-shadow: var(--shadow); border: 1px solid rgba(44,24,16,0.04); margin-bottom: 12px; cursor: pointer; transition: all 0.2s ease; -webkit-tap-highlight-color: transparent; }
+.bean-card:hover { box-shadow: var(--shadow-lg); transform: translateY(-1px); }
+.bean-card:active { transform: translateY(0); }
+.bean-card.archived { opacity: 0.55; background: var(--cream-dark); }
+.bean-card.archived:hover { opacity: 0.7; }
+.bean-card-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px; }
+.bean-card-name { font-family: var(--font-heading); font-size: 18px; font-weight: 600; color: var(--espresso); line-height: 1.3; }
+.bean-card-roaster { font-size: 14px; color: var(--text-secondary); margin-bottom: 10px; }
+.bean-card-footer { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.best-recipe-indicator { display: inline-flex; align-items: center; gap: 4px; font-size: 12px; color: var(--amber-dark); font-weight: 500; }
+.beans-section-label { font-family: var(--font-body); font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; color: var(--text-muted); margin: 20px 0 10px; }
+.beans-section-label:first-of-type { margin-top: 0; }
+
+.detail-header { display: flex; align-items: center; gap: 12px; margin-bottom: 24px; }
+.back-btn { width: 40px; height: 40px; min-width: 40px; display: flex; align-items: center; justify-content: center; border: none; background: rgba(44,24,16,0.06); border-radius: 50%; font-size: 18px; cursor: pointer; color: var(--text-primary); transition: background 0.2s ease; -webkit-tap-highlight-color: transparent; }
+.back-btn:hover { background: rgba(44,24,16,0.1); }
+
+.freshness-display { display: flex; align-items: center; gap: 12px; padding: 14px 16px; border-radius: var(--radius); margin-bottom: 16px; }
+.freshness-display.resting { background: var(--freshness-resting-bg); }
+.freshness-display.optimal { background: var(--freshness-optimal-bg); }
+.freshness-display.past { background: var(--freshness-past-bg); }
+.freshness-icon { font-size: 24px; }
+.freshness-text { font-size: 14px; font-weight: 500; }
+
+.recipe-card { background: linear-gradient(135deg, var(--espresso) 0%, var(--espresso-light) 100%); border-radius: var(--radius-lg); padding: 20px; color: var(--cream); margin-bottom: 20px; position: relative; overflow: hidden; }
+.recipe-card::before { content: ''; position: absolute; top: -20px; right: -20px; width: 80px; height: 80px; background: rgba(212,165,116,0.1); border-radius: 50%; }
+.recipe-card-label { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 1.5px; color: var(--amber); margin-bottom: 12px; }
+.recipe-card-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; }
+.recipe-stat-label { font-size: 11px; color: rgba(245,240,232,0.6); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px; }
+.recipe-stat-value { font-family: var(--font-heading); font-size: 22px; font-weight: 600; }
+.recipe-card-edit { margin-top: 14px; color: var(--amber); font-size: 13px; padding: 6px 0; }
+.recipe-card-edit-form .stepper-dark { background: var(--cream); border: 1px solid rgba(44,24,16,0.2); }
+.recipe-card-edit-form .stepper-dark .stepper-btn { color: var(--espresso); font-weight: 500; }
+.recipe-card-edit-form .stepper-dark .stepper-btn:hover:not(:disabled) { background: var(--cream-dark); color: var(--espresso); }
+.recipe-card-edit-form .stepper-dark .stepper-btn:disabled { opacity: 0.4; color: var(--text-muted); }
+.recipe-card-edit-form .stepper-dark .stepper-input { color: var(--espresso); font-size: 17px; font-weight: 600; border-left-color: rgba(44,24,16,0.12); border-right-color: rgba(44,24,16,0.12); }
+.recipe-card-edit-form .stepper-dark .stepper-input::placeholder { color: var(--text-muted); }
+
+.shot-row { display: flex; align-items: center; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid rgba(44,24,16,0.06); }
+.shot-row:last-child { border-bottom: none; }
+.shot-info { display: flex; flex-direction: column; gap: 3px; }
+.shot-settings { font-size: 14px; font-weight: 500; color: var(--text-primary); }
+.shot-date { font-size: 12px; color: var(--text-muted); }
+.shot-meta { display: flex; align-items: center; gap: 8px; }
+.best-recipe-star { color: var(--amber); font-size: 16px; }
+
+.daily-bean-selector { margin-bottom: 20px; }
+.daily-bean-selector select { width: 100%; padding: 14px 16px; min-height: 48px; border: 2px solid rgba(44,24,16,0.12); border-radius: var(--radius); font-family: var(--font-body); font-size: 16px; color: var(--text-primary); background: white; -webkit-appearance: none; appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%236B5B4E' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 14px center; cursor: pointer; }
+.daily-bean-selector select:focus { outline: none; border-color: var(--amber); box-shadow: 0 0 0 3px rgba(212,165,116,0.15); }
+
+.reuse-card { background: white; border: 2px solid var(--amber-light); border-radius: var(--radius-lg); padding: 20px; margin-bottom: 20px; }
+.reuse-card-header { display: flex; align-items: center; gap: 8px; margin-bottom: 14px; font-size: 14px; font-weight: 500; color: var(--text-secondary); }
+.reuse-settings { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-bottom: 16px; }
+.reuse-stat { text-align: center; padding: 10px 8px; background: var(--cream); border-radius: var(--radius-sm); }
+.reuse-stat-label { font-size: 11px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; }
+.reuse-stat-value { font-family: var(--font-heading); font-size: 20px; font-weight: 600; color: var(--espresso); margin-top: 2px; }
+.reuse-actions { display: flex; gap: 10px; }
+.reuse-actions .btn { flex: 1; }
+
+.today-shot-item { display: flex; align-items: center; justify-content: space-between; padding: 14px 16px; background: white; border-radius: var(--radius); margin-bottom: 8px; box-shadow: var(--shadow-sm); }
+.today-shot-content { flex: 1; min-width: 0; cursor: pointer; }
+.today-shot-bean { font-weight: 600; font-size: 14px; color: var(--espresso); }
+.today-shot-details { font-size: 13px; color: var(--text-secondary); margin-top: 2px; }
+.today-shot-meta { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+.today-shot-time { font-size: 12px; color: var(--text-muted); white-space: nowrap; }
+.today-shot-edit { padding: 4px 10px; font-size: 13px; color: var(--text-muted); }
+.today-shot-edit:hover { color: var(--espresso); }
+
+.calendar-card { background: white; border-radius: var(--radius-lg); box-shadow: var(--shadow); padding: 24px; max-width: 460px; margin: 0 auto; }
+.calendar-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; }
+.calendar-nav { width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; border: none; background: rgba(44,24,16,0.04); border-radius: 50%; font-size: 16px; cursor: pointer; color: var(--text-secondary); transition: background 0.2s ease, transform 0.15s ease; -webkit-tap-highlight-color: transparent; }
+.calendar-nav:hover { background: rgba(44,24,16,0.08); transform: scale(1.06); }
+.calendar-month-label { font-family: var(--font-heading); font-size: 24px; font-weight: 600; color: var(--espresso); letter-spacing: -0.01em; }
+.calendar-weekdays { display: grid; grid-template-columns: repeat(7, 1fr); text-align: center; margin-bottom: 2px; padding-bottom: 8px; border-bottom: 1px solid var(--cream-dark); }
+.calendar-weekday { font-family: var(--font-body); font-size: 11px; font-weight: 500; color: var(--text-muted); padding: 4px 0; text-transform: uppercase; letter-spacing: 1px; }
+.calendar-grid { display: flex; flex-direction: column; gap: 0; padding-top: 4px; }
+.calendar-row { position: relative; display: grid; grid-template-columns: repeat(7, 1fr); min-height: 44px; }
+.calendar-cell { display: flex; align-items: center; justify-content: center; font-family: var(--font-body); font-size: 14px; font-weight: 400; color: var(--text-primary); padding: 4px 0; position: relative; z-index: 2; }
+.calendar-cell span { display: flex; align-items: center; justify-content: center; width: 32px; height: 32px; border-radius: 50%; transition: background 0.15s ease; }
+.calendar-cell.empty { color: transparent; }
+.calendar-cell.today span { font-weight: 600; color: white; background: var(--amber-dark); }
+.calendar-bars-container { position: absolute; left: 0; right: 0; bottom: 0; z-index: 1; pointer-events: none; }
+.calendar-bar { position: absolute; height: 6px; border-radius: 3px; opacity: 0.6; transition: opacity 0.2s ease; box-shadow: 0 1px 2px rgba(0,0,0,0.06); }
+.calendar-legend { display: flex; flex-wrap: wrap; gap: 14px; margin-top: 18px; padding-top: 16px; border-top: 1px solid var(--cream-dark); }
+.legend-item { display: flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 500; color: var(--text-secondary); }
+.legend-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+
+/* Layout utilities */
+.form-actions { display: flex; gap: 10px; margin-top: 8px; }
+.form-actions .btn:first-child { flex: 1; }
+.form-actions .btn:last-child { flex: 0.6; }
+
+/* Spacing utilities */
+.mb-8 { margin-bottom: 8px; }
+.mb-12 { margin-bottom: 12px; }
+.mb-16 { margin-bottom: 16px; }
+.mb-20 { margin-bottom: 20px; }
+.mb-24 { margin-bottom: 24px; }
+.mt-24 { margin-top: 24px; }
+
+@keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+.fade-in { animation: fadeIn 0.3s ease-out; }
+
+@media (min-width: 768px) {
+  .content-area { padding: 28px 24px; padding-bottom: calc(var(--tab-height) + var(--safe-bottom) + 32px); }
+  .heading-xl { font-size: 34px; }
+  .date-header .day-name { font-size: 38px; }
+}
+</style>
+</head>
+<body>
+
+<div class="app-shell" x-data="app()" x-init="init()">
+
+  <div class="content-area">
+
+    <!-- ═══════════════════════════════════════
+         TODAY TAB — Daily Log
+         ═══════════════════════════════════════ -->
+    <div x-show="currentTab === 'today'" x-cloak class="fade-in">
+
+      <div class="date-header">
+        <div class="day-name" x-text="todayFormatted.day"></div>
+        <div class="date-sub" x-text="todayFormatted.date"></div>
+      </div>
+
+      <!-- Bean Selector — only current (non-archived) beans -->
+      <div class="daily-bean-selector">
+        <label class="form-label">What are you pulling?</label>
+        <select x-model="dailySelectedBeanId" @change="onDailyBeanSelect()">
+          <option value="">Choose a bean...</option>
+          <template x-for="bean in currentBeans" :key="bean.id">
+            <option :value="bean.id" x-text="bean.name + ' \u2014 ' + bean.roaster"></option>
+          </template>
+        </select>
+      </div>
+
+      <!-- Reuse Last Settings -->
+      <div x-show="dailySelectedBeanId && dailyLastShot" class="reuse-card fade-in">
+        <div class="reuse-card-header">
+          <span>&#9749;</span>
+          <span>Use last settings for <strong x-text="getBeanById(dailySelectedBeanId)?.name"></strong>?</span>
+        </div>
+        <div class="reuse-settings">
+          <div class="reuse-stat">
+            <div class="reuse-stat-label">Grind</div>
+            <div class="reuse-stat-value" x-text="dailyLastShot?.grindSize || '\u2014'"></div>
+          </div>
+          <div class="reuse-stat">
+            <div class="reuse-stat-label">Dose</div>
+            <div class="reuse-stat-value" x-text="dailyLastShot?.doseIn ? dailyLastShot.doseIn + 'g' : '\u2014'"></div>
+          </div>
+          <div class="reuse-stat">
+            <div class="reuse-stat-label">Yield</div>
+            <div class="reuse-stat-value" x-text="dailyLastShot?.yieldOut ? dailyLastShot.yieldOut + 'g' : '\u2014'"></div>
+          </div>
+        </div>
+        <div class="reuse-actions">
+          <button class="btn btn-amber" @click="logQuickShot()">Log it &#10003;</button>
+          <button class="btn btn-ghost" @click="openShotFormFromDaily()">Adjust</button>
+        </div>
+      </div>
+
+      <!-- Manual Entry (no previous shot) -->
+      <div x-show="dailySelectedBeanId && !dailyLastShot" class="fade-in mb-20">
+        <p class="text-secondary mb-12">No previous shots for this bean. Enter your settings:</p>
+        <button class="btn btn-primary btn-full" @click="openShotFormFromDaily()">Log Shot</button>
+      </div>
+
+      <!-- Today's Shots Summary -->
+      <div x-show="todayShots.length > 0" class="mt-24">
+        <h3 class="heading-md mb-12">Today's Shots</h3>
+        <template x-for="shot in todayShots" :key="shot.id">
+          <div class="today-shot-item fade-in">
+            <div class="today-shot-content" @click="openShotFormForEdit(shot)">
+              <div class="today-shot-bean" x-text="getBeanById(shot.beanId)?.name || 'Unknown'"></div>
+              <div class="today-shot-details">
+                <span x-text="'Grind ' + shot.grindSize"></span>
+                <span x-show="shot.doseIn"> &middot; <span x-text="shot.doseIn + 'g'"></span></span>
+                <span x-show="shot.yieldOut"> &#8594; <span x-text="shot.yieldOut + 'g'"></span></span>
+              </div>
+            </div>
+            <div class="today-shot-meta">
+              <span x-show="shotQualityLabel(shot.rating)" class="shot-quality-badge" :class="shotQualityClass(shot.rating)" x-text="shotQualityLabel(shot.rating)"></span>
+              <span class="today-shot-time" x-text="formatTime(shot.createdAt)"></span>
+              <button type="button" class="btn btn-ghost today-shot-edit" @click.stop="openShotFormForEdit(shot)" title="Edit shot">Edit</button>
+            </div>
+          </div>
+        </template>
+      </div>
+
+      <!-- Empty State -->
+      <div x-show="todayShots.length === 0 && !dailySelectedBeanId" class="empty-state">
+        <div class="empty-state-icon">&#9749;</div>
+        <div class="empty-state-title">No shots logged today</div>
+        <div class="empty-state-text">Select a bean above to start your morning ritual.</div>
+      </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════
+         BEANS TAB — Dashboard
+         ═══════════════════════════════════════ -->
+    <div x-show="currentTab === 'beans'" x-cloak>
+
+      <!-- Bean List -->
+      <div x-show="beansView === 'list'" class="fade-in">
+        <h1 class="heading-xl mb-20">Your Beans</h1>
+
+        <!-- Current Beans -->
+        <div x-show="currentBeans.length > 0">
+          <div class="beans-section-label" x-show="archivedBeans.length > 0">Current</div>
+          <template x-for="bean in currentBeans" :key="bean.id">
+            <div class="bean-card" @click="selectBean(bean.id)">
+              <div class="bean-card-header">
+                <div>
+                  <div class="bean-card-name" x-text="bean.name"></div>
+                  <div class="bean-card-roaster" x-text="bean.roaster"></div>
+                </div>
+                <span x-show="bean.rating" class="star-display">
+                  <template x-for="n in 5">
+                    <span class="star" :class="n <= bean.rating ? 'filled' : ''" x-text="n <= bean.rating ? '\u2605' : '\u2606'"></span>
+                  </template>
+                </span>
+              </div>
+              <div class="bean-card-footer">
+                <span class="badge" :class="'badge-' + getFreshness(bean).status" x-show="bean.roastDate">
+                  <span class="badge-dot"></span>
+                  <span x-text="getFreshness(bean).label"></span>
+                </span>
+              </div>
+            </div>
+          </template>
+        </div>
+
+        <!-- Archived / Old Beans -->
+        <div x-show="archivedBeans.length > 0">
+          <div class="beans-section-label">Old</div>
+          <template x-for="bean in archivedBeans" :key="bean.id">
+            <div class="bean-card archived" @click="selectBean(bean.id)">
+              <div class="bean-card-header">
+                <div>
+                  <div class="bean-card-name" x-text="bean.name"></div>
+                  <div class="bean-card-roaster" x-text="bean.roaster"></div>
+                </div>
+                <span x-show="bean.rating" class="star-display">
+                  <template x-for="n in 5">
+                    <span class="star" :class="n <= bean.rating ? 'filled' : ''" x-text="n <= bean.rating ? '\u2605' : '\u2606'"></span>
+                  </template>
+                </span>
+              </div>
+              <div class="bean-card-footer">
+                <span class="badge badge-archived"><span class="badge-dot"></span><span>Archived</span></span>
+              </div>
+            </div>
+          </template>
+        </div>
+
+        <!-- Empty State -->
+        <div x-show="beans.length === 0" class="empty-state">
+          <div class="empty-state-icon">&#127793;</div>
+          <div class="empty-state-title">Add your first bean</div>
+          <div class="empty-state-text">Start tracking your espresso beans and dial in the perfect shot.</div>
+          <button class="btn btn-amber" @click="openBeanForm(null)">Add Bean</button>
+        </div>
+      </div>
+
+      <!-- Bean Detail -->
+      <div x-show="beansView === 'detail' && selectedBean" class="fade-in">
+        <div class="detail-header">
+          <button class="back-btn" @click="beansView = 'list'; selectedBeanId = null; showBeanLogShotOptions = false;">&#8592;</button>
+          <div style="flex:1;">
+            <h2 class="heading-lg" x-text="selectedBean?.name"></h2>
+            <div class="text-secondary" x-text="selectedBean?.roaster"></div>
+            <span x-show="selectedBean?.isArchived" class="badge badge-archived" style="margin-top: 4px;">Archived</span>
+          </div>
+          <button class="btn btn-ghost" style="padding: 8px 12px; font-size: 14px;" @click="openBeanForm(selectedBeanId)">Edit</button>
+        </div>
+
+        <!-- Days remaining (roast date is edited only in Edit Bean screen) -->
+        <div x-show="selectedBean?.roastDate" class="freshness-display mb-16" :class="getFreshness(selectedBean).status">
+          <span class="freshness-icon" x-text="getFreshness(selectedBean).icon"></span>
+          <span class="freshness-text" x-text="getFreshness(selectedBean).detail"></span>
+        </div>
+
+        <!-- Optimal Settings (always visible; set or change via Edit) -->
+        <div class="recipe-card">
+          <div class="recipe-card-label">Optimal settings</div>
+          <div class="text-secondary" style="font-size: 12px; margin-top: 2px; margin-bottom: 10px;">Your go-to settings for this bean. Edit below to set or change.</div>
+          <div x-show="editingOptimalBeanId !== selectedBeanId">
+            <div class="recipe-card-grid">
+              <div>
+                <div class="recipe-stat-label">Grind</div>
+                <div class="recipe-stat-value" x-text="selectedBean?.optimalGrindSize ?? '\u2014'"></div>
+              </div>
+              <div>
+                <div class="recipe-stat-label">Dose</div>
+                <div class="recipe-stat-value" x-text="selectedBean?.optimalDoseIn != null ? selectedBean.optimalDoseIn + 'g' : '\u2014'"></div>
+              </div>
+              <div>
+                <div class="recipe-stat-label">Yield</div>
+                <div class="recipe-stat-value" x-text="selectedBean?.optimalYieldOut != null ? selectedBean.optimalYieldOut + 'g' : '\u2014'"></div>
+              </div>
+            </div>
+            <div x-show="selectedBean?.optimalDoseIn && selectedBean?.optimalYieldOut" style="margin-top:10px;">
+              <span class="recipe-stat-label">Ratio</span>
+              <span class="recipe-stat-value" style="font-size:16px; margin-left: 6px;" x-text="'1:' + (selectedBean.optimalYieldOut / selectedBean.optimalDoseIn).toFixed(1)"></span>
+            </div>
+            <button type="button" class="btn btn-ghost recipe-card-edit" @click="startEditingOptimal()">Edit</button>
+          </div>
+          <div x-show="editingOptimalBeanId === selectedBeanId" class="recipe-card-edit-form">
+            <div class="recipe-card-grid">
+              <div x-data="optimalStepper()" x-init="stInit('grindSize', 1, 10, selectedBean?.optimalGrindSize ?? 5)">
+                <div class="recipe-stat-label">Grind</div>
+                <div class="stepper stepper-dark">
+                  <button type="button" class="stepper-btn" aria-label="Decrease" :disabled="stVal() !== null && stVal() <= stMin" @click="stDec()">−</button>
+                  <input type="number" inputmode="numeric" class="stepper-input" :min="stMin" :max="stMax" :placeholder="stPlaceholder()" :value="stVal() === null ? '' : stVal()" @input="stOnInput($event)">
+                  <button type="button" class="stepper-btn" aria-label="Increase" :disabled="stVal() !== null && stVal() >= stMax" @click="stInc()">+</button>
+                </div>
+              </div>
+              <div x-data="optimalStepper()" x-init="stInit('doseIn', 1, 50, selectedBean?.optimalDoseIn ?? 16)">
+                <div class="recipe-stat-label">Dose (g)</div>
+                <div class="stepper stepper-dark">
+                  <button type="button" class="stepper-btn" aria-label="Decrease" :disabled="stVal() !== null && stVal() <= stMin" @click="stDec()">−</button>
+                  <input type="number" inputmode="numeric" class="stepper-input" :min="stMin" :max="stMax" :placeholder="stPlaceholder()" :value="stVal() === null ? '' : stVal()" @input="stOnInput($event)">
+                  <button type="button" class="stepper-btn" aria-label="Increase" :disabled="stVal() !== null && stVal() >= stMax" @click="stInc()">+</button>
+                </div>
+              </div>
+              <div x-data="optimalStepper()" x-init="stInit('yieldOut', 1, 100, selectedBean?.optimalYieldOut ?? 32)">
+                <div class="recipe-stat-label">Yield (g)</div>
+                <div class="stepper stepper-dark">
+                  <button type="button" class="stepper-btn" aria-label="Decrease" :disabled="stVal() !== null && stVal() <= stMin" @click="stDec()">−</button>
+                  <input type="number" inputmode="numeric" class="stepper-input" :min="stMin" :max="stMax" :placeholder="stPlaceholder()" :value="stVal() === null ? '' : stVal()" @input="stOnInput($event)">
+                  <button type="button" class="stepper-btn" aria-label="Increase" :disabled="stVal() !== null && stVal() >= stMax" @click="stInc()">+</button>
+                </div>
+              </div>
+            </div>
+            <div style="display: flex; gap: 8px; margin-top: 12px;">
+              <button type="button" class="btn btn-amber" @click="saveOptimalSettings()">Save</button>
+              <button type="button" class="btn btn-ghost" @click="cancelEditingOptimal()">Cancel</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Notes -->
+        <div x-show="selectedBean?.notes" class="mb-16">
+          <p class="text-secondary" style="font-style: italic;" x-text="selectedBean?.notes"></p>
+        </div>
+
+        <!-- Shot History -->
+        <div class="mb-20">
+          <div style="display: flex; align-items: center; justify-content: space-between;" class="mb-12">
+            <h3 class="heading-md">Shot History</h3>
+            <button x-show="!showBeanLogShotOptions" class="btn btn-amber" style="padding: 8px 16px; font-size: 14px;" @click="showBeanLogShotOptions = true">+ Log Shot</button>
+            <button x-show="showBeanLogShotOptions" class="btn btn-ghost" style="padding: 8px 16px; font-size: 14px;" @click="showBeanLogShotOptions = false">Cancel</button>
+          </div>
+
+          <!-- Reuse last settings (only after user taps "+ Log Shot") -->
+          <div x-show="showBeanLogShotOptions && selectedBeanId && getLastShot(selectedBeanId)" class="reuse-card fade-in mb-16">
+            <div class="reuse-card-header">
+              <span>&#9749;</span>
+              <span>Use last settings for <strong x-text="selectedBean?.name"></strong>?</span>
+            </div>
+            <div class="reuse-settings">
+              <div class="reuse-stat">
+                <div class="reuse-stat-label">Grind</div>
+                <div class="reuse-stat-value" x-text="getLastShot(selectedBeanId)?.grindSize || '\u2014'"></div>
+              </div>
+              <div class="reuse-stat">
+                <div class="reuse-stat-label">Dose</div>
+                <div class="reuse-stat-value" x-text="getLastShot(selectedBeanId)?.doseIn ? getLastShot(selectedBeanId).doseIn + 'g' : '\u2014'"></div>
+              </div>
+              <div class="reuse-stat">
+                <div class="reuse-stat-label">Yield</div>
+                <div class="reuse-stat-value" x-text="getLastShot(selectedBeanId)?.yieldOut ? getLastShot(selectedBeanId).yieldOut + 'g' : '\u2014'"></div>
+              </div>
+            </div>
+            <div class="reuse-actions">
+              <button class="btn btn-amber" @click="logQuickShotForBean(selectedBeanId); showBeanLogShotOptions = false">Log it &#10003;</button>
+              <button class="btn btn-ghost" @click="openShotFormFromBean(); showBeanLogShotOptions = false">Adjust</button>
+            </div>
+          </div>
+
+          <!-- Manual entry when no previous shot (only after user taps "+ Log Shot") -->
+          <div x-show="showBeanLogShotOptions && selectedBeanId && !getLastShot(selectedBeanId)" class="fade-in mb-16">
+            <p class="text-secondary mb-12">No previous shots for this bean. Enter your settings:</p>
+            <button class="btn btn-primary btn-full" @click="openShotForm(selectedBeanId); showBeanLogShotOptions = false">Log Shot</button>
+          </div>
+
+          <div x-show="getShotsForBean(selectedBeanId).length === 0 && !showBeanLogShotOptions" class="empty-state" style="padding: 24px;">
+            <div class="empty-state-icon" style="font-size: 32px;">&#9749;</div>
+            <div class="empty-state-text">Log your first shot to start dialing in.</div>
+          </div>
+          <template x-for="shot in getShotsForBean(selectedBeanId)" :key="shot.id">
+            <div class="shot-row">
+              <div class="shot-info">
+                <div class="shot-settings">
+                  Grind <span x-text="shot.grindSize"></span>
+                  <span x-show="shot.doseIn"> &middot; <span x-text="shot.doseIn + 'g'"></span></span>
+                  <span x-show="shot.yieldOut"> &#8594; <span x-text="shot.yieldOut + 'g'"></span></span>
+                </div>
+                <div class="shot-date" x-text="formatDate(shot.createdAt)"></div>
+                <div x-show="shot.notes" class="text-muted" style="margin-top:2px; font-style:italic;" x-text="shot.notes"></div>
+              </div>
+              <div class="shot-meta">
+                <span x-show="shotQualityLabel(shot.rating)" class="shot-quality-badge" :class="shotQualityClass(shot.rating)" x-text="shotQualityLabel(shot.rating)"></span>
+                <button type="button" class="btn btn-ghost today-shot-edit" @click.stop="openShotFormForEdit(shot)" title="Edit shot">Edit</button>
+                <button class="btn btn-ghost" style="padding:4px 8px; font-size:12px; color: var(--text-muted);" @click="deleteShot(shot.id)">&#10005;</button>
+              </div>
+            </div>
+          </template>
+        </div>
+
+        <!-- Rating (last content block) -->
+        <div class="bean-detail-stars mb-16">
+          <div class="text-secondary" style="font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px;">Rating</div>
+          <div class="star-rating">
+            <template x-for="n in 5">
+              <span class="star" :class="n <= (selectedBean?.rating || 0) ? 'filled' : ''"
+                    x-text="n <= (selectedBean?.rating || 0) ? '\u2605' : '\u2606'"
+                    @click="updateBeanRating(n)"></span>
+            </template>
+          </div>
+        </div>
+
+        <div class="divider"></div>
+        <button x-show="selectedBean && !selectedBean.isArchived" class="btn btn-ghost btn-archive-highlight btn-full mb-8" @click="archiveBean(selectedBeanId)">Archive Bean</button>
+        <button x-show="selectedBean && selectedBean.isArchived" class="btn btn-amber btn-full mb-8" @click="unarchiveBean(selectedBeanId)">Bring Back Bean</button>
+        <button class="btn btn-danger btn-delete-highlight btn-full" @click="if(confirm('Are you sure you want to delete this?')) deleteBean(selectedBeanId)">Delete Bean</button>
+      </div>
+
+      <!-- Add/Edit Bean Form -->
+      <div x-show="beansView === 'form'" class="fade-in">
+        <div class="detail-header">
+          <button class="back-btn" @click="cancelBeanForm()">&#8592;</button>
+          <h2 class="heading-lg" x-text="editingBeanId ? 'Edit Bean' : 'Add Bean'"></h2>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Bean Name <span class="required">*</span></label>
+          <input type="text" class="form-input" placeholder="e.g. Unicorn Blood" x-model="beanForm.name">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Roaster <span class="required">*</span></label>
+          <input type="text" class="form-input" placeholder="e.g. Dark Matter" x-model="beanForm.roaster">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Roast Date <span class="required">*</span></label>
+          <input type="date" class="form-input" x-model="beanForm.roastDate">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Rating</label>
+          <div class="star-rating">
+            <template x-for="n in 5">
+              <span class="star" :class="n <= (beanForm.rating || 0) ? 'filled' : ''"
+                    x-text="n <= (beanForm.rating || 0) ? '\u2605' : '\u2606'"
+                    @click="beanForm.rating = (beanForm.rating === n ? null : n)"></span>
+            </template>
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Notes</label>
+          <textarea class="form-input" placeholder="Tasting notes, brew tips..." x-model="beanForm.notes"></textarea>
+        </div>
+        <div class="form-actions">
+          <button class="btn btn-primary" @click="saveBean()">Save</button>
+          <button class="btn btn-ghost" @click="cancelBeanForm()">Cancel</button>
+        </div>
+      </div>
+
+      <!-- FAB: Add Bean -->
+      <button x-show="currentTab === 'beans' && beansView === 'list' && beans.length > 0" class="fab" @click="openBeanForm(null)" title="Add Bean">+</button>
+    </div>
+
+    <!-- ═══════════════════════════════════════
+         CALENDAR TAB
+         ═══════════════════════════════════════ -->
+    <div x-show="currentTab === 'calendar'" x-cloak class="fade-in">
+      <div class="calendar-card">
+        <div class="calendar-header">
+          <button class="calendar-nav" @click="prevMonth()">&#8592;</button>
+          <span class="calendar-month-label" x-text="calendarMonthLabel"></span>
+          <button class="calendar-nav" @click="nextMonth()">&#8594;</button>
+        </div>
+        <div class="calendar-weekdays">
+          <template x-for="d in ['Sun','Mon','Tue','Wed','Thu','Fri','Sat']">
+            <div class="calendar-weekday" x-text="d"></div>
+          </template>
+        </div>
+        <div class="calendar-grid">
+          <template x-for="(week, wi) in calendarWeeks" :key="calendarYear + '-' + calendarMonth + '-' + wi">
+            <div class="calendar-row" :style="'min-height:' + (44 + calendarBarsForWeek(wi).length * 9) + 'px'">
+              <template x-for="(day, di) in week" :key="calendarYear + '-' + calendarMonth + '-' + wi + '-' + di">
+                <div class="calendar-cell" :class="{ 'empty': !day, 'today': day && isToday(calendarYear, calendarMonth, day) }">
+                  <span x-text="day || ''"></span>
+                </div>
+              </template>
+              <div class="calendar-bars-container">
+                <template x-for="(bar, bi) in calendarBarsForWeek(wi)" :key="bar.beanId + '-' + calendarYear + '-' + calendarMonth + '-' + wi">
+                  <div class="calendar-bar" :style="getBarStyle(bar, wi, bi)"></div>
+                </template>
+              </div>
+            </div>
+          </template>
+        </div>
+        <div x-show="calendarBars.length > 0" class="calendar-legend">
+          <template x-for="bar in calendarBarsUnique" :key="bar.beanId">
+            <div class="legend-item">
+              <div class="legend-dot" :style="'background:' + bar.color"></div>
+              <span x-text="bar.beanName"></span>
+            </div>
+          </template>
+        </div>
+        <div x-show="calendarBars.length === 0" class="empty-state" style="padding: 32px 0 8px;">
+          <div class="empty-state-icon">&#128197;</div>
+          <div class="empty-state-title">No beans in window</div>
+          <div class="empty-state-text">No beans have their optimal freshness window this month.</div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ═══════════════════════════════════════
+       SHOT FORM OVERLAY
+       ═══════════════════════════════════════ -->
+  <div x-show="showShotForm" class="overlay" @click.self="editingShotId = null; showShotForm = false" x-cloak>
+    <div class="panel" @click.stop :key="'shot-form-' + (shotFormBeanId || '') + '-' + showShotForm">
+      <div class="panel-handle"></div>
+      <h3 class="heading-lg mb-20" x-text="editingShotId ? 'Edit Shot' : 'Log Shot'"></h3>
+      <div class="form-group" x-data="stepper()" x-init="stInit('grindSize', 1, 30, getLastShot(shotFormBeanId)?.grindSize ?? 5)">
+        <label class="form-label">Grind Size</label>
+        <div class="stepper">
+          <button type="button" class="stepper-btn" aria-label="Decrease" :disabled="stVal() !== null && stVal() <= stMin" @click="stDec()">−</button>
+          <input type="number" inputmode="numeric" class="stepper-input" :min="stMin" :max="stMax" :placeholder="stPlaceholder()" :value="stVal() === null ? '' : stVal()" @input="stOnInput($event)">
+          <button type="button" class="stepper-btn" aria-label="Increase" :disabled="stVal() !== null && stVal() >= stMax" @click="stInc()">+</button>
+        </div>
+      </div>
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+        <div class="form-group" x-data="stepper()" x-init="stInit('doseIn', 1, 50, getLastShot(shotFormBeanId)?.doseIn ?? 16)">
+          <label class="form-label">Dose In (g)</label>
+          <div class="stepper">
+            <button type="button" class="stepper-btn" aria-label="Decrease" :disabled="stVal() !== null && stVal() <= stMin" @click="stDec()">−</button>
+            <input type="number" inputmode="numeric" class="stepper-input" :min="stMin" :max="stMax" :placeholder="stPlaceholder()" :value="stVal() === null ? '' : stVal()" @input="stOnInput($event)">
+            <button type="button" class="stepper-btn" aria-label="Increase" :disabled="stVal() !== null && stVal() >= stMax" @click="stInc()">+</button>
+          </div>
+        </div>
+        <div class="form-group" x-data="stepper()" x-init="stInit('yieldOut', 1, 100, getLastShot(shotFormBeanId)?.yieldOut ?? 32)">
+          <label class="form-label">Yield Out (g)</label>
+          <div class="stepper">
+            <button type="button" class="stepper-btn" aria-label="Decrease" :disabled="stVal() !== null && stVal() <= stMin" @click="stDec()">−</button>
+            <input type="number" inputmode="numeric" class="stepper-input" :min="stMin" :max="stMax" :placeholder="stPlaceholder()" :value="stVal() === null ? '' : stVal()" @input="stOnInput($event)">
+            <button type="button" class="stepper-btn" aria-label="Increase" :disabled="stVal() !== null && stVal() >= stMax" @click="stInc()">+</button>
+          </div>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">How was this shot?</label>
+        <div class="shot-quality-options">
+          <button type="button" class="shot-quality-btn" :class="{ 'active': shotForm.rating === 'bad' }" @click="shotForm.rating = (shotForm.rating === 'bad' ? null : 'bad')">Bad</button>
+          <button type="button" class="shot-quality-btn" :class="{ 'active': shotForm.rating === 'okay' }" @click="shotForm.rating = (shotForm.rating === 'okay' ? null : 'okay')">Okay</button>
+          <button type="button" class="shot-quality-btn" :class="{ 'active': shotForm.rating === 'perfect' }" @click="shotForm.rating = (shotForm.rating === 'perfect' ? null : 'perfect')">Perfect</button>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Notes</label>
+        <textarea class="form-input" placeholder="How did it taste?" x-model="shotForm.notes"></textarea>
+      </div>
+      <div class="form-actions">
+        <button class="btn btn-primary" @click="saveShot()">Save Shot</button>
+        <button class="btn btn-ghost" @click="editingShotId = null; showShotForm = false">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════
+       TAB BAR
+       ═══════════════════════════════════════ -->
+  <nav class="tab-bar">
+    <button class="tab-btn" :class="{ 'active': currentTab === 'today' }" @click="currentTab = 'today'">
+      <span class="tab-icon">&#9749;</span>
+      <span>Today</span>
+    </button>
+    <button class="tab-btn" :class="{ 'active': currentTab === 'beans' }" @click="currentTab = 'beans'; if(beansView !== 'list') { beansView = 'list'; selectedBeanId = null; showBeanLogShotOptions = false; }">
+      <span class="tab-icon">&#127793;</span>
+      <span>Beans</span>
+    </button>
+    <button class="tab-btn" :class="{ 'active': currentTab === 'calendar' }" @click="currentTab = 'calendar'">
+      <span class="tab-icon">&#128197;</span>
+      <span>Calendar</span>
+    </button>
+  </nav>
+
+</div>
+
+<script>
+document.addEventListener('alpine:init', () => {
+  /** Reusable numeric stepper component. formName is the key on the parent x-data (e.g. 'shotForm' or 'optimalForm'). */
+  function createStepper(formName) {
+    return () => ({
+      stField: '', stMin: 0, stMax: 100, stDefault: 0,
+      stInit(field, min, max, defaultWhenEmpty) {
+        this.stField = field; this.stMin = min; this.stMax = max; this.stDefault = defaultWhenEmpty;
+      },
+      stForm() { return this[formName]; },
+      stVal() {
+        const v = this.stForm()[this.stField];
+        return (v !== null && v !== undefined && v !== '') ? Number(v) : null;
+      },
+      stPlaceholder() { return this.stDefault.toString(); },
+      stInc() {
+        const cur = this.stVal();
+        this.stForm()[this.stField] = cur === null ? this.stDefault : Math.min(this.stMax, cur + 1);
+      },
+      stDec() {
+        const cur = this.stVal();
+        this.stForm()[this.stField] = cur === null ? Math.max(this.stMin, this.stDefault - 1) : Math.max(this.stMin, cur - 1);
+      },
+      stOnInput(e) {
+        const raw = e.target.value.trim();
+        if (raw === '') { this.stForm()[this.stField] = null; return; }
+        const num = parseInt(raw, 10);
+        if (!isNaN(num)) this.stForm()[this.stField] = Math.max(this.stMin, Math.min(this.stMax, num));
+      }
+    });
+  }
+  Alpine.data('stepper', createStepper('shotForm'));
+  Alpine.data('optimalStepper', createStepper('optimalForm'));
+});
+const BAR_COLORS = ['#C2714F','#8B9E7C','#C4A34D','#7B5B8D','#5B8E8E','#B87333','#A0695B'];
+
+function generateSeedData() {
+  const beans = [
+    { id: crypto.randomUUID(), name: 'Light Roast', roaster: 'Starbucks', roastDate: '2026-01-10', rating: null, notes: '', createdAt: '2026-01-10T08:00:00.000Z', isArchived: true },
+    { id: crypto.randomUUID(), name: 'Espresso Roast', roaster: 'Starbucks', roastDate: '2026-01-12', rating: null, notes: 'Manually grind all', createdAt: '2026-01-12T08:00:00.000Z', isArchived: true },
+    { id: crypto.randomUUID(), name: 'Guatemala David Solano', roaster: 'Temple', roastDate: '2026-01-20', rating: 4, notes: 'Good as a cortado', createdAt: '2026-01-20T08:00:00.000Z', isArchived: true },
+    { id: crypto.randomUUID(), name: 'A Love Supreme', roaster: 'Dark Matter', roastDate: '2026-01-22', rating: 3, notes: 'Nothing special', createdAt: '2026-01-22T08:00:00.000Z', isArchived: true },
+    { id: crypto.randomUUID(), name: 'Unicorn Blood', roaster: 'Dark Matter', roastDate: '2026-01-25', rating: 4, notes: 'Came out a bit fast, maybe +1g', createdAt: '2026-01-25T08:00:00.000Z', isArchived: true },
+    { id: crypto.randomUUID(), name: 'Big Riff', roaster: 'Metric', roastDate: '2026-01-28', rating: null, notes: '', createdAt: '2026-01-28T08:00:00.000Z' },
+    { id: crypto.randomUUID(), name: 'Pilipinas', roaster: '4LW', roastDate: '2026-02-01', rating: null, notes: '', createdAt: '2026-02-01T08:00:00.000Z' },
+  ];
+  const shots = [
+    { id: crypto.randomUUID(), beanId: beans[0].id, grindSize: 4, doseIn: 16, yieldOut: null, rating: null, isBestRecipe: true, notes: '', createdAt: '2026-01-15T07:30:00.000Z' },
+    { id: crypto.randomUUID(), beanId: beans[1].id, grindSize: 4, doseIn: 16, yieldOut: null, rating: null, isBestRecipe: true, notes: '', createdAt: '2026-01-16T07:30:00.000Z' },
+    { id: crypto.randomUUID(), beanId: beans[2].id, grindSize: 6, doseIn: 18, yieldOut: 31, rating: 'perfect', isBestRecipe: true, notes: '', createdAt: '2026-01-24T07:30:00.000Z' },
+    { id: crypto.randomUUID(), beanId: beans[3].id, grindSize: 5, doseIn: 18, yieldOut: 29, rating: 'okay', isBestRecipe: true, notes: '', createdAt: '2026-01-26T07:30:00.000Z' },
+    { id: crypto.randomUUID(), beanId: beans[4].id, grindSize: 5, doseIn: 16, yieldOut: 32, rating: 'perfect', isBestRecipe: true, notes: 'Came out a bit fast', createdAt: '2026-01-29T07:30:00.000Z' },
+    { id: crypto.randomUUID(), beanId: beans[5].id, grindSize: 6, doseIn: 16, yieldOut: 34, rating: null, isBestRecipe: true, notes: '', createdAt: '2026-01-31T07:30:00.000Z' },
+    { id: crypto.randomUUID(), beanId: beans[6].id, grindSize: 4, doseIn: 16, yieldOut: null, rating: null, isBestRecipe: true, notes: '', createdAt: '2026-02-02T07:30:00.000Z' },
+  ];
+  return { beans, shots };
+}
+
+function isSameDay(d1, d2) {
+  const a = new Date(d1), b = new Date(d2);
+  return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
+}
+function addDays(date, days) { const d = new Date(date); d.setDate(d.getDate() + days); return d; }
+function daysBetween(d1, d2) { return Math.floor((new Date(d2) - new Date(d1)) / 86400000); }
+
+/** Convert any legacy numeric rating (1-5) or valid string to 'bad'|'okay'|'perfect'|null */
+function normalizeRating(r) {
+  if (r == null) return null;
+  if (r === 'bad' || r === 'okay' || r === 'perfect') return r;
+  if (typeof r === 'number') {
+    if (r <= 2) return 'bad';
+    if (r === 3) return 'okay';
+    return 'perfect';
+  }
+  return null;
+}
+
+function app() {
+  return {
+    beans: [], shots: [],
+    currentTab: 'today', beansView: 'list',
+    selectedBeanId: null, editingBeanId: null,
+    showBeanLogShotOptions: false,
+    showShotForm: false, shotFormBeanId: null, shotFormReturnTo: null, editingShotId: null,
+    dailySelectedBeanId: '', dailyLastShot: null,
+    editingOptimalBeanId: null,
+    optimalForm: { grindSize: null, doseIn: null, yieldOut: null },
+    beanForm: { name: '', roaster: '', roastDate: '', rating: null, notes: '' },
+    shotForm: { grindSize: null, doseIn: null, yieldOut: null, rating: null, isBestRecipe: false, notes: '' },
+    calendarYear: new Date().getFullYear(), calendarMonth: new Date().getMonth(),
+
+    init() {
+      const savedBeans = localStorage.getItem('coffee_beans');
+      const savedShots = localStorage.getItem('coffee_shots');
+      if (savedBeans) {
+        this.beans = JSON.parse(savedBeans);
+        this.shots = savedShots ? JSON.parse(savedShots) : [];
+
+        // Migrate: ensure isArchived field exists on all beans
+        this.beans.forEach(b => { if (b.isArchived === undefined) b.isArchived = false; });
+
+        // Migrate: seed optimal settings from best-recipe shots if not yet set
+        this.beans.forEach(b => {
+          if (b.optimalGrindSize === undefined && b.optimalDoseIn === undefined && b.optimalYieldOut === undefined) {
+            const best = this.shots.find(s => s.beanId === b.id && s.isBestRecipe);
+            if (best) {
+              b.optimalGrindSize = best.grindSize;
+              b.optimalDoseIn = best.doseIn;
+              b.optimalYieldOut = best.yieldOut;
+            }
+          }
+        });
+
+        // Migrate: convert legacy numeric ratings to string labels
+        let shotsDirty = false;
+        this.shots.forEach(s => {
+          if (typeof s.rating === 'number') {
+            s.rating = normalizeRating(s.rating);
+            shotsDirty = true;
+          }
+        });
+        if (shotsDirty) this.saveShots();
+      } else {
+        const seed = generateSeedData();
+        this.beans = seed.beans;
+        this.shots = seed.shots;
+        this.saveBeans();
+        this.saveShots();
+      }
+    },
+
+    saveBeans() { localStorage.setItem('coffee_beans', JSON.stringify(this.beans)); },
+    saveShots() { localStorage.setItem('coffee_shots', JSON.stringify(this.shots)); },
+
+    getBeanById(id) { return this.beans.find(b => b.id === id) || null; },
+    getShotsForBean(id) {
+      return this.shots.filter(s => s.beanId === id).sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+    },
+    getLastShot(beanId) { const ss = this.getShotsForBean(beanId); return ss.length > 0 ? ss[0] : null; },
+
+    get todayShots() {
+      const now = new Date();
+      return this.shots
+        .filter(s => isSameDay(s.createdAt, now))
+        .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+    },
+    get selectedBean() { return this.getBeanById(this.selectedBeanId); },
+
+    get sortedBeans() {
+      return [...this.beans].sort((a,b) => {
+        if (!!a.isArchived !== !!b.isArchived) return a.isArchived ? 1 : -1;
+        const fa = this.getFreshness(a), fb = this.getFreshness(b);
+        const order = { optimal: 0, resting: 1, past: 2, unknown: 3 };
+        if (order[fa.status] !== order[fb.status]) return order[fa.status] - order[fb.status];
+        return new Date(b.roastDate || 0) - new Date(a.roastDate || 0);
+      });
+    },
+
+    get currentBeans() { return this.sortedBeans.filter(b => !b.isArchived); },
+    get archivedBeans() { return this.sortedBeans.filter(b => b.isArchived); },
+
+    getFreshness(bean) {
+      if (!bean || !bean.roastDate) return { status: 'unknown', label: 'No roast date', detail: '', icon: '' };
+      const days = daysBetween(bean.roastDate, new Date());
+      if (days < 7) return { status: 'resting', label: 'Resting', detail: (7 - days) + ' days until optimal', icon: '\u{1F464}' };
+      if (days <= 21) return { status: 'optimal', label: 'Optimal', detail: (21 - days) + ' days remaining', icon: '\u2728' };
+      return { status: 'past', label: 'Past Peak', detail: 'Past peak by ' + (days - 21) + ' days', icon: '\u231B' };
+    },
+
+    openBeanForm(id) {
+      this.editingBeanId = id;
+      if (id) {
+        const b = this.getBeanById(id);
+        this.beanForm = { name: b.name, roaster: b.roaster, roastDate: b.roastDate, rating: b.rating, notes: b.notes || '' };
+      } else {
+        this.beanForm = { name: '', roaster: '', roastDate: '', rating: null, notes: '' };
+      }
+      this.beansView = 'form';
+    },
+
+    saveBean() {
+      if (!this.beanForm.name || !this.beanForm.roaster || !this.beanForm.roastDate) return;
+      if (this.editingBeanId) {
+        const idx = this.beans.findIndex(b => b.id === this.editingBeanId);
+        if (idx !== -1) this.beans[idx] = { ...this.beans[idx], ...this.beanForm };
+      } else {
+        this.beans.push({ id: crypto.randomUUID(), ...this.beanForm, isArchived: false, createdAt: new Date().toISOString() });
+      }
+      this.saveBeans();
+      this.beansView = this.editingBeanId ? 'detail' : 'list';
+      this.editingBeanId = null;
+    },
+
+    cancelBeanForm() {
+      this.beansView = this.editingBeanId ? 'detail' : 'list';
+      this.editingBeanId = null;
+    },
+
+    deleteBean(id) {
+      this.beans = this.beans.filter(b => b.id !== id);
+      this.shots = this.shots.filter(s => s.beanId !== id);
+      this.saveBeans();
+      this.saveShots();
+      this.beansView = 'list';
+      this.selectedBeanId = null;
+    },
+
+    selectBean(id) {
+      this.selectedBeanId = id;
+      this.beansView = 'detail';
+      this.showBeanLogShotOptions = false;
+    },
+
+    archiveBean(id) {
+      const bean = this.getBeanById(id);
+      if (bean) {
+        bean.isArchived = true;
+        this.saveBeans();
+        if (this.dailySelectedBeanId === id) { this.dailySelectedBeanId = ''; this.dailyLastShot = null; }
+      }
+    },
+
+    unarchiveBean(id) {
+      const bean = this.getBeanById(id);
+      if (bean) { bean.isArchived = false; this.saveBeans(); }
+    },
+
+    updateBeanRating(n) {
+      const bean = this.getBeanById(this.selectedBeanId);
+      if (bean) { bean.rating = bean.rating === n ? null : n; this.saveBeans(); }
+    },
+
+    openShotForm(beanId, prefill) {
+      this.editingShotId = null;
+      this.shotFormBeanId = beanId;
+      this.shotFormReturnTo = this.currentTab;
+      if (prefill) {
+        this.shotForm = {
+          grindSize: prefill.grindSize, doseIn: prefill.doseIn, yieldOut: prefill.yieldOut,
+          rating: normalizeRating(prefill.rating), isBestRecipe: prefill.isBestRecipe ?? false, notes: prefill.notes ?? ''
+        };
+      } else {
+        this.shotForm = { grindSize: null, doseIn: null, yieldOut: null, rating: null, isBestRecipe: false, notes: '' };
+      }
+      this.showShotForm = true;
+    },
+
+    openShotFormForEdit(shot) {
+      this.editingShotId = shot.id;
+      this.shotFormBeanId = shot.beanId;
+      this.shotFormReturnTo = this.currentTab;
+      this.shotForm = {
+        grindSize: shot.grindSize, doseIn: shot.doseIn, yieldOut: shot.yieldOut,
+        rating: normalizeRating(shot.rating), isBestRecipe: false, notes: shot.notes ?? ''
+      };
+      this.showShotForm = true;
+    },
+
+    startEditingOptimal() {
+      this.editingOptimalBeanId = this.selectedBeanId;
+      const b = this.selectedBean;
+      this.optimalForm = { grindSize: b?.optimalGrindSize ?? null, doseIn: b?.optimalDoseIn ?? null, yieldOut: b?.optimalYieldOut ?? null };
+    },
+    saveOptimalSettings() {
+      const bean = this.getBeanById(this.selectedBeanId);
+      if (!bean) return;
+      const num = (v) => { const n = parseFloat(v); return v === '' || v == null || isNaN(n) ? null : Math.round(n * 10) / 10; };
+      bean.optimalGrindSize = num(this.optimalForm.grindSize);
+      bean.optimalDoseIn = num(this.optimalForm.doseIn);
+      bean.optimalYieldOut = num(this.optimalForm.yieldOut);
+      this.saveBeans();
+      this.editingOptimalBeanId = null;
+    },
+    cancelEditingOptimal() { this.editingOptimalBeanId = null; },
+
+    openShotFormFromDaily() { this.openShotForm(this.dailySelectedBeanId, this.dailyLastShot); },
+
+    openShotFormFromBean() { this.openShotForm(this.selectedBeanId); },
+
+    logQuickShotForBean(beanId) {
+      const lastShot = this.getLastShot(beanId);
+      if (!beanId || !lastShot) return;
+      this.shots.push({
+        id: crypto.randomUUID(), beanId, grindSize: lastShot.grindSize,
+        doseIn: lastShot.doseIn, yieldOut: lastShot.yieldOut,
+        rating: null, isBestRecipe: false, notes: '', createdAt: new Date().toISOString()
+      });
+      this.saveShots();
+    },
+
+    saveShot() {
+      if (!this.shotFormBeanId) return;
+      const last = this.getLastShot(this.shotFormBeanId);
+      const grind = this.shotForm.grindSize != null ? Math.round(Number(this.shotForm.grindSize)) : (last?.grindSize ?? 5);
+      const dose = this.shotForm.doseIn != null ? Math.round(Number(this.shotForm.doseIn)) : (last?.doseIn ?? 16);
+      const yieldVal = this.shotForm.yieldOut != null ? Math.round(Number(this.shotForm.yieldOut)) : (last?.yieldOut ?? 32);
+      const shotData = {
+        grindSize: grind, doseIn: dose, yieldOut: yieldVal,
+        rating: this.shotForm.rating, isBestRecipe: this.shotForm.isBestRecipe, notes: this.shotForm.notes || ''
+      };
+      if (this.editingShotId) {
+        const shot = this.shots.find(s => s.id === this.editingShotId);
+        if (shot) Object.assign(shot, shotData);
+        this.editingShotId = null;
+      } else {
+        this.shots.push({
+          id: crypto.randomUUID(), beanId: this.shotFormBeanId,
+          ...shotData, createdAt: new Date().toISOString()
+        });
+      }
+      this.saveShots();
+      this.showShotForm = false;
+      if (this.shotFormReturnTo === 'today' && this.dailySelectedBeanId) {
+        this.dailyLastShot = this.getLastShot(this.dailySelectedBeanId);
+      }
+    },
+
+    deleteShot(id) {
+      this.shots = this.shots.filter(s => s.id !== id);
+      this.saveShots();
+    },
+
+    onDailyBeanSelect() {
+      this.dailyLastShot = this.dailySelectedBeanId
+        ? this.getLastShot(this.dailySelectedBeanId)
+        : null;
+    },
+
+    logQuickShot() {
+      if (!this.dailySelectedBeanId || !this.dailyLastShot) return;
+      this.logQuickShotForBean(this.dailySelectedBeanId);
+      this.dailyLastShot = this.getLastShot(this.dailySelectedBeanId);
+    },
+
+    get todayFormatted() {
+      const d = new Date();
+      return {
+        day: d.toLocaleDateString('en-US', { weekday: 'long' }),
+        date: d.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })
+      };
+    },
+    formatDate(dateStr) {
+      return new Date(dateStr).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+    },
+    formatTime(dateStr) {
+      return new Date(dateStr).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
+    },
+
+    shotQualityLabel(r) {
+      const normalized = normalizeRating(r);
+      if (!normalized) return null;
+      return normalized.charAt(0).toUpperCase() + normalized.slice(1);
+    },
+    shotQualityClass(r) {
+      return normalizeRating(r) || '';
+    },
+
+    get calendarMonthLabel() {
+      return new Date(this.calendarYear, this.calendarMonth).toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+    },
+    prevMonth() {
+      if (this.calendarMonth === 0) { this.calendarMonth = 11; this.calendarYear--; }
+      else { this.calendarMonth--; }
+    },
+    nextMonth() {
+      if (this.calendarMonth === 11) { this.calendarMonth = 0; this.calendarYear++; }
+      else { this.calendarMonth++; }
+    },
+
+    get calendarWeeks() {
+      const first = new Date(this.calendarYear, this.calendarMonth, 1);
+      const daysInMonth = new Date(this.calendarYear, this.calendarMonth + 1, 0).getDate();
+      const startDay = first.getDay();
+      const weeks = [];
+      let week = new Array(startDay).fill(null);
+      for (let d = 1; d <= daysInMonth; d++) {
+        week.push(d);
+        if (week.length === 7) { weeks.push(week); week = []; }
+      }
+      if (week.length > 0) {
+        while (week.length < 7) week.push(null);
+        weeks.push(week);
+      }
+      return weeks;
+    },
+
+    isToday(y, m, d) {
+      const now = new Date();
+      return now.getFullYear() === y && now.getMonth() === m && now.getDate() === d;
+    },
+
+    get calendarBars() {
+      const monthStart = new Date(this.calendarYear, this.calendarMonth, 1);
+      const monthEnd = new Date(this.calendarYear, this.calendarMonth + 1, 0);
+      const activeBeans = this.beans
+        .filter(b => b.roastDate && !b.isArchived)
+        .sort((a, b) => (a.id || '').localeCompare(b.id || ''));
+      const beanColorIndex = new Map();
+      activeBeans.forEach((b, i) => beanColorIndex.set(b.id, i));
+      const bars = [];
+      for (const bean of activeBeans) {
+        const roast = new Date(bean.roastDate);
+        const optStart = addDays(roast, 7);
+        const optEnd = addDays(roast, 21);
+        if (optEnd < monthStart || optStart > monthEnd) continue;
+        const clippedStart = optStart < monthStart ? monthStart : optStart;
+        const clippedEnd = optEnd > monthEnd ? monthEnd : optEnd;
+        const colorIndex = beanColorIndex.get(bean.id) ?? 0;
+        bars.push({
+          beanId: bean.id, beanName: bean.name,
+          color: BAR_COLORS[colorIndex % BAR_COLORS.length],
+          startDay: clippedStart.getDate(), endDay: clippedEnd.getDate()
+        });
+      }
+      return bars;
+    },
+
+    get calendarBarsUnique() {
+      const seen = new Set();
+      return this.calendarBars.filter(b => {
+        if (seen.has(b.beanId)) return false;
+        seen.add(b.beanId);
+        return true;
+      });
+    },
+
+    calendarBarsForWeek(weekIndex) {
+      const week = this.calendarWeeks[weekIndex];
+      if (!week) return [];
+      const firstDay = week.find(d => d !== null);
+      const lastDay = [...week].reverse().find(d => d !== null);
+      if (!firstDay || !lastDay) return [];
+      return this.calendarBars.filter(bar => bar.startDay <= lastDay && bar.endDay >= firstDay);
+    },
+
+    getBarStyle(bar, weekIndex, barIndex) {
+      const week = this.calendarWeeks[weekIndex];
+      let startCol = 0, endCol = 6;
+      for (let i = 0; i < 7; i++) {
+        if (week[i] !== null && week[i] >= bar.startDay) { startCol = i; break; }
+      }
+      for (let i = 6; i >= 0; i--) {
+        if (week[i] !== null && week[i] <= bar.endDay) { endCol = i; break; }
+      }
+      const left = (startCol / 7 * 100).toFixed(2);
+      const width = ((endCol - startCol + 1) / 7 * 100).toFixed(2);
+      const bottom = 2 + barIndex * 9;
+      return `left:${left}%;width:${width}%;bottom:${bottom}px;background:${bar.color};`;
+    },
+  };
+}
+</script>
+
+</body>
+</html>
