@@ -249,7 +249,6 @@ textarea.form-input { min-height: 80px; resize: vertical; line-height: 1.5; }
 .today-shot-bean { font-weight: 600; font-size: 14px; color: var(--espresso); }
 .today-shot-details { font-size: 13px; color: var(--text-secondary); margin-top: 2px; }
 .today-shot-meta { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
-.today-shot-time { font-size: 12px; color: var(--text-muted); white-space: nowrap; }
 .today-shot-edit { padding: 4px 10px; font-size: 13px; color: var(--text-muted); }
 .today-shot-edit:hover { color: var(--espresso); }
 
@@ -373,7 +372,6 @@ textarea.form-input { min-height: 80px; resize: vertical; line-height: 1.5; }
             </div>
             <div class="today-shot-meta">
               <span x-show="shotQualityLabel(shot.rating)" class="shot-quality-badge" :class="shotQualityClass(shot.rating)" x-text="shotQualityLabel(shot.rating)"></span>
-              <span class="today-shot-time" x-text="formatTime(shot.createdAt)"></span>
               <button type="button" class="btn btn-ghost today-shot-edit" @click.stop="openShotFormForEdit(shot)" title="Edit shot">Edit</button>
             </div>
           </div>
