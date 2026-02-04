@@ -1,4 +1,4 @@
-# Bean Journal
+# Coffee Journal
 
 A mobile-first single-page app for tracking espresso beans, dialing in shots, monitoring freshness windows, and logging daily brewing.
 
