@@ -155,14 +155,9 @@ textarea.form-input { min-height: 80px; resize: vertical; line-height: 1.5; }
 .date-clear-btn { width: 30px; height: 30px; display: flex; align-items: center; justify-content: center; border: none; background: transparent; color: var(--text-muted); cursor: pointer; border-radius: 50%; transition: background 0.15s ease, color 0.15s ease; font-size: 16px; line-height: 1; padding: 0; -webkit-tap-highlight-color: transparent; }
 .date-clear-btn:hover { background: rgba(44,24,16,0.06); color: var(--text-secondary); }
 .date-clear-btn:active { background: rgba(44,24,16,0.1); }
-.date-input-wrapper .date-icon { color: var(--text-muted); font-size: 16px; line-height: 1; pointer-events: none; }
 
 /* Custom calendar picker */
 .custom-datepicker { background: #FFFCF7; border: 1.5px solid rgba(44,24,16,0.1); border-radius: var(--radius-lg); box-shadow: 0 12px 40px rgba(44,24,16,0.15), 0 4px 12px rgba(44,24,16,0.08); padding: 0; overflow: visible; min-width: 300px; position: absolute; top: calc(100% + 8px); left: 0; z-index: 200; }
-.datepicker-enter { animation: datepickerIn 0.15s ease-out; }
-.datepicker-leave { animation: datepickerOut 0.1s ease-in; }
-@keyframes datepickerIn { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: translateY(0); } }
-@keyframes datepickerOut { from { opacity: 1; transform: translateY(0); } to { opacity: 0; transform: translateY(-4px); } }
 .datepicker-nav { display: flex; align-items: center; justify-content: space-between; padding: 14px 16px 10px; }
 .datepicker-month-year { font-family: var(--font-heading); font-size: 17px; font-weight: 600; color: var(--espresso); letter-spacing: -0.01em; }
 .datepicker-nav-actions { display: flex; align-items: center; gap: 4px; }
@@ -722,32 +717,34 @@ textarea.form-input { min-height: 80px; resize: vertical; line-height: 1.5; }
               <button type="button" class="date-clear-btn" x-show="dpValue()" @click.stop="dpClear()" title="Clear date">&times;</button>
             </span>
           </div>
-          <div class="custom-datepicker" x-show="dpOpen" x-transition:enter="datepicker-enter" x-transition:leave="datepicker-leave" @click.stop @click.outside="!$refs.dateInputWrapper?.contains($event.target) && (dpOpen = false)">
-            <div class="datepicker-nav">
-              <div class="datepicker-month-year" x-text="dpMonthYearLabel()"></div>
-              <div class="datepicker-nav-actions">
-                <button type="button" class="datepicker-today-btn" @click="dpGoToday()">Today</button>
-                <button type="button" class="datepicker-nav-btn" @click="dpPrevMonth()">&lsaquo;</button>
-                <button type="button" class="datepicker-nav-btn" @click="dpNextMonth()">&rsaquo;</button>
+          <template x-if="dpOpen">
+            <div class="custom-datepicker" x-ref="datepickerEl" @click.stop>
+              <div class="datepicker-nav">
+                <div class="datepicker-month-year" x-text="dpMonthYearLabel()"></div>
+                <div class="datepicker-nav-actions">
+                  <button type="button" class="datepicker-today-btn" @click="dpGoToday()">Today</button>
+                  <button type="button" class="datepicker-nav-btn" @click="dpPrevMonth()">&lsaquo;</button>
+                  <button type="button" class="datepicker-nav-btn" @click="dpNextMonth()">&rsaquo;</button>
+                </div>
+              </div>
+              <div class="datepicker-weekdays">
+                <template x-for="d in ['Su','Mo','Tu','We','Th','Fr','Sa']">
+                  <div class="datepicker-weekday" x-text="d"></div>
+                </template>
+              </div>
+              <div class="datepicker-days">
+                <template x-for="day in dpDays()" :key="day.key">
+                  <button type="button" class="datepicker-day"
+                    :class="{ outside: day.outside, today: day.isToday, selected: day.isSelected }"
+                    @click.stop="!day.outside && dpSelect(day.date)"
+                    x-text="day.day"></button>
+                </template>
+              </div>
+              <div class="datepicker-footer">
+                <button type="button" class="datepicker-clear-btn" x-show="dpValue()" @click="dpClear()">Clear</button>
               </div>
             </div>
-            <div class="datepicker-weekdays">
-              <template x-for="d in ['Su','Mo','Tu','We','Th','Fr','Sa']">
-                <div class="datepicker-weekday" x-text="d"></div>
-              </template>
-            </div>
-            <div class="datepicker-days">
-              <template x-for="day in dpDays()" :key="day.key">
-                <button type="button" class="datepicker-day"
-                  :class="{ outside: day.outside, today: day.isToday, selected: day.isSelected }"
-                  @click.stop="!day.outside && dpSelect(day.date)"
-                  x-text="day.day"></button>
-              </template>
-            </div>
-            <div class="datepicker-footer">
-              <button type="button" class="datepicker-clear-btn" x-show="dpValue()" @click="dpClear()">Clear</button>
-            </div>
-          </div>
+          </template>
         </div>
         <div class="form-group">
           <label class="form-label">Notes</label>
@@ -922,20 +919,42 @@ document.addEventListener('alpine:init', () => {
   Alpine.data('stepper', createStepper('shotForm'));
   Alpine.data('optimalStepper', createStepper('optimalForm'));
 
-  /** Custom date picker component */
+  /** Custom date picker: x-if (no x-show) + document close listener to avoid flicker from @click.outside. */
   Alpine.data('datePicker', () => ({
     dpOpen: false,
+    _dpCloseListener: null,
     dpMonth: new Date().getMonth(),
     dpYear: new Date().getFullYear(),
     dpModelKey: '',
     dpInit(modelKey) {
       this.dpModelKey = modelKey;
-      // Initialize view to selected date's month if set
       const val = this.dpValue();
       if (val) {
         const d = new Date(val + 'T00:00:00');
         this.dpMonth = d.getMonth();
         this.dpYear = d.getFullYear();
+      }
+      this.$watch('dpOpen', (open) => {
+        if (open) this.$nextTick(() => this.dpAddCloseListener());
+        else this.dpRemoveCloseListener();
+      });
+    },
+    dpAddCloseListener() {
+      this.dpRemoveCloseListener();
+      const handler = (e) => {
+        const wrapper = this.$refs.dateInputWrapper;
+        const picker = this.$refs.datepickerEl;
+        if (wrapper?.contains(e.target) || picker?.contains(e.target)) return;
+        this.dpOpen = false;
+        this.dpRemoveCloseListener();
+      };
+      this._dpCloseListener = handler;
+      document.addEventListener('click', handler);
+    },
+    dpRemoveCloseListener() {
+      if (this._dpCloseListener) {
+        document.removeEventListener('click', this._dpCloseListener);
+        this._dpCloseListener = null;
       }
     },
     dpValue() {
@@ -953,12 +972,6 @@ document.addEventListener('alpine:init', () => {
     dpDisplayValue() {
       const v = this.dpValue();
       if (!v) return '';
-      const d = new Date(v + 'T00:00:00');
-      return d.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
-    },
-    dpSelectedLabel() {
-      const v = this.dpValue();
-      if (!v) return 'Select a date';
       const d = new Date(v + 'T00:00:00');
       return d.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
     },
@@ -984,7 +997,7 @@ document.addEventListener('alpine:init', () => {
     },
     dpSelect(dateStr) {
       this.dpSetValue(dateStr);
-      requestAnimationFrame(() => { this.dpOpen = false; });
+      this.dpOpen = false;
     },
     dpClear() {
       this.dpSetValue('');
