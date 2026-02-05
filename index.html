@@ -669,8 +669,7 @@ textarea.form-input { min-height: 80px; resize: vertical; line-height: 1.5; }
           <textarea class="form-input" placeholder="Tasting notes, brew tips..." x-model="beanForm.notes"></textarea>
         </div>
         <div class="form-actions">
-          <button class="btn btn-primary" @click="saveBean()">Save</button>
-          <button class="btn btn-danger-solid btn-action-small" @click="cancelBeanForm()">Cancel</button>
+          <button class="btn btn-primary" style="flex: 1;" @click="saveBean()">Save</button>
         </div>
       </div>
 
