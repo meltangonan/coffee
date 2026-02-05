@@ -226,6 +226,16 @@ textarea.form-input { min-height: 80px; resize: vertical; line-height: 1.5; }
 .shot-quality-badge.okay { background: rgba(139,157,175,0.2); color: var(--freshness-resting); }
 .shot-quality-badge.perfect { background: var(--freshness-optimal-bg); color: var(--freshness-optimal); }
 
+/* Shot rating row: inline rating buttons + date picker */
+.shot-rating-row { display: flex; align-items: flex-start; gap: 12px; flex-wrap: wrap; }
+.shot-rating-row .shot-quality-options { flex: 1; min-width: 200px; }
+.shot-rating-row .shot-date-picker { flex: 0 0 auto; min-width: 140px; }
+.shot-date-picker .date-input-wrapper .form-input { font-size: 13px; padding: 8px 36px 8px 10px; }
+/* Date pickers in modals/forms: use fixed positioning centered on screen */
+.shot-date-picker .custom-datepicker,
+.panel .date-picker-group .custom-datepicker,
+.content-area .date-picker-group .custom-datepicker { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); }
+
 .toggle-row { display: flex; align-items: center; justify-content: space-between; padding: 12px 0; }
 .toggle { position: relative; width: 48px; height: 28px; background: rgba(44,24,16,0.12); border-radius: 14px; border: none; cursor: pointer; transition: background 0.2s ease; -webkit-tap-highlight-color: transparent; }
 .toggle.active { background: var(--amber); }
@@ -831,7 +841,7 @@ textarea.form-input { min-height: 80px; resize: vertical; line-height: 1.5; }
                       <span x-show="shot.doseIn"> &middot; <span x-text="shot.doseIn + 'g'"></span></span>
                       <span x-show="shot.yieldOut"> &#8594; <span x-text="shot.yieldOut + 'g'"></span></span>
                     </div>
-                    <div class="shot-date" x-text="formatDate(shot.createdAt)"></div>
+                    <div class="shot-date" x-text="formatDate(shot.shotDate || shot.createdAt)"></div>
                     <div x-show="shot.notes" class="text-muted" style="margin-top:2px; font-style:italic;" x-text="shot.notes"></div>
                   </div>
                   <div class="shot-meta">
@@ -1083,10 +1093,48 @@ textarea.form-input { min-height: 80px; resize: vertical; line-height: 1.5; }
       </div>
       <div class="form-group">
         <label class="form-label">How was this shot?</label>
-        <div class="shot-quality-options">
-          <button type="button" class="shot-quality-btn" :class="{ 'active': shotForm.rating === 'bad' }" @click="shotForm.rating = (shotForm.rating === 'bad' ? null : 'bad')">Bad</button>
-          <button type="button" class="shot-quality-btn" :class="{ 'active': shotForm.rating === 'okay' }" @click="shotForm.rating = (shotForm.rating === 'okay' ? null : 'okay')">Okay</button>
-          <button type="button" class="shot-quality-btn" :class="{ 'active': shotForm.rating === 'perfect' }" @click="shotForm.rating = (shotForm.rating === 'perfect' ? null : 'perfect')">Perfect</button>
+        <div class="shot-rating-row">
+          <div class="shot-quality-options">
+            <button type="button" class="shot-quality-btn" :class="{ 'active': shotForm.rating === 'bad' }" @click="shotForm.rating = (shotForm.rating === 'bad' ? null : 'bad')">Bad</button>
+            <button type="button" class="shot-quality-btn" :class="{ 'active': shotForm.rating === 'okay' }" @click="shotForm.rating = (shotForm.rating === 'okay' ? null : 'okay')">Okay</button>
+            <button type="button" class="shot-quality-btn" :class="{ 'active': shotForm.rating === 'perfect' }" @click="shotForm.rating = (shotForm.rating === 'perfect' ? null : 'perfect')">Perfect</button>
+          </div>
+          <div class="shot-date-picker date-picker-group" x-data="datePicker()" x-init="dpInit('shotForm.shotDate')">
+            <div class="date-input-wrapper" x-ref="dateInputWrapper" @click="dpToggle()">
+              <input type="text" class="form-input" :value="dpDisplayValue()" placeholder="Date" readonly>
+              <span class="date-input-actions">
+                <button type="button" class="date-clear-btn" x-show="dpValue()" @click.stop="dpClear()" title="Clear date">&times;</button>
+              </span>
+            </div>
+            <template x-if="dpOpen">
+              <div class="custom-datepicker" x-ref="datepickerEl" @click.stop>
+                <div class="datepicker-nav">
+                  <div class="datepicker-month-year" x-text="dpMonthYearLabel()"></div>
+                  <div class="datepicker-nav-actions">
+                    <button type="button" class="datepicker-today-btn" @click="dpGoToday()">Today</button>
+                    <button type="button" class="datepicker-nav-btn" @click="dpPrevMonth()" aria-label="Previous month">&lsaquo;</button>
+                    <button type="button" class="datepicker-nav-btn" @click="dpNextMonth()" aria-label="Next month">&rsaquo;</button>
+                  </div>
+                </div>
+                <div class="datepicker-weekdays">
+                  <template x-for="d in ['Su','Mo','Tu','We','Th','Fr','Sa']">
+                    <div class="datepicker-weekday" x-text="d"></div>
+                  </template>
+                </div>
+                <div class="datepicker-days">
+                  <template x-for="day in dpDays()" :key="day.key">
+                    <button type="button" class="datepicker-day"
+                      :class="{ outside: day.outside, today: day.isToday, selected: day.isSelected }"
+                      @click.stop="!day.outside && dpSelect(day.date)"
+                      x-text="day.day"></button>
+                  </template>
+                </div>
+                <div class="datepicker-footer">
+                  <button type="button" class="datepicker-clear-btn" x-show="dpValue()" @click="dpClear()">Clear</button>
+                </div>
+              </div>
+            </template>
+          </div>
         </div>
       </div>
       <div class="form-group">
@@ -1184,11 +1232,12 @@ document.addEventListener('alpine:init', () => {
         this.dpRemoveCloseListener();
       };
       this._dpCloseListener = handler;
-      document.addEventListener('click', handler);
+      // Use capture phase so click is caught before @click.stop in modals
+      document.addEventListener('click', handler, true);
     },
     dpRemoveCloseListener() {
       if (this._dpCloseListener) {
-        document.removeEventListener('click', this._dpCloseListener);
+        document.removeEventListener('click', this._dpCloseListener, true);
         this._dpCloseListener = null;
       }
     },
@@ -1340,7 +1389,7 @@ function app() {
     editingOptimalBeanId: null,
     optimalForm: { grindSize: null, doseIn: null, yieldOut: null },
     beanForm: { name: '', roaster: '', roastDate: '', rating: null, notes: '' },
-    shotForm: { grindSize: null, doseIn: null, yieldOut: null, rating: null, notes: '' },
+    shotForm: { grindSize: null, doseIn: null, yieldOut: null, rating: null, notes: '', shotDate: '' },
     calendarYear: new Date().getFullYear(), calendarMonth: new Date().getMonth(),
 
     init() {
@@ -1393,9 +1442,12 @@ function app() {
     getLastShot(beanId) { const ss = this.getShotsForBean(beanId); return ss.length > 0 ? ss[0] : null; },
 
     get todayShots() {
-      const now = new Date();
+      const todayStr = new Date().toISOString().split('T')[0];
       return this.shots
-        .filter(s => isSameDay(s.createdAt, now))
+        .filter(s => {
+          const shotDate = s.shotDate || s.createdAt.split('T')[0];
+          return shotDate === todayStr;
+        })
         .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
     },
     get selectedBean() { return this.getBeanById(this.selectedBeanId); },
@@ -1581,7 +1633,8 @@ function app() {
       this.editingShotId = null;
       this.shotFormBeanId = beanId;
       this.shotFormReturnTo = this.currentTab;
-      this.shotForm = { grindSize: null, doseIn: null, yieldOut: null, rating: null, notes: '' };
+      const today = new Date().toISOString().split('T')[0];
+      this.shotForm = { grindSize: null, doseIn: null, yieldOut: null, rating: null, notes: '', shotDate: today };
       this.showShotForm = true;
     },
 
@@ -1589,12 +1642,15 @@ function app() {
       this.editingShotId = shot.id;
       this.shotFormBeanId = shot.beanId;
       this.shotFormReturnTo = this.currentTab;
+      // Use shotDate if exists, otherwise derive from createdAt (migration)
+      const shotDate = shot.shotDate || shot.createdAt.split('T')[0];
       this.shotForm = {
         grindSize: shot.grindSize,
         doseIn: shot.doseIn,
         yieldOut: shot.yieldOut,
         rating: normalizeRating(shot.rating),
-        notes: shot.notes ?? ''
+        notes: shot.notes ?? '',
+        shotDate: shotDate
       };
       this.showShotForm = true;
     },
@@ -1651,7 +1707,8 @@ function app() {
         doseIn: dose,
         yieldOut: yieldVal,
         rating: this.shotForm.rating,
-        notes: this.shotForm.notes || ''
+        notes: this.shotForm.notes || '',
+        shotDate: this.shotForm.shotDate || new Date().toISOString().split('T')[0]
       };
       if (this.editingShotId) {
         const shot = this.shots.find(s => s.id === this.editingShotId);
