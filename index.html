@@ -233,22 +233,62 @@ textarea.form-input { min-height: 80px; resize: vertical; line-height: 1.5; }
 .empty-state-title { font-family: var(--font-heading); font-size: 20px; color: var(--text-secondary); margin-bottom: 8px; }
 .empty-state-text { color: var(--text-muted); font-size: 14px; margin-bottom: 20px; line-height: 1.5; }
 
+/* Today tab — no beans onboarding state */
+.today-no-beans-state { display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 60px 24px 48px; min-height: calc(100dvh - var(--tab-total) - var(--safe-top) - 80px); }
+.today-no-beans-icon { width: 96px; height: 96px; margin-bottom: 24px; opacity: 0.85; }
+.today-no-beans-icon svg { width: 100%; height: 100%; }
+.today-no-beans-title { font-family: var(--font-heading); font-size: 26px; font-weight: 600; color: var(--espresso); margin-bottom: 12px; line-height: 1.2; }
+.today-no-beans-text { color: var(--text-secondary); font-size: 15px; line-height: 1.6; margin-bottom: 28px; max-width: 280px; }
+
+/* Restore from archive */
+.restore-from-archive { margin-top: 20px; width: 100%; max-width: 300px; }
+.restore-toggle { display: inline-flex; align-items: center; gap: 8px; background: none; border: none; color: var(--text-muted); font-family: var(--font-body); font-size: 14px; cursor: pointer; padding: 8px 16px; border-radius: var(--radius); transition: color 0.2s ease, background 0.2s ease; -webkit-tap-highlight-color: transparent; }
+.restore-toggle:hover { color: var(--text-secondary); background: rgba(44,24,16,0.04); }
+.restore-toggle-icon { font-size: 16px; }
+.archive-picker { background: white; border-radius: var(--radius-lg); box-shadow: var(--shadow-lg); border: 1px solid rgba(44,24,16,0.08); overflow: hidden; animation: archiveSlideIn 0.2s ease-out; }
+@keyframes archiveSlideIn { from { opacity: 0; transform: translateY(-8px); } to { opacity: 1; transform: translateY(0); } }
+.archive-picker-header { display: flex; align-items: center; justify-content: space-between; padding: 14px 16px; border-bottom: 1px solid rgba(44,24,16,0.06); background: var(--cream-dark); }
+.archive-picker-title { font-family: var(--font-body); font-size: 13px; font-weight: 600; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.5px; }
+.archive-picker-close { width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; background: none; border: none; font-size: 20px; color: var(--text-muted); cursor: pointer; border-radius: 50%; transition: background 0.15s ease, color 0.15s ease; -webkit-tap-highlight-color: transparent; }
+.archive-picker-close:hover { background: rgba(44,24,16,0.08); color: var(--text-primary); }
+.archive-picker-list { max-height: 200px; overflow-y: auto; -webkit-overflow-scrolling: touch; }
+.archive-picker-item { display: flex; flex-direction: column; align-items: flex-start; gap: 2px; width: 100%; padding: 14px 16px; background: none; border: none; border-bottom: 1px solid rgba(44,24,16,0.04); text-align: left; cursor: pointer; transition: background 0.15s ease; -webkit-tap-highlight-color: transparent; font-family: var(--font-body); }
+.archive-picker-item:last-child { border-bottom: none; }
+.archive-picker-item:hover { background: rgba(212,165,116,0.1); }
+.archive-picker-item:active { background: rgba(212,165,116,0.2); }
+.archive-picker-name { font-size: 15px; font-weight: 500; color: var(--text-primary); }
+.archive-picker-roaster { font-size: 13px; color: var(--text-muted); }
+.archive-picker-footer { padding: 10px 16px 14px; border-top: 1px solid rgba(44,24,16,0.06); }
+.archive-picker-view-all { width: 100%; padding: 10px; background: none; border: 1.5px dashed rgba(44,24,16,0.15); border-radius: var(--radius-sm); font-family: var(--font-body); font-size: 13px; font-weight: 500; color: var(--text-secondary); cursor: pointer; transition: all 0.15s ease; -webkit-tap-highlight-color: transparent; }
+.archive-picker-view-all:hover { border-color: var(--amber); color: var(--amber-dark); background: rgba(212,165,116,0.08); }
+
 .date-header { margin-bottom: 24px; }
 .date-header .day-name { font-family: var(--font-heading); font-size: 32px; font-weight: 700; color: var(--espresso); line-height: 1.1; }
 .date-header .date-sub { font-size: 15px; color: var(--text-secondary); margin-top: 4px; }
 
-.bean-card { background: white; border-radius: var(--radius); padding: 16px; box-shadow: var(--shadow); border: 1px solid rgba(44,24,16,0.04); margin-bottom: 12px; cursor: pointer; transition: all 0.2s ease; -webkit-tap-highlight-color: transparent; }
+.bean-card { position: relative; background: white; border-radius: var(--radius); padding: 16px; box-shadow: var(--shadow); border: 1px solid rgba(44,24,16,0.04); margin-bottom: 12px; cursor: pointer; transition: all 0.2s ease; -webkit-tap-highlight-color: transparent; }
 .bean-card:hover { box-shadow: var(--shadow-lg); transform: translateY(-1px); }
 .bean-card:active { transform: translateY(0); }
 .bean-card.archived { opacity: 0.55; background: var(--cream-dark); }
 .bean-card.archived:hover { opacity: 0.7; }
-.bean-card-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px; }
+.bean-card-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 4px; }
 .bean-card-name { font-family: var(--font-heading); font-size: 18px; font-weight: 600; color: var(--espresso); line-height: 1.3; }
-.bean-card-roaster { font-size: 14px; color: var(--text-secondary); margin-bottom: 10px; }
+.bean-card-roaster { font-size: 14px; color: var(--text-secondary); }
+.bean-card-roast-date { font-size: 12px; color: var(--text-muted); margin-top: 2px; margin-bottom: 10px; }
 .bean-card-footer { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
 .best-recipe-indicator { display: inline-flex; align-items: center; gap: 4px; font-size: 12px; color: var(--amber-dark); font-weight: 500; }
+.bean-card-occurrence { position: absolute; bottom: 12px; right: 12px; min-width: 18px; height: 18px; padding: 0 5px; display: flex; align-items: center; justify-content: center; background: rgba(44,24,16,0.04); border-radius: 9px; font-family: var(--font-body); font-size: 10px; font-weight: 500; color: var(--text-muted); }
 .beans-section-label { font-family: var(--font-body); font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; color: var(--text-muted); margin: 20px 0 10px; }
 .beans-section-label:first-of-type { margin-top: 0; }
+.beans-section-header { display: flex; align-items: center; justify-content: space-between; margin: 20px 0 10px; }
+.beans-section-header:first-of-type { margin-top: 0; }
+.beans-section-header .beans-section-label { margin: 0; }
+.beans-section-link { font-family: var(--font-body); font-size: 12px; font-weight: 500; color: var(--amber-dark); background: none; border: none; cursor: pointer; padding: 4px 8px; margin: -4px -8px; border-radius: var(--radius-sm); transition: background 0.15s ease; -webkit-tap-highlight-color: transparent; }
+.beans-section-link:hover { background: rgba(212,165,116,0.15); }
+
+/* Archive View */
+.archive-view-header { display: flex; align-items: center; gap: 12px; margin-bottom: 20px; }
+.archive-view-title { flex: 1; }
 
 .detail-header { display: flex; align-items: center; gap: 12px; margin-bottom: 24px; }
 .back-btn { width: 40px; height: 40px; min-width: 40px; display: flex; align-items: center; justify-content: center; border: none; background: rgba(44,24,16,0.06); border-radius: 50%; font-size: 18px; cursor: pointer; color: var(--text-primary); transition: background 0.2s ease; -webkit-tap-highlight-color: transparent; }
@@ -387,80 +427,133 @@ textarea.form-input { min-height: 80px; resize: vertical; line-height: 1.5; }
          ═══════════════════════════════════════ -->
     <div x-show="currentTab === 'today'" x-cloak class="fade-in">
 
-      <div class="date-header">
-        <div class="day-name" x-text="todayFormatted.day"></div>
-        <div class="date-sub" x-text="todayFormatted.date"></div>
-      </div>
+      <!-- No Beans Empty State — shown when user has no active beans -->
+      <template x-if="currentBeans.length === 0">
+        <div class="today-no-beans-state" x-data="{ showArchive: false }">
+          <div class="today-no-beans-icon">
+            <svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <ellipse cx="32" cy="48" rx="20" ry="4" fill="var(--cream-dark)"/>
+              <path d="M20 22c0-6.627 5.373-12 12-12s12 5.373 12 12v20c0 4.418-5.373 8-12 8s-12-3.582-12-8V22z" fill="var(--amber-light)" stroke="var(--amber-dark)" stroke-width="2"/>
+              <ellipse cx="32" cy="22" rx="12" ry="5" fill="var(--amber)" stroke="var(--amber-dark)" stroke-width="2"/>
+              <path d="M44 28c4 1 7 4 7 8s-3 7-7 8" stroke="var(--amber-dark)" stroke-width="2" stroke-linecap="round"/>
+              <path d="M26 16c0-2 1.5-4 4-5M32 15c0-3 2-5 4-6" stroke="var(--text-muted)" stroke-width="1.5" stroke-linecap="round" opacity="0.5"/>
+            </svg>
+          </div>
+          <h2 class="today-no-beans-title">Start Your Journey</h2>
+          <p class="today-no-beans-text">Add a coffee bean to begin tracking your shots and dialing in the perfect espresso.</p>
+          <button class="btn btn-amber" @click="currentTab = 'beans'; openBeanForm(null);">
+            <span style="font-size: 18px; line-height: 1;">+</span> Add Coffee Bean
+          </button>
 
-      <!-- Bean Selector — only current (non-archived) beans -->
-      <div class="daily-bean-selector" x-data="{ pickerOpen: false }" @click.outside="pickerOpen = false" @keydown.escape.window="pickerOpen = false">
-        <label class="form-label">What are you pulling?</label>
-        <div class="bean-picker-trigger" :class="{ open: pickerOpen }" @click="pickerOpen = !pickerOpen" tabindex="0" @keydown.enter.prevent="pickerOpen = !pickerOpen" @keydown.space.prevent="pickerOpen = !pickerOpen" role="combobox" aria-haspopup="listbox" :aria-expanded="pickerOpen">
-          <template x-if="!dailySelectedBeanId">
-            <span class="picker-placeholder">Choose a coffee bean...</span>
-          </template>
-          <template x-if="dailySelectedBeanId && getBeanById(dailySelectedBeanId)">
-            <span class="picker-selected">
-              <span class="bean-picker-dot" :class="getFreshness(getBeanById(dailySelectedBeanId)).status"></span>
-              <span class="picker-selected-name" x-text="getBeanById(dailySelectedBeanId).name"></span>
-              <span class="picker-selected-roaster" x-text="'\u2014 ' + getBeanById(dailySelectedBeanId).roaster"></span>
-            </span>
-          </template>
-          <svg class="bean-picker-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>
-        </div>
-        <div class="bean-picker-dropdown" :class="{ show: pickerOpen }" role="listbox">
-          <template x-for="bean in currentBeans" :key="bean.id">
-            <div class="bean-picker-option" :class="{ selected: dailySelectedBeanId === bean.id }" @click="dailySelectedBeanId = bean.id; pickerOpen = false; onDailyBeanSelect()" role="option" :aria-selected="dailySelectedBeanId === bean.id" tabindex="0" @keydown.enter.prevent="dailySelectedBeanId = bean.id; pickerOpen = false; onDailyBeanSelect()">
-              <span class="bean-picker-dot" :class="getFreshness(bean).status"></span>
-              <span class="bean-picker-info">
-                <span class="bean-picker-name" x-text="bean.name"></span>
-                <span class="bean-picker-meta">
-                  <span x-text="bean.roaster"></span>
-                  <span class="bean-picker-freshness" :class="getFreshness(bean).status" x-show="bean.roastDate" x-text="getFreshness(bean).label"></span>
-                </span>
-              </span>
-            </div>
-          </template>
-        </div>
-      </div>
-
-      <!-- Today's Shots Summary -->
-      <div x-show="todayShots.length > 0" class="mt-24">
-        <h3 class="heading-md mb-12">Today's Shots</h3>
-        <template x-for="shot in todayShots" :key="shot.id">
-          <div class="today-shot-swipe fade-in" x-data="{ swipeStart: 0, swipeX: 0, reveal: false }"
-               @touchstart="swipeStart = $event.touches[0].clientX; swipeX = 0"
-               @touchmove="swipeX = Math.min(0, $event.touches[0].clientX - swipeStart)"
-               @touchend="if (swipeX < -60) { deleteShot(shot.id); } else { reveal = swipeX < -36; swipeX = reveal ? -72 : 0; }"
-               :class="{ 'reveal': reveal }">
-            <div class="today-shot-swipe-actions" @click="deleteShot(shot.id)" role="button" tabindex="0" @keydown.enter="deleteShot(shot.id)">Delete</div>
-            <div class="today-shot-swipe-content" :style="'transform: translateX(' + (reveal ? -72 : swipeX) + 'px)'">
-              <div class="today-shot-item" style="margin-bottom:0;">
-                <div class="today-shot-content" @click="openShotFormForEdit(shot)">
-                  <div class="today-shot-bean" x-text="getBeanById(shot.beanId)?.name || 'Unknown'"></div>
-                  <div class="today-shot-details">
-                    <span x-text="'Grind ' + shot.grindSize"></span>
-                    <span x-show="shot.doseIn"> &middot; <span x-text="shot.doseIn + 'g'"></span></span>
-                    <span x-show="shot.yieldOut"> &#8594; <span x-text="shot.yieldOut + 'g'"></span></span>
-                  </div>
+          <!-- Restore from Archive -->
+          <template x-if="archivedBeans.length > 0">
+            <div class="restore-from-archive">
+              <button x-show="!showArchive" class="restore-toggle" @click="showArchive = true">
+                <span class="restore-toggle-icon">&#128230;</span> Or restore from archive
+              </button>
+              <div x-show="showArchive" x-cloak class="archive-picker">
+                <div class="archive-picker-header">
+                  <span class="archive-picker-title">Pick a bean to restore</span>
+                  <button class="archive-picker-close" @click="showArchive = false">&times;</button>
                 </div>
-                <div class="today-shot-meta">
-                  <span x-show="shotQualityLabel(shot.rating)" class="shot-quality-badge" :class="shotQualityClass(shot.rating)" x-text="shotQualityLabel(shot.rating)"></span>
-                  <button type="button" class="btn btn-ghost today-shot-edit" @click.stop="openShotFormForEdit(shot)" title="Edit shot">Edit</button>
-                  <button type="button" class="btn btn-ghost today-shot-delete" @click.stop="deleteShot(shot.id)" title="Delete shot">&#10005;</button>
+                <div class="archive-picker-list">
+                  <template x-for="bean in archivedBeans.slice(0, 5)" :key="bean.id">
+                    <button class="archive-picker-item" @click="duplicateFromArchive(bean.id); showArchive = false;">
+                      <span class="archive-picker-name" x-text="bean.name"></span>
+                      <span class="archive-picker-roaster" x-text="bean.roaster"></span>
+                    </button>
+                  </template>
+                </div>
+                <div x-show="archivedBeans.length > 5" class="archive-picker-footer">
+                  <button class="archive-picker-view-all" @click="currentTab = 'beans'; beansView = 'archive'; showArchive = false;">
+                    View all <span x-text="archivedBeans.length"></span> archived beans &rarr;
+                  </button>
                 </div>
               </div>
             </div>
-          </div>
-        </template>
-      </div>
+          </template>
+        </div>
+      </template>
 
-      <!-- Empty State -->
-      <div x-show="todayShots.length === 0 && !dailySelectedBeanId" class="empty-state">
-        <div class="empty-state-icon">&#9749;</div>
-        <div class="empty-state-title">No shots logged today</div>
-        <div class="empty-state-text">Select a bean above to start your morning ritual.</div>
-      </div>
+      <!-- Normal Today Tab Content — shown when beans exist -->
+      <template x-if="currentBeans.length > 0">
+        <div>
+          <div class="date-header">
+            <div class="day-name" x-text="todayFormatted.day"></div>
+            <div class="date-sub" x-text="todayFormatted.date"></div>
+          </div>
+
+          <!-- Bean Selector — only current (non-archived) beans -->
+          <div class="daily-bean-selector" x-data="{ pickerOpen: false }" @click.outside="pickerOpen = false" @keydown.escape.window="pickerOpen = false">
+            <label class="form-label">What are you pulling?</label>
+            <div class="bean-picker-trigger" :class="{ open: pickerOpen }" @click="pickerOpen = !pickerOpen" tabindex="0" @keydown.enter.prevent="pickerOpen = !pickerOpen" @keydown.space.prevent="pickerOpen = !pickerOpen" role="combobox" aria-haspopup="listbox" :aria-expanded="pickerOpen">
+              <template x-if="!dailySelectedBeanId">
+                <span class="picker-placeholder">Choose a coffee bean...</span>
+              </template>
+              <template x-if="dailySelectedBeanId && getBeanById(dailySelectedBeanId)">
+                <span class="picker-selected">
+                  <span class="bean-picker-dot" :class="getFreshness(getBeanById(dailySelectedBeanId)).status"></span>
+                  <span class="picker-selected-name" x-text="getBeanById(dailySelectedBeanId).name"></span>
+                  <span class="picker-selected-roaster" x-text="'\u2014 ' + getBeanById(dailySelectedBeanId).roaster"></span>
+                </span>
+              </template>
+              <svg class="bean-picker-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>
+            </div>
+            <div class="bean-picker-dropdown" :class="{ show: pickerOpen }" role="listbox">
+              <template x-for="bean in currentBeans" :key="bean.id">
+                <div class="bean-picker-option" :class="{ selected: dailySelectedBeanId === bean.id }" @click="dailySelectedBeanId = bean.id; pickerOpen = false; onDailyBeanSelect()" role="option" :aria-selected="dailySelectedBeanId === bean.id" tabindex="0" @keydown.enter.prevent="dailySelectedBeanId = bean.id; pickerOpen = false; onDailyBeanSelect()">
+                  <span class="bean-picker-dot" :class="getFreshness(bean).status"></span>
+                  <span class="bean-picker-info">
+                    <span class="bean-picker-name" x-text="bean.name"></span>
+                    <span class="bean-picker-meta">
+                      <span x-text="bean.roaster"></span>
+                      <span class="bean-picker-freshness" :class="getFreshness(bean).status" x-show="bean.roastDate" x-text="getFreshness(bean).label"></span>
+                    </span>
+                  </span>
+                </div>
+              </template>
+            </div>
+          </div>
+
+          <!-- Today's Shots Summary -->
+          <div x-show="todayShots.length > 0" class="mt-24">
+            <h3 class="heading-md mb-12">Today's Shots</h3>
+            <template x-for="shot in todayShots" :key="shot.id">
+              <div class="today-shot-swipe fade-in" x-data="{ swipeStart: 0, swipeX: 0, reveal: false }"
+                   @touchstart="swipeStart = $event.touches[0].clientX; swipeX = 0"
+                   @touchmove="swipeX = Math.min(0, $event.touches[0].clientX - swipeStart)"
+                   @touchend="if (swipeX < -60) { deleteShot(shot.id); } else { reveal = swipeX < -36; swipeX = reveal ? -72 : 0; }"
+                   :class="{ 'reveal': reveal }">
+                <div class="today-shot-swipe-actions" @click="deleteShot(shot.id)" role="button" tabindex="0" @keydown.enter="deleteShot(shot.id)">Delete</div>
+                <div class="today-shot-swipe-content" :style="'transform: translateX(' + (reveal ? -72 : swipeX) + 'px)'">
+                  <div class="today-shot-item" style="margin-bottom:0;">
+                    <div class="today-shot-content" @click="openShotFormForEdit(shot)">
+                      <div class="today-shot-bean" x-text="getBeanById(shot.beanId)?.name || 'Unknown'"></div>
+                      <div class="today-shot-details">
+                        <span x-text="'Grind ' + shot.grindSize"></span>
+                        <span x-show="shot.doseIn"> &middot; <span x-text="shot.doseIn + 'g'"></span></span>
+                        <span x-show="shot.yieldOut"> &#8594; <span x-text="shot.yieldOut + 'g'"></span></span>
+                      </div>
+                    </div>
+                    <div class="today-shot-meta">
+                      <span x-show="shotQualityLabel(shot.rating)" class="shot-quality-badge" :class="shotQualityClass(shot.rating)" x-text="shotQualityLabel(shot.rating)"></span>
+                      <button type="button" class="btn btn-ghost today-shot-edit" @click.stop="openShotFormForEdit(shot)" title="Edit shot">Edit</button>
+                      <button type="button" class="btn btn-ghost today-shot-delete" @click.stop="deleteShot(shot.id)" title="Delete shot">&#10005;</button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </template>
+          </div>
+
+          <!-- Empty State — has beans but no shots today -->
+          <div x-show="todayShots.length === 0 && !dailySelectedBeanId" class="empty-state">
+            <div class="empty-state-icon">&#9749;</div>
+            <div class="empty-state-title">No shots logged today</div>
+            <div class="empty-state-text">Select a bean above to start your morning ritual.</div>
+          </div>
+        </div>
+      </template>
     </div>
 
     <!-- ═══════════════════════════════════════
@@ -477,6 +570,7 @@ textarea.form-input { min-height: 80px; resize: vertical; line-height: 1.5; }
           <div class="beans-section-label" x-show="archivedBeans.length > 0">Current</div>
           <template x-for="bean in currentBeans" :key="bean.id">
             <div class="bean-card" @click="selectBean(bean.id)">
+              <span class="bean-card-occurrence" x-text="getBeanOccurrence(bean)"></span>
               <div class="bean-card-header">
                 <div>
                   <div class="bean-card-name" x-text="bean.name"></div>
@@ -488,6 +582,7 @@ textarea.form-input { min-height: 80px; resize: vertical; line-height: 1.5; }
                   </template>
                 </span>
               </div>
+              <div class="bean-card-roast-date" x-show="bean.roastDate" x-text="formatRoastDate(bean.roastDate)"></div>
               <div class="bean-card-footer">
                 <span class="badge" :class="'badge-' + getFreshness(bean).status" x-show="bean.roastDate">
                   <span class="badge-dot"></span>
@@ -498,11 +593,15 @@ textarea.form-input { min-height: 80px; resize: vertical; line-height: 1.5; }
           </template>
         </div>
 
-        <!-- Archived / Old Beans -->
+        <!-- Archived / Old Beans (show first 3, link to full view) -->
         <div x-show="archivedBeans.length > 0">
-          <div class="beans-section-label">Old</div>
-          <template x-for="bean in archivedBeans" :key="bean.id">
+          <div class="beans-section-header">
+            <div class="beans-section-label">Archived</div>
+            <button class="beans-section-link" @click="beansView = 'archive'">View all (<span x-text="archivedBeans.length"></span>)</button>
+          </div>
+          <template x-for="bean in archivedBeans.slice(0, 3)" :key="bean.id">
             <div class="bean-card archived" @click="selectBean(bean.id)">
+              <span class="bean-card-occurrence" x-text="getBeanOccurrence(bean)"></span>
               <div class="bean-card-header">
                 <div>
                   <div class="bean-card-name" x-text="bean.name"></div>
@@ -514,6 +613,7 @@ textarea.form-input { min-height: 80px; resize: vertical; line-height: 1.5; }
                   </template>
                 </span>
               </div>
+              <div class="bean-card-roast-date" x-show="bean.roastDate" x-text="formatRoastDate(bean.roastDate)"></div>
               <div class="bean-card-footer">
                 <span class="badge badge-archived"><span class="badge-dot"></span><span>Archived</span></span>
               </div>
@@ -702,6 +802,44 @@ textarea.form-input { min-height: 80px; resize: vertical; line-height: 1.5; }
         <button class="btn btn-danger btn-delete-highlight btn-full" @click="if(confirm('Are you sure you want to delete this?')) deleteBean(selectedBeanId)">Delete Bean</button>
       </div>
 
+      <!-- Archive View — Full list of archived beans -->
+      <div x-show="beansView === 'archive'" class="fade-in">
+        <div class="archive-view-header">
+          <button class="back-btn" @click="beansView = 'list'">&#8592;</button>
+          <div class="archive-view-title">
+            <h2 class="heading-lg">Archived Beans</h2>
+            <p class="text-muted" style="margin-top: 2px;"><span x-text="archivedBeans.length"></span> beans in archive</p>
+          </div>
+        </div>
+
+        <div x-show="archivedBeans.length === 0" class="empty-state">
+          <div class="empty-state-icon">&#128230;</div>
+          <div class="empty-state-title">No archived beans</div>
+          <div class="empty-state-text">Beans you've finished will appear here.</div>
+        </div>
+
+        <template x-for="bean in archivedBeans" :key="bean.id">
+          <div class="bean-card archived" @click="selectBean(bean.id)">
+            <span class="bean-card-occurrence" x-text="getBeanOccurrence(bean)"></span>
+            <div class="bean-card-header">
+              <div>
+                <div class="bean-card-name" x-text="bean.name"></div>
+                <div class="bean-card-roaster" x-text="bean.roaster"></div>
+              </div>
+              <span x-show="bean.rating" class="star-display">
+                <template x-for="n in 5">
+                  <span class="star" :class="n <= bean.rating ? 'filled' : ''" x-text="n <= bean.rating ? '\u2605' : '\u2606'"></span>
+                </template>
+              </span>
+            </div>
+            <div class="bean-card-roast-date" x-show="bean.roastDate" x-text="formatRoastDate(bean.roastDate)"></div>
+            <div class="bean-card-footer">
+              <span class="badge badge-archived"><span class="badge-dot"></span><span>Archived</span></span>
+            </div>
+          </div>
+        </template>
+      </div>
+
       <!-- Add/Edit Bean Form -->
       <div x-show="beansView === 'form'" class="fade-in">
         <div class="detail-header">
@@ -763,7 +901,7 @@ textarea.form-input { min-height: 80px; resize: vertical; line-height: 1.5; }
       </div>
 
       <!-- FAB: Add Bean -->
-      <button x-show="currentTab === 'beans' && beansView === 'list' && beans.length > 0" class="fab" @click="openBeanForm(null)"><span class="fab-icon">+</span> Add Coffee Bean</button>
+      <button x-show="currentTab === 'beans' && beansView === 'list' && beans.length > 0" class="fab" @click="openBeanForm(null)"><span class="fab-icon">+</span> Add Bean</button>
     </div>
 
     <!-- ═══════════════════════════════════════
@@ -1203,6 +1341,31 @@ function app() {
       this.beansView = 'form';
     },
 
+    duplicateFromArchive(archivedBeanId) {
+      const source = this.getBeanById(archivedBeanId);
+      if (!source) return;
+      const today = new Date().toISOString().slice(0, 10);
+      const newBean = {
+        id: crypto.randomUUID(),
+        name: source.name,
+        roaster: source.roaster,
+        roastDate: today,
+        rating: source.rating,
+        notes: source.notes ?? '',
+        isArchived: false,
+        optimalGrindSize: source.optimalGrindSize,
+        optimalDoseIn: source.optimalDoseIn,
+        optimalYieldOut: source.optimalYieldOut,
+        createdAt: new Date().toISOString()
+      };
+      // Pre-fill the form for user review/edit
+      this.beanForm = { name: newBean.name, roaster: newBean.roaster, roastDate: newBean.roastDate, rating: newBean.rating, notes: newBean.notes };
+      this.editingBeanId = null;
+      this._pendingDuplicateBean = newBean; // Store for saveBean to use
+      this.currentTab = 'beans';
+      this.beansView = 'form';
+    },
+
     saveBean() {
       const name = (this.beanForm.name || '').trim();
       const roaster = (this.beanForm.roaster || '').trim();
@@ -1214,6 +1377,15 @@ function app() {
           const updated = { ...this.beans[idx], name, roaster, roastDate, notes: this.beanForm.notes ?? '' };
           this.beans[idx] = updated;
         }
+      } else if (this._pendingDuplicateBean) {
+        // Duplicating from archive — preserve optimal settings
+        const pending = this._pendingDuplicateBean;
+        this.beans.push({
+          ...pending,
+          name, roaster, roastDate,
+          notes: this.beanForm.notes ?? ''
+        });
+        this._pendingDuplicateBean = null;
       } else {
         this.beans.push({
           id: crypto.randomUUID(), name, roaster, roastDate,
@@ -1229,6 +1401,7 @@ function app() {
     cancelBeanForm() {
       this.beansView = this.editingBeanId ? 'detail' : 'list';
       this.editingBeanId = null;
+      this._pendingDuplicateBean = null;
     },
 
     deleteBean(id) {
@@ -1358,6 +1531,20 @@ function app() {
     },
     formatTime(dateStr) {
       return new Date(dateStr).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
+    },
+    formatRoastDate(dateStr) {
+      if (!dateStr) return '';
+      const d = new Date(dateStr + 'T00:00:00');
+      return 'Roasted ' + d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+    },
+    getBeanOccurrence(bean) {
+      // Count how many beans share the same name+roaster (including this one)
+      const key = (bean.name || '').toLowerCase().trim() + '|' + (bean.roaster || '').toLowerCase().trim();
+      const allMatching = this.beans.filter(b => {
+        const bKey = (b.name || '').toLowerCase().trim() + '|' + (b.roaster || '').toLowerCase().trim();
+        return bKey === key;
+      }).sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
+      return allMatching.findIndex(b => b.id === bean.id) + 1;
     },
 
     shotQualityLabel(r) {
