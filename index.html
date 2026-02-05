@@ -14,8 +14,6 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,400&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
-<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
 <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3/dist/cdn.min.js"></script>
 <style>
 /* ═══════════════════════════════════════════
@@ -149,35 +147,43 @@ body {
 .form-input::placeholder { color: var(--text-muted); }
 textarea.form-input { min-height: 80px; resize: vertical; line-height: 1.5; }
 
-/* Flatpickr café theme */
-.flatpickr-calendar { background: #FFFCF7; border: 1.5px solid rgba(44,24,16,0.1); border-radius: var(--radius-lg); box-shadow: 0 12px 40px rgba(44,24,16,0.15), 0 4px 12px rgba(44,24,16,0.08); font-family: var(--font-body); padding: 4px; }
-.flatpickr-calendar.arrowTop::before, .flatpickr-calendar.arrowTop::after { display: none; }
-.flatpickr-months { padding: 8px 4px 4px; border-radius: var(--radius) var(--radius) 0 0; }
-.flatpickr-months .flatpickr-month { height: 36px; }
-.flatpickr-current-month { font-family: var(--font-heading); font-size: 16px; font-weight: 600; color: var(--espresso); padding-top: 4px; }
-.flatpickr-current-month .flatpickr-monthDropdown-months { font-family: var(--font-heading); font-weight: 600; appearance: none; -webkit-appearance: none; background: transparent; }
-.flatpickr-current-month input.cur-year { font-family: var(--font-heading); font-weight: 600; color: var(--espresso); }
-.flatpickr-months .flatpickr-prev-month, .flatpickr-months .flatpickr-next-month { top: 8px; width: 32px; height: 32px; padding: 0; border-radius: 50%; transition: background 0.15s ease; display: flex; align-items: center; justify-content: center; background: rgba(44,24,16,0.05); }
-.flatpickr-months .flatpickr-prev-month:hover, .flatpickr-months .flatpickr-next-month:hover { background: rgba(212,165,116,0.25); }
-.flatpickr-months .flatpickr-prev-month:active, .flatpickr-months .flatpickr-next-month:active { background: rgba(212,165,116,0.35); }
-.flatpickr-months .flatpickr-prev-month svg, .flatpickr-months .flatpickr-next-month svg { width: 14px; height: 14px; fill: var(--espresso); }
-span.flatpickr-weekday { font-family: var(--font-body); font-size: 11px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; }
-.flatpickr-day { font-family: var(--font-body); font-size: 14px; color: var(--text-primary); border-radius: 50%; height: 38px; line-height: 38px; max-width: 38px; margin: 1px; border: none; transition: background 0.15s ease, color 0.15s ease; }
-.flatpickr-day:hover { background: rgba(212,165,116,0.18); border: none; }
-.flatpickr-day.today { background: rgba(212,165,116,0.12); color: var(--amber-dark); font-weight: 600; border: none; }
-.flatpickr-day.today:hover { background: rgba(212,165,116,0.25); }
-.flatpickr-day.selected, .flatpickr-day.selected:hover { background: var(--amber-dark); color: white; font-weight: 600; border: none; box-shadow: 0 2px 8px rgba(184,134,78,0.3); }
-.flatpickr-day.flatpickr-disabled, .flatpickr-day.prevMonthDay, .flatpickr-day.nextMonthDay { color: var(--text-muted); opacity: 0.4; }
-.flatpickr-innerContainer { padding: 4px 4px 8px; }
-.dayContainer { min-width: 280px; max-width: 280px; }
-.flatpickr-days { width: 288px !important; }
+/* Custom date picker */
+.date-picker-group { position: relative; }
 .date-input-wrapper { position: relative; cursor: pointer; }
-.date-input-wrapper .form-input { cursor: pointer; padding-right: 72px; }
+.date-input-wrapper .form-input { cursor: pointer; padding-right: 44px; }
 .date-input-actions { position: absolute; right: 8px; top: 50%; transform: translateY(-50%); display: flex; align-items: center; gap: 2px; }
 .date-clear-btn { width: 30px; height: 30px; display: flex; align-items: center; justify-content: center; border: none; background: transparent; color: var(--text-muted); cursor: pointer; border-radius: 50%; transition: background 0.15s ease, color 0.15s ease; font-size: 16px; line-height: 1; padding: 0; -webkit-tap-highlight-color: transparent; }
 .date-clear-btn:hover { background: rgba(44,24,16,0.06); color: var(--text-secondary); }
 .date-clear-btn:active { background: rgba(44,24,16,0.1); }
 .date-input-wrapper .date-icon { color: var(--text-muted); font-size: 16px; line-height: 1; pointer-events: none; }
+
+/* Custom calendar picker */
+.custom-datepicker { background: #FFFCF7; border: 1.5px solid rgba(44,24,16,0.1); border-radius: var(--radius-lg); box-shadow: 0 12px 40px rgba(44,24,16,0.15), 0 4px 12px rgba(44,24,16,0.08); padding: 0; overflow: visible; min-width: 300px; position: absolute; top: calc(100% + 8px); left: 0; z-index: 200; }
+.datepicker-enter { animation: datepickerIn 0.15s ease-out; }
+.datepicker-leave { animation: datepickerOut 0.1s ease-in; }
+@keyframes datepickerIn { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes datepickerOut { from { opacity: 1; transform: translateY(0); } to { opacity: 0; transform: translateY(-4px); } }
+.datepicker-nav { display: flex; align-items: center; justify-content: space-between; padding: 14px 16px 10px; }
+.datepicker-month-year { font-family: var(--font-heading); font-size: 17px; font-weight: 600; color: var(--espresso); letter-spacing: -0.01em; }
+.datepicker-nav-actions { display: flex; align-items: center; gap: 4px; }
+.datepicker-clear-btn { padding: 6px 12px; font-family: var(--font-body); font-size: 13px; font-weight: 500; color: var(--text-muted); background: transparent; border: none; cursor: pointer; border-radius: var(--radius-sm); transition: color 0.15s ease, background 0.15s ease; }
+.datepicker-clear-btn:hover { color: var(--freshness-past); background: var(--freshness-past-bg); }
+.datepicker-nav-btn { width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; background: rgba(44,24,16,0.05); border: none; color: var(--text-secondary); cursor: pointer; border-radius: 50%; transition: color 0.15s ease, background 0.15s ease; font-size: 16px; }
+.datepicker-nav-btn:hover { color: var(--espresso); background: rgba(212,165,116,0.2); }
+.datepicker-today-btn { padding: 6px 12px; font-family: var(--font-body); font-size: 13px; font-weight: 500; color: var(--amber-dark); background: transparent; border: none; cursor: pointer; border-radius: var(--radius-sm); transition: color 0.15s ease, background 0.15s ease; }
+.datepicker-today-btn:hover { color: var(--espresso); background: rgba(212,165,116,0.2); }
+.datepicker-footer { display: flex; justify-content: flex-end; padding: 8px 12px 14px; border-top: 1px solid rgba(44,24,16,0.06); margin: 0 4px; }
+.datepicker-weekdays { display: grid; grid-template-columns: repeat(7, 1fr); padding: 4px 12px 8px; border-bottom: 1px solid rgba(44,24,16,0.06); margin: 0 4px; }
+.datepicker-weekday { font-family: var(--font-body); font-size: 11px; font-weight: 600; color: var(--text-muted); text-align: center; text-transform: uppercase; letter-spacing: 0.5px; padding: 4px 0; }
+.datepicker-days { display: grid; grid-template-columns: repeat(7, 1fr); padding: 8px 12px 14px; gap: 2px; }
+.datepicker-day { font-family: var(--font-body); font-size: 14px; font-weight: 400; color: var(--text-primary); background: transparent; border: none; cursor: pointer; border-radius: 50%; aspect-ratio: 1; display: flex; align-items: center; justify-content: center; transition: background 0.15s ease, color 0.15s ease, transform 0.1s ease; }
+.datepicker-day:hover:not(.outside):not(.today):not(.selected) { background: rgba(212,165,116,0.15); }
+.datepicker-day:active:not(.outside) { transform: scale(0.92); }
+.datepicker-day.outside { color: var(--text-muted); opacity: 0.4; cursor: default; }
+.datepicker-day.outside:hover { background: transparent; }
+.datepicker-day.today { background: rgba(212,165,116,0.15); color: var(--amber-dark); font-weight: 600; }
+.datepicker-day.selected { background: var(--amber-dark); color: white; font-weight: 600; box-shadow: 0 2px 8px rgba(184,134,78,0.3); }
+.datepicker-day.today.selected { background: var(--amber-dark); color: white; }
 
 .stepper { display: flex; align-items: center; gap: 0; border: 1.5px solid rgba(44,24,16,0.12); border-radius: var(--radius); background: white; overflow: hidden; }
 .stepper-btn { width: 44px; min-height: 44px; display: flex; align-items: center; justify-content: center; font-size: 18px; font-weight: 600; color: var(--text-primary); background: transparent; border: none; cursor: pointer; transition: background 0.15s ease; -webkit-tap-highlight-color: transparent; }
@@ -338,8 +344,8 @@ span.flatpickr-weekday { font-family: var(--font-body); font-size: 11px; font-we
 .calendar-cell span { display: flex; align-items: center; justify-content: center; width: 32px; height: 32px; border-radius: 50%; transition: background 0.15s ease; }
 .calendar-cell.empty { color: transparent; }
 .calendar-cell.today span { font-weight: 600; color: white; background: var(--amber-dark); }
-.calendar-bars-container { position: absolute; left: 0; right: 0; bottom: 0; z-index: 1; pointer-events: none; }
-.calendar-bar { position: absolute; height: 6px; border-radius: 3px; opacity: 0.6; transition: opacity 0.2s ease; box-shadow: 0 1px 2px rgba(0,0,0,0.06); }
+.calendar-range-bands { position: absolute; left: 0; right: 0; top: 0; bottom: 0; z-index: 1; pointer-events: none; }
+.calendar-range-band { position: absolute; top: 0; bottom: 0; z-index: 1; }
 .calendar-legend { display: flex; flex-wrap: wrap; gap: 14px; margin-top: 18px; padding-top: 16px; border-top: 1px solid var(--cream-dark); }
 .calendar-note { font-size: 12px; color: var(--text-muted); line-height: 1.45; margin-top: 18px; padding-top: 14px; border-top: 1px solid var(--cream-dark); }
 .legend-item { display: flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 500; color: var(--text-secondary); }
@@ -708,16 +714,39 @@ span.flatpickr-weekday { font-family: var(--font-body); font-size: 11px; font-we
           <label class="form-label">Roaster <span class="required">*</span></label>
           <input type="text" class="form-input" placeholder="e.g. Dark Matter" x-model="beanForm.roaster">
         </div>
-        <div class="form-group">
+        <div class="form-group date-picker-group" x-data="datePicker()" x-init="dpInit('beanForm.roastDate')">
           <label class="form-label">Roast Date</label>
-          <div class="date-input-wrapper" @click="$refs.roastDateInput._flatpickr && $refs.roastDateInput._flatpickr.open()">
-            <input type="text" class="form-input" x-ref="roastDateInput" placeholder="Select date" readonly
-              x-init="flatpickr($refs.roastDateInput, { dateFormat: 'Y-m-d', allowInput: false, disableMobile: true, onChange(sel, dateStr) { beanForm.roastDate = dateStr } })"
-              x-effect="if ($refs.roastDateInput._flatpickr) $refs.roastDateInput._flatpickr.setDate(beanForm.roastDate, false)">
+          <div class="date-input-wrapper" x-ref="dateInputWrapper" @click="dpToggle()">
+            <input type="text" class="form-input" :value="dpDisplayValue()" placeholder="Select date" readonly>
             <span class="date-input-actions">
-              <button type="button" class="date-clear-btn" x-show="beanForm.roastDate" @click.stop="beanForm.roastDate = ''; $refs.roastDateInput._flatpickr.clear()" title="Clear date">&times;</button>
-              <span class="date-icon">&#128197;</span>
+              <button type="button" class="date-clear-btn" x-show="dpValue()" @click.stop="dpClear()" title="Clear date">&times;</button>
             </span>
+          </div>
+          <div class="custom-datepicker" x-show="dpOpen" x-transition:enter="datepicker-enter" x-transition:leave="datepicker-leave" @click.stop @click.outside="!$refs.dateInputWrapper?.contains($event.target) && (dpOpen = false)">
+            <div class="datepicker-nav">
+              <div class="datepicker-month-year" x-text="dpMonthYearLabel()"></div>
+              <div class="datepicker-nav-actions">
+                <button type="button" class="datepicker-today-btn" @click="dpGoToday()">Today</button>
+                <button type="button" class="datepicker-nav-btn" @click="dpPrevMonth()">&lsaquo;</button>
+                <button type="button" class="datepicker-nav-btn" @click="dpNextMonth()">&rsaquo;</button>
+              </div>
+            </div>
+            <div class="datepicker-weekdays">
+              <template x-for="d in ['Su','Mo','Tu','We','Th','Fr','Sa']">
+                <div class="datepicker-weekday" x-text="d"></div>
+              </template>
+            </div>
+            <div class="datepicker-days">
+              <template x-for="day in dpDays()" :key="day.key">
+                <button type="button" class="datepicker-day"
+                  :class="{ outside: day.outside, today: day.isToday, selected: day.isSelected }"
+                  @click.stop="!day.outside && dpSelect(day.date)"
+                  x-text="day.day"></button>
+              </template>
+            </div>
+            <div class="datepicker-footer">
+              <button type="button" class="datepicker-clear-btn" x-show="dpValue()" @click="dpClear()">Clear</button>
+            </div>
           </div>
         </div>
         <div class="form-group">
@@ -752,17 +781,17 @@ span.flatpickr-weekday { font-family: var(--font-body); font-size: 11px; font-we
         </div>
         <div class="calendar-grid">
           <template x-for="(week, wi) in calendarWeeks" :key="calendarYear + '-' + calendarMonth + '-' + wi">
-            <div class="calendar-row" :style="'min-height:' + (44 + calendarBarsForWeek(wi).length * 9) + 'px'">
+            <div class="calendar-row">
+              <div class="calendar-range-bands">
+                <template x-for="(bar, bi) in calendarBarsForWeek(wi)" :key="bar.beanId + '-' + calendarYear + '-' + calendarMonth + '-' + wi">
+                  <div class="calendar-range-band" :style="getRangeBandStyle(bar, wi)"></div>
+                </template>
+              </div>
               <template x-for="(day, di) in week" :key="calendarYear + '-' + calendarMonth + '-' + wi + '-' + di">
                 <div class="calendar-cell" :class="{ 'empty': !day, 'today': day && isToday(calendarYear, calendarMonth, day) }">
                   <span x-text="day || ''"></span>
                 </div>
               </template>
-              <div class="calendar-bars-container">
-                <template x-for="(bar, bi) in calendarBarsForWeek(wi)" :key="bar.beanId + '-' + calendarYear + '-' + calendarMonth + '-' + wi">
-                  <div class="calendar-bar" :style="getBarStyle(bar, wi, bi)"></div>
-                </template>
-              </div>
             </div>
           </template>
         </div>
@@ -788,11 +817,11 @@ span.flatpickr-weekday { font-family: var(--font-body); font-size: 11px; font-we
   <!-- ═══════════════════════════════════════
        SHOT FORM OVERLAY
        ═══════════════════════════════════════ -->
-  <div x-show="showShotForm" class="overlay" @click.self="editingShotId = null; showShotForm = false" x-cloak>
+  <div x-show="showShotForm" class="overlay" @click.self="editingShotId = null; showShotForm = false; if (shotFormReturnTo === 'today') { dailySelectedBeanId = ''; dailyLastShot = null; }" x-cloak>
     <div class="panel" @click.stop :key="'shot-form-' + (shotFormBeanId || '') + '-' + showShotForm">
       <div class="panel-handle"></div>
       <div style="display: flex; align-items: center; gap: 12px;" class="mb-20">
-        <button class="back-btn" @click="editingShotId = null; showShotForm = false">&#8592;</button>
+        <button class="back-btn" @click="editingShotId = null; showShotForm = false; if (shotFormReturnTo === 'today') { dailySelectedBeanId = ''; dailyLastShot = null; }">&#8592;</button>
         <h3 class="heading-lg" x-text="editingShotId ? 'Edit Shot' : 'Log Shot'"></h3>
       </div>
       <div class="form-group" x-data="stepper()" x-init="stInit('grindSize', 1, 30, getLastShot(shotFormBeanId)?.grindSize ?? 5)">
@@ -892,8 +921,121 @@ document.addEventListener('alpine:init', () => {
   }
   Alpine.data('stepper', createStepper('shotForm'));
   Alpine.data('optimalStepper', createStepper('optimalForm'));
+
+  /** Custom date picker component */
+  Alpine.data('datePicker', () => ({
+    dpOpen: false,
+    dpMonth: new Date().getMonth(),
+    dpYear: new Date().getFullYear(),
+    dpModelKey: '',
+    dpInit(modelKey) {
+      this.dpModelKey = modelKey;
+      // Initialize view to selected date's month if set
+      const val = this.dpValue();
+      if (val) {
+        const d = new Date(val + 'T00:00:00');
+        this.dpMonth = d.getMonth();
+        this.dpYear = d.getFullYear();
+      }
+    },
+    dpValue() {
+      const keys = this.dpModelKey.split('.');
+      let val = this;
+      for (const k of keys) val = val?.[k];
+      return val || '';
+    },
+    dpSetValue(v) {
+      const keys = this.dpModelKey.split('.');
+      let obj = this;
+      for (let i = 0; i < keys.length - 1; i++) obj = obj[keys[i]];
+      obj[keys[keys.length - 1]] = v;
+    },
+    dpDisplayValue() {
+      const v = this.dpValue();
+      if (!v) return '';
+      const d = new Date(v + 'T00:00:00');
+      return d.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
+    },
+    dpSelectedLabel() {
+      const v = this.dpValue();
+      if (!v) return 'Select a date';
+      const d = new Date(v + 'T00:00:00');
+      return d.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
+    },
+    dpMonthYearLabel() {
+      const d = new Date(this.dpYear, this.dpMonth, 1);
+      return d.toLocaleDateString('en-US', { year: 'numeric', month: 'short' });
+    },
+    dpPrevMonth() {
+      if (this.dpMonth === 0) { this.dpMonth = 11; this.dpYear--; }
+      else { this.dpMonth--; }
+    },
+    dpNextMonth() {
+      if (this.dpMonth === 11) { this.dpMonth = 0; this.dpYear++; }
+      else { this.dpMonth++; }
+    },
+    dpGoToday() {
+      const today = new Date();
+      this.dpMonth = today.getMonth();
+      this.dpYear = today.getFullYear();
+    },
+    dpToggle() {
+      this.dpOpen = !this.dpOpen;
+    },
+    dpSelect(dateStr) {
+      this.dpSetValue(dateStr);
+      requestAnimationFrame(() => { this.dpOpen = false; });
+    },
+    dpClear() {
+      this.dpSetValue('');
+    },
+    dpDays() {
+      const days = [];
+      const firstDay = new Date(this.dpYear, this.dpMonth, 1);
+      const lastDay = new Date(this.dpYear, this.dpMonth + 1, 0);
+      const today = new Date();
+      const selectedVal = this.dpValue();
+
+      // Sunday-based week (0=Sun, 6=Sat)
+      const startDow = firstDay.getDay();
+
+      // Previous month days
+      const prevMonth = new Date(this.dpYear, this.dpMonth, 0);
+      for (let i = startDow - 1; i >= 0; i--) {
+        const day = prevMonth.getDate() - i;
+        const d = new Date(this.dpYear, this.dpMonth - 1, day);
+        const dateStr = d.toISOString().slice(0, 10);
+        days.push({ key: 'prev-' + day, day, date: dateStr, outside: true, isToday: false, isSelected: false });
+      }
+
+      // Current month days
+      for (let day = 1; day <= lastDay.getDate(); day++) {
+        const d = new Date(this.dpYear, this.dpMonth, day);
+        const dateStr = d.toISOString().slice(0, 10);
+        const isToday = d.getFullYear() === today.getFullYear() && d.getMonth() === today.getMonth() && d.getDate() === today.getDate();
+        const isSelected = selectedVal === dateStr;
+        days.push({ key: 'cur-' + day, day, date: dateStr, outside: false, isToday, isSelected });
+      }
+
+      // Next month days to fill exactly 5 weeks (35 cells)
+      const remaining = Math.max(0, 35 - days.length);
+      for (let i = 1; i <= remaining; i++) {
+        const d = new Date(this.dpYear, this.dpMonth + 1, i);
+        const dateStr = d.toISOString().slice(0, 10);
+        days.push({ key: 'next-' + i, day: i, date: dateStr, outside: true, isToday: false, isSelected: false });
+      }
+
+      return days;
+    }
+  }));
 });
 const BAR_COLORS = ['#C2714F','#8B9E7C','#C4A34D','#7B5B8D','#5B8E8E','#B87333','#A0695B'];
+
+function hexToRgba(hex, alpha) {
+  const m = hex.match(/^#?([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})$/i);
+  if (!m) return hex;
+  return `rgba(${parseInt(m[1], 16)},${parseInt(m[2], 16)},${parseInt(m[3], 16)},${alpha})`;
+}
 
 function generateSeedData() {
   const beans = [
@@ -1283,7 +1425,8 @@ function app() {
       return this.calendarBars.filter(bar => bar.startDay <= lastDay && bar.endDay >= firstDay);
     },
 
-    getBarStyle(bar, weekIndex, barIndex) {
+    /** Style for a smooth full-height band spanning the bar's days in this week (no gaps between cells). */
+    getRangeBandStyle(bar, weekIndex) {
       const week = this.calendarWeeks[weekIndex];
       let startCol = 0, endCol = 6;
       for (let i = 0; i < 7; i++) {
@@ -1294,8 +1437,7 @@ function app() {
       }
       const left = (startCol / 7 * 100).toFixed(2);
       const width = ((endCol - startCol + 1) / 7 * 100).toFixed(2);
-      const bottom = 2 + barIndex * 9;
-      return `left:${left}%;width:${width}%;bottom:${bottom}px;background:${bar.color};`;
+      return `left:${left}%;width:${width}%;background:${hexToRgba(bar.color, 0.22)};`;
     },
   };
 }
