@@ -15,6 +15,17 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,400&display=swap" rel="stylesheet">
 <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3/dist/cdn.min.js"></script>
+<script>
+// Polyfill for crypto.randomUUID (older browsers)
+if (typeof crypto !== 'undefined' && !crypto.randomUUID) {
+  crypto.randomUUID = function() {
+    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+      var r = Math.random() * 16 | 0;
+      return (c === 'x' ? r : (r & 0x3 | 0x8)).toString(16);
+    });
+  };
+}
+</script>
 <style>
 /* ═══════════════════════════════════════════
    COFFEE JOURNAL — Warm Industrial Cafe
@@ -464,7 +475,7 @@ textarea.form-input { min-height: 80px; resize: vertical; line-height: 1.5; }
                     </button>
                   </template>
                 </div>
-                <div x-show="archivedBeans.length > 5" class="archive-picker-footer">
+                <div x-show="archivedBeans.length >= 5" class="archive-picker-footer">
                   <button class="archive-picker-view-all" @click="currentTab = 'beans'; beansView = 'archive'; showArchive = false;">
                     View all <span x-text="archivedBeans.length"></span> archived beans &rarr;
                   </button>
@@ -868,8 +879,8 @@ textarea.form-input { min-height: 80px; resize: vertical; line-height: 1.5; }
                 <div class="datepicker-month-year" x-text="dpMonthYearLabel()"></div>
                 <div class="datepicker-nav-actions">
                   <button type="button" class="datepicker-today-btn" @click="dpGoToday()">Today</button>
-                  <button type="button" class="datepicker-nav-btn" @click="dpPrevMonth()">&lsaquo;</button>
-                  <button type="button" class="datepicker-nav-btn" @click="dpNextMonth()">&rsaquo;</button>
+                  <button type="button" class="datepicker-nav-btn" @click="dpPrevMonth()" aria-label="Previous month">&lsaquo;</button>
+                  <button type="button" class="datepicker-nav-btn" @click="dpNextMonth()" aria-label="Next month">&rsaquo;</button>
                 </div>
               </div>
               <div class="datepicker-weekdays">
@@ -912,9 +923,9 @@ textarea.form-input { min-height: 80px; resize: vertical; line-height: 1.5; }
       <p class="calendar-description">See when each coffee is at peak freshness this month.</p>
       <div class="calendar-card">
         <div class="calendar-header">
-          <button class="calendar-nav" @click="prevMonth()">&#8592;</button>
+          <button class="calendar-nav" @click="prevMonth()" aria-label="Previous month">&#8592;</button>
           <span class="calendar-month-label" x-text="calendarMonthLabel"></span>
-          <button class="calendar-nav" @click="nextMonth()">&#8594;</button>
+          <button class="calendar-nav" @click="nextMonth()" aria-label="Next month">&#8594;</button>
         </div>
         <div class="calendar-weekdays">
           <template x-for="d in ['Sun','Mon','Tue','Wed','Thu','Fri','Sat']">
@@ -960,14 +971,14 @@ textarea.form-input { min-height: 80px; resize: vertical; line-height: 1.5; }
        SHOT FORM OVERLAY
        ═══════════════════════════════════════ -->
   <template x-if="showShotForm">
-  <div class="overlay" @click.self="editingShotId = null; showShotForm = false; if (shotFormReturnTo === 'today') { dailySelectedBeanId = ''; dailyLastShot = null; }">
+  <div class="overlay" @click.self="closeShotForm()">
     <div class="panel" @click.stop>
       <div class="panel-handle"></div>
       <div style="display: flex; align-items: center; gap: 12px;" class="mb-20">
-        <button class="back-btn" @click="editingShotId = null; showShotForm = false; if (shotFormReturnTo === 'today') { dailySelectedBeanId = ''; dailyLastShot = null; }">&#8592;</button>
+        <button class="back-btn" @click="closeShotForm()">&#8592;</button>
         <h3 class="heading-lg" x-text="editingShotId ? 'Edit Shot' : 'Log Shot'"></h3>
       </div>
-      <div class="form-group" x-data="stepper()" x-init="stInit('grindSize', 1, 30, getLastShot(shotFormBeanId)?.grindSize ?? 5)">
+      <div class="form-group" x-data="stepper()" x-init="stInit('grindSize', 1, 30, getShotFormDefault('grindSize'))">
         <label class="form-label">Grind Size</label>
         <div class="stepper">
           <button type="button" class="stepper-btn" aria-label="Decrease" :disabled="stVal() !== null && stVal() <= stMin" @click="stDec()">−</button>
@@ -976,7 +987,7 @@ textarea.form-input { min-height: 80px; resize: vertical; line-height: 1.5; }
         </div>
       </div>
       <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
-        <div class="form-group" x-data="stepper()" x-init="stInit('doseIn', 1, 50, getLastShot(shotFormBeanId)?.doseIn ?? 16)">
+        <div class="form-group" x-data="stepper()" x-init="stInit('doseIn', 1, 50, getShotFormDefault('doseIn'))">
           <label class="form-label">Dose In (g)</label>
           <div class="stepper">
             <button type="button" class="stepper-btn" aria-label="Decrease" :disabled="stVal() !== null && stVal() <= stMin" @click="stDec()">−</button>
@@ -984,7 +995,7 @@ textarea.form-input { min-height: 80px; resize: vertical; line-height: 1.5; }
             <button type="button" class="stepper-btn" aria-label="Increase" :disabled="stVal() !== null && stVal() >= stMax" @click="stInc()">+</button>
           </div>
         </div>
-        <div class="form-group" x-data="stepper()" x-init="stInit('yieldOut', 1, 100, getLastShot(shotFormBeanId)?.yieldOut ?? 32)">
+        <div class="form-group" x-data="stepper()" x-init="stInit('yieldOut', 1, 100, getShotFormDefault('yieldOut'))">
           <label class="form-label">Yield Out (g)</label>
           <div class="stepper">
             <button type="button" class="stepper-btn" aria-label="Decrease" :disabled="stVal() !== null && stVal() <= stMin" @click="stDec()">−</button>
@@ -1191,6 +1202,10 @@ document.addEventListener('alpine:init', () => {
 });
 const BAR_COLORS = ['#C2714F','#8B9E7C','#C4A34D','#7B5B8D','#5B8E8E','#B87333','#A0695B'];
 
+// Freshness thresholds (centralized constants)
+const FRESHNESS_RESTING_DAYS = 7;
+const FRESHNESS_OPTIMAL_DAYS = 21;
+
 function hexToRgba(hex, alpha) {
   const m = hex.match(/^#?([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})$/i);
   if (!m) return hex;
@@ -1208,13 +1223,13 @@ function generateSeedData() {
     { id: crypto.randomUUID(), name: 'Pilipinas', roaster: '4LW', roastDate: '2026-02-01', rating: null, notes: '', createdAt: '2026-02-01T08:00:00.000Z' },
   ];
   const shots = [
-    { id: crypto.randomUUID(), beanId: beans[0].id, grindSize: 4, doseIn: 16, yieldOut: null, rating: null, isBestRecipe: true, notes: '', createdAt: '2026-01-15T07:30:00.000Z' },
-    { id: crypto.randomUUID(), beanId: beans[1].id, grindSize: 4, doseIn: 16, yieldOut: null, rating: null, isBestRecipe: true, notes: '', createdAt: '2026-01-16T07:30:00.000Z' },
-    { id: crypto.randomUUID(), beanId: beans[2].id, grindSize: 6, doseIn: 18, yieldOut: 31, rating: 'perfect', isBestRecipe: true, notes: '', createdAt: '2026-01-24T07:30:00.000Z' },
-    { id: crypto.randomUUID(), beanId: beans[3].id, grindSize: 5, doseIn: 18, yieldOut: 29, rating: 'okay', isBestRecipe: true, notes: '', createdAt: '2026-01-26T07:30:00.000Z' },
-    { id: crypto.randomUUID(), beanId: beans[4].id, grindSize: 5, doseIn: 16, yieldOut: 32, rating: 'perfect', isBestRecipe: true, notes: 'Came out a bit fast', createdAt: '2026-01-29T07:30:00.000Z' },
-    { id: crypto.randomUUID(), beanId: beans[5].id, grindSize: 6, doseIn: 16, yieldOut: 34, rating: null, isBestRecipe: true, notes: '', createdAt: '2026-01-31T07:30:00.000Z' },
-    { id: crypto.randomUUID(), beanId: beans[6].id, grindSize: 4, doseIn: 16, yieldOut: null, rating: null, isBestRecipe: true, notes: '', createdAt: '2026-02-02T07:30:00.000Z' },
+    { id: crypto.randomUUID(), beanId: beans[0].id, grindSize: 4, doseIn: 16, yieldOut: null, rating: null, notes: '', createdAt: '2026-01-15T07:30:00.000Z' },
+    { id: crypto.randomUUID(), beanId: beans[1].id, grindSize: 4, doseIn: 16, yieldOut: null, rating: null, notes: '', createdAt: '2026-01-16T07:30:00.000Z' },
+    { id: crypto.randomUUID(), beanId: beans[2].id, grindSize: 6, doseIn: 18, yieldOut: 31, rating: 'perfect', notes: '', createdAt: '2026-01-24T07:30:00.000Z' },
+    { id: crypto.randomUUID(), beanId: beans[3].id, grindSize: 5, doseIn: 18, yieldOut: 29, rating: 'okay', notes: '', createdAt: '2026-01-26T07:30:00.000Z' },
+    { id: crypto.randomUUID(), beanId: beans[4].id, grindSize: 5, doseIn: 16, yieldOut: 32, rating: 'perfect', notes: 'Came out a bit fast', createdAt: '2026-01-29T07:30:00.000Z' },
+    { id: crypto.randomUUID(), beanId: beans[5].id, grindSize: 6, doseIn: 16, yieldOut: 34, rating: null, notes: '', createdAt: '2026-01-31T07:30:00.000Z' },
+    { id: crypto.randomUUID(), beanId: beans[6].id, grindSize: 4, doseIn: 16, yieldOut: null, rating: null, notes: '', createdAt: '2026-02-02T07:30:00.000Z' },
   ];
   return { beans, shots };
 }
@@ -1248,7 +1263,7 @@ function app() {
     editingOptimalBeanId: null,
     optimalForm: { grindSize: null, doseIn: null, yieldOut: null },
     beanForm: { name: '', roaster: '', roastDate: '', rating: null, notes: '' },
-    shotForm: { grindSize: null, doseIn: null, yieldOut: null, rating: null, isBestRecipe: false, notes: '' },
+    shotForm: { grindSize: null, doseIn: null, yieldOut: null, rating: null, notes: '' },
     calendarYear: new Date().getFullYear(), calendarMonth: new Date().getMonth(),
 
     init() {
@@ -1261,14 +1276,14 @@ function app() {
         // Migrate: ensure isArchived field exists on all beans
         this.beans.forEach(b => { if (b.isArchived === undefined) b.isArchived = false; });
 
-        // Migrate: seed optimal settings from best-recipe shots if not yet set
+        // Migrate: seed optimal settings from first shot if not yet set
         this.beans.forEach(b => {
           if (b.optimalGrindSize === undefined && b.optimalDoseIn === undefined && b.optimalYieldOut === undefined) {
-            const best = this.shots.find(s => s.beanId === b.id && s.isBestRecipe);
-            if (best) {
-              b.optimalGrindSize = best.grindSize;
-              b.optimalDoseIn = best.doseIn;
-              b.optimalYieldOut = best.yieldOut;
+            const firstShot = this.shots.find(s => s.beanId === b.id);
+            if (firstShot) {
+              b.optimalGrindSize = firstShot.grindSize;
+              b.optimalDoseIn = firstShot.doseIn;
+              b.optimalYieldOut = firstShot.yieldOut;
             }
           }
         });
@@ -1322,11 +1337,15 @@ function app() {
     get archivedBeans() { return this.sortedBeans.filter(b => b.isArchived); },
 
     getFreshness(bean) {
-      if (!bean || !bean.roastDate) return { status: 'unknown', label: 'No roast date', detail: '', icon: '' };
+      if (!bean?.roastDate) return { status: 'unknown', label: 'No roast date', detail: '' };
       const days = daysBetween(bean.roastDate, new Date());
-      if (days < 7) return { status: 'resting', label: 'Resting', detail: (7 - days) + ' days until peak', icon: '\u{1F464}' };
-      if (days <= 21) return { status: 'optimal', label: 'At Peak', detail: (21 - days) + ' days remaining', icon: '\u2728' };
-      return { status: 'past', label: 'Past Peak', detail: 'Past peak by ' + (days - 21) + ' days', icon: '\u231B' };
+      if (days < FRESHNESS_RESTING_DAYS) {
+        return { status: 'resting', label: 'Resting', detail: `${FRESHNESS_RESTING_DAYS - days} days until peak` };
+      }
+      if (days <= FRESHNESS_OPTIMAL_DAYS) {
+        return { status: 'optimal', label: 'At Peak', detail: `${FRESHNESS_OPTIMAL_DAYS - days} days remaining` };
+      }
+      return { status: 'past', label: 'Past Peak', detail: `Past peak by ${days - FRESHNESS_OPTIMAL_DAYS} days` };
     },
 
     openBeanForm(id) {
@@ -1423,7 +1442,14 @@ function app() {
       if (bean) {
         bean.isArchived = true;
         this.saveBeans();
-        if (this.dailySelectedBeanId === id) { this.dailySelectedBeanId = ''; this.dailyLastShot = null; }
+        // Close shot form if it references this bean
+        if (this.showShotForm && this.shotFormBeanId === id) {
+          this.closeShotForm();
+        }
+        if (this.dailySelectedBeanId === id) {
+          this.dailySelectedBeanId = '';
+          this.dailyLastShot = null;
+        }
         this.selectedBeanId = null;
         this.beansView = 'list';
       }
@@ -1443,7 +1469,7 @@ function app() {
       this.editingShotId = null;
       this.shotFormBeanId = beanId;
       this.shotFormReturnTo = this.currentTab;
-      this.shotForm = { grindSize: null, doseIn: null, yieldOut: null, rating: null, isBestRecipe: false, notes: '' };
+      this.shotForm = { grindSize: null, doseIn: null, yieldOut: null, rating: null, notes: '' };
       this.showShotForm = true;
     },
 
@@ -1452,8 +1478,11 @@ function app() {
       this.shotFormBeanId = shot.beanId;
       this.shotFormReturnTo = this.currentTab;
       this.shotForm = {
-        grindSize: shot.grindSize, doseIn: shot.doseIn, yieldOut: shot.yieldOut,
-        rating: normalizeRating(shot.rating), isBestRecipe: false, notes: shot.notes ?? ''
+        grindSize: shot.grindSize,
+        doseIn: shot.doseIn,
+        yieldOut: shot.yieldOut,
+        rating: normalizeRating(shot.rating),
+        notes: shot.notes ?? ''
       };
       this.showShotForm = true;
     },
@@ -1476,8 +1505,28 @@ function app() {
     cancelEditingOptimal() { this.editingOptimalBeanId = null; },
 
     openShotFormFromDaily() { this.openShotForm(this.dailySelectedBeanId); },
-
     openShotFormFromBean() { this.openShotForm(this.selectedBeanId); },
+
+    closeShotForm() {
+      this.editingShotId = null;
+      this.showShotForm = false;
+      if (this.shotFormReturnTo === 'today') {
+        this.dailySelectedBeanId = '';
+        this.dailyLastShot = null;
+      }
+    },
+
+    /** Get default value for shot form field - uses edited shot values when editing, otherwise last shot or fallback */
+    getShotFormDefault(field) {
+      const defaults = { grindSize: 5, doseIn: 16, yieldOut: 32 };
+      // When editing, use the shotForm values that were populated in openShotFormForEdit
+      if (this.editingShotId && this.shotForm[field] != null) {
+        return this.shotForm[field];
+      }
+      // When creating new shot, use last shot values or defaults
+      const last = this.getLastShot(this.shotFormBeanId);
+      return last?.[field] ?? defaults[field];
+    },
 
     saveShot() {
       if (!this.shotFormBeanId) return;
@@ -1486,8 +1535,11 @@ function app() {
       const dose = this.shotForm.doseIn != null ? Math.round(Number(this.shotForm.doseIn)) : (last?.doseIn ?? 16);
       const yieldVal = this.shotForm.yieldOut != null ? Math.round(Number(this.shotForm.yieldOut)) : (last?.yieldOut ?? 32);
       const shotData = {
-        grindSize: grind, doseIn: dose, yieldOut: yieldVal,
-        rating: this.shotForm.rating, isBestRecipe: this.shotForm.isBestRecipe, notes: this.shotForm.notes || ''
+        grindSize: grind,
+        doseIn: dose,
+        yieldOut: yieldVal,
+        rating: this.shotForm.rating,
+        notes: this.shotForm.notes || ''
       };
       if (this.editingShotId) {
         const shot = this.shots.find(s => s.id === this.editingShotId);
@@ -1528,9 +1580,6 @@ function app() {
     },
     formatDate(dateStr) {
       return new Date(dateStr).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
-    },
-    formatTime(dateStr) {
-      return new Date(dateStr).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
     },
     formatRoastDate(dateStr) {
       if (!dateStr) return '';
@@ -1601,8 +1650,8 @@ function app() {
       const bars = [];
       for (const bean of activeBeans) {
         const roast = new Date(bean.roastDate);
-        const optStart = addDays(roast, 7);
-        const optEnd = addDays(roast, 21);
+        const optStart = addDays(roast, FRESHNESS_RESTING_DAYS);
+        const optEnd = addDays(roast, FRESHNESS_OPTIMAL_DAYS);
         if (optEnd < monthStart || optStart > monthEnd) continue;
         const clippedStart = optStart < monthStart ? monthStart : optStart;
         const clippedEnd = optEnd > monthEnd ? monthEnd : optEnd;
@@ -1618,11 +1667,7 @@ function app() {
 
     get calendarBarsUnique() {
       const seen = new Set();
-      return this.calendarBars.filter(b => {
-        if (seen.has(b.beanId)) return false;
-        seen.add(b.beanId);
-        return true;
-      });
+      return this.calendarBars.filter(b => !seen.has(b.beanId) && seen.add(b.beanId));
     },
 
     calendarBarsForWeek(weekIndex) {

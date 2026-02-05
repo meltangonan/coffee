@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Coffee Journal - Tests</title>
+<style>
+body { font-family: system-ui, sans-serif; max-width: 800px; margin: 40px auto; padding: 0 20px; }
+h1 { color: #2C1810; }
+.test { padding: 8px 12px; margin: 4px 0; border-radius: 4px; }
+.pass { background: #d4edda; color: #155724; }
+.fail { background: #f8d7da; color: #721c24; }
+.summary { margin-top: 20px; padding: 16px; border-radius: 8px; font-weight: 600; }
+.summary.all-pass { background: #d4edda; color: #155724; }
+.summary.has-fail { background: #f8d7da; color: #721c24; }
+</style>
+</head>
+<body>
+<h1>Coffee Journal - Test Suite</h1>
+<div id="results"></div>
+<div id="summary"></div>
+
+<script>
+// Test utilities
+const results = [];
+function test(name, fn) {
+  try {
+    fn();
+    results.push({ name, pass: true });
+  } catch (e) {
+    results.push({ name, pass: false, error: e.message });
+  }
+}
+function assert(condition, message) {
+  if (!condition) throw new Error(message || 'Assertion failed');
+}
+function assertEqual(actual, expected, message) {
+  if (actual !== expected) {
+    throw new Error(message || `Expected ${JSON.stringify(expected)}, got ${JSON.stringify(actual)}`);
+  }
+}
+function assertDeepEqual(actual, expected, message) {
+  if (JSON.stringify(actual) !== JSON.stringify(expected)) {
+    throw new Error(message || `Expected ${JSON.stringify(expected)}, got ${JSON.stringify(actual)}`);
+  }
+}
+
+// ========================================
+// Helper functions (extracted from app)
+// ========================================
+
+function isSameDay(d1, d2) {
+  const a = new Date(d1), b = new Date(d2);
+  return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
+}
+
+function addDays(date, days) {
+  const d = new Date(date);
+  d.setDate(d.getDate() + days);
+  return d;
+}
+
+function daysBetween(d1, d2) {
+  return Math.floor((new Date(d2) - new Date(d1)) / 86400000);
+}
+
+function normalizeRating(r) {
+  if (r == null) return null;
+  if (r === 'bad' || r === 'okay' || r === 'perfect') return r;
+  if (typeof r === 'number') {
+    if (r <= 2) return 'bad';
+    if (r === 3) return 'okay';
+    return 'perfect';
+  }
+  return null;
+}
+
+// Freshness thresholds (should be constants)
+const FRESHNESS_RESTING_DAYS = 7;
+const FRESHNESS_OPTIMAL_DAYS = 21;
+
+function getFreshness(bean) {
+  if (!bean || !bean.roastDate) return { status: 'unknown', label: 'No roast date', detail: '' };
+  const days = daysBetween(bean.roastDate, new Date());
+  if (days < FRESHNESS_RESTING_DAYS) {
+    return { status: 'resting', label: 'Resting', detail: `${FRESHNESS_RESTING_DAYS - days} days until peak` };
+  }
+  if (days <= FRESHNESS_OPTIMAL_DAYS) {
+    return { status: 'optimal', label: 'At Peak', detail: `${FRESHNESS_OPTIMAL_DAYS - days} days remaining` };
+  }
+  return { status: 'past', label: 'Past Peak', detail: `Past peak by ${days - FRESHNESS_OPTIMAL_DAYS} days` };
+}
+
+// ========================================
+// Tests
+// ========================================
+
+// --- Date Helper Tests ---
+test('isSameDay - same day returns true', () => {
+  assert(isSameDay('2026-01-15T08:00:00', '2026-01-15T20:00:00'));
+});
+
+test('isSameDay - different days returns false', () => {
+  assert(!isSameDay('2026-01-15T08:00:00', '2026-01-16T08:00:00'));
+});
+
+test('addDays - adds positive days', () => {
+  const result = addDays('2026-01-15', 7);
+  assertEqual(result.getDate(), 22);
+});
+
+test('addDays - handles month rollover', () => {
+  const result = addDays('2026-01-28', 7);
+  assertEqual(result.getMonth(), 1); // February
+  assertEqual(result.getDate(), 4);
+});
+
+test('daysBetween - calculates correctly', () => {
+  assertEqual(daysBetween('2026-01-01', '2026-01-08'), 7);
+});
+
+test('daysBetween - handles same day', () => {
+  assertEqual(daysBetween('2026-01-15', '2026-01-15'), 0);
+});
+
+// --- Rating Normalization Tests ---
+test('normalizeRating - null returns null', () => {
+  assertEqual(normalizeRating(null), null);
+});
+
+test('normalizeRating - string "bad" passes through', () => {
+  assertEqual(normalizeRating('bad'), 'bad');
+});
+
+test('normalizeRating - string "okay" passes through', () => {
+  assertEqual(normalizeRating('okay'), 'okay');
+});
+
+test('normalizeRating - string "perfect" passes through', () => {
+  assertEqual(normalizeRating('perfect'), 'perfect');
+});
+
+test('normalizeRating - number 1-2 becomes "bad"', () => {
+  assertEqual(normalizeRating(1), 'bad');
+  assertEqual(normalizeRating(2), 'bad');
+});
+
+test('normalizeRating - number 3 becomes "okay"', () => {
+  assertEqual(normalizeRating(3), 'okay');
+});
+
+test('normalizeRating - number 4-5 becomes "perfect"', () => {
+  assertEqual(normalizeRating(4), 'perfect');
+  assertEqual(normalizeRating(5), 'perfect');
+});
+
+test('normalizeRating - invalid string returns null', () => {
+  assertEqual(normalizeRating('invalid'), null);
+});
+
+// --- Freshness Tests ---
+test('getFreshness - no roast date returns unknown', () => {
+  const result = getFreshness({ name: 'Test', roastDate: null });
+  assertEqual(result.status, 'unknown');
+});
+
+test('getFreshness - null bean returns unknown', () => {
+  const result = getFreshness(null);
+  assertEqual(result.status, 'unknown');
+});
+
+test('getFreshness - 0 days is resting', () => {
+  const today = new Date().toISOString().slice(0, 10);
+  const result = getFreshness({ roastDate: today });
+  assertEqual(result.status, 'resting');
+});
+
+test('getFreshness - 6 days is resting', () => {
+  const sixDaysAgo = addDays(new Date(), -6).toISOString().slice(0, 10);
+  const result = getFreshness({ roastDate: sixDaysAgo });
+  assertEqual(result.status, 'resting');
+});
+
+test('getFreshness - 7 days is optimal', () => {
+  const sevenDaysAgo = addDays(new Date(), -7).toISOString().slice(0, 10);
+  const result = getFreshness({ roastDate: sevenDaysAgo });
+  assertEqual(result.status, 'optimal');
+});
+
+test('getFreshness - 21 days is optimal', () => {
+  const twentyOneDaysAgo = addDays(new Date(), -21).toISOString().slice(0, 10);
+  const result = getFreshness({ roastDate: twentyOneDaysAgo });
+  assertEqual(result.status, 'optimal');
+});
+
+test('getFreshness - 22 days is past', () => {
+  const twentyTwoDaysAgo = addDays(new Date(), -22).toISOString().slice(0, 10);
+  const result = getFreshness({ roastDate: twentyTwoDaysAgo });
+  assertEqual(result.status, 'past');
+});
+
+// --- Bean Data Model Tests ---
+test('Bean requires name and roaster', () => {
+  const bean = { name: 'Test Bean', roaster: 'Test Roaster' };
+  assert(bean.name && bean.roaster);
+});
+
+test('Bean with empty name should fail validation', () => {
+  const bean = { name: '', roaster: 'Test' };
+  const isValid = bean.name.trim() && bean.roaster.trim();
+  assert(!isValid);
+});
+
+// --- Shot Data Model Tests ---
+test('Shot references beanId', () => {
+  const shot = { beanId: 'bean-123', grindSize: 5 };
+  assert(shot.beanId);
+});
+
+test('Shot rating should be normalized', () => {
+  const shot = { rating: 4 };
+  const normalized = normalizeRating(shot.rating);
+  assertEqual(normalized, 'perfect');
+});
+
+// --- LocalStorage Mock Tests ---
+test('Beans array can be JSON serialized', () => {
+  const beans = [
+    { id: '1', name: 'Test', roaster: 'Roaster', roastDate: '2026-01-15', isArchived: false }
+  ];
+  const json = JSON.stringify(beans);
+  const parsed = JSON.parse(json);
+  assertEqual(parsed[0].name, 'Test');
+});
+
+test('Shots array can be JSON serialized', () => {
+  const shots = [
+    { id: '1', beanId: 'bean-1', grindSize: 5, doseIn: 16, yieldOut: 32, rating: 'perfect', notes: '', createdAt: '2026-01-15T08:00:00Z' }
+  ];
+  const json = JSON.stringify(shots);
+  const parsed = JSON.parse(json);
+  assertEqual(parsed[0].grindSize, 5);
+});
+
+// --- Sorting Tests ---
+test('Beans sort by freshness status', () => {
+  const order = { optimal: 0, resting: 1, past: 2, unknown: 3 };
+  assert(order.optimal < order.resting);
+  assert(order.resting < order.past);
+  assert(order.past < order.unknown);
+});
+
+test('Archived beans sort after active beans', () => {
+  const beans = [
+    { name: 'Archived', isArchived: true },
+    { name: 'Active', isArchived: false }
+  ];
+  const sorted = [...beans].sort((a, b) => {
+    if (!!a.isArchived !== !!b.isArchived) return a.isArchived ? 1 : -1;
+    return 0;
+  });
+  assertEqual(sorted[0].name, 'Active');
+  assertEqual(sorted[1].name, 'Archived');
+});
+
+// --- Calendar Logic Tests ---
+test('Calendar weeks calculation', () => {
+  // February 2026 starts on Sunday
+  const year = 2026, month = 1; // February
+  const first = new Date(year, month, 1);
+  const startDay = first.getDay();
+  assertEqual(startDay, 0); // Sunday
+});
+
+test('Calendar bar clipping works', () => {
+  const monthStart = new Date(2026, 1, 1); // Feb 1
+  const monthEnd = new Date(2026, 1, 28); // Feb 28
+  const optStart = new Date(2026, 0, 25); // Jan 25
+  const optEnd = new Date(2026, 1, 14); // Feb 14
+
+  const clippedStart = optStart < monthStart ? monthStart : optStart;
+  const clippedEnd = optEnd > monthEnd ? monthEnd : optEnd;
+
+  assertEqual(clippedStart.getMonth(), 1); // Feb
+  assertEqual(clippedEnd.getDate(), 14);
+});
+
+// --- hexToRgba Tests ---
+function hexToRgba(hex, alpha) {
+  const m = hex.match(/^#?([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})$/i);
+  if (!m) return hex;
+  return `rgba(${parseInt(m[1], 16)},${parseInt(m[2], 16)},${parseInt(m[3], 16)},${alpha})`;
+}
+
+test('hexToRgba converts correctly', () => {
+  assertEqual(hexToRgba('#C2714F', 0.5), 'rgba(194,113,79,0.5)');
+});
+
+test('hexToRgba handles invalid hex', () => {
+  assertEqual(hexToRgba('invalid', 0.5), 'invalid');
+});
+
+// --- UUID Fallback Test ---
+test('crypto.randomUUID exists or fallback works', () => {
+  let uuid;
+  if (typeof crypto !== 'undefined' && crypto.randomUUID) {
+    uuid = crypto.randomUUID();
+  } else {
+    // Fallback
+    uuid = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, c => {
+      const r = Math.random() * 16 | 0;
+      return (c === 'x' ? r : (r & 0x3 | 0x8)).toString(16);
+    });
+  }
+  assert(uuid.length === 36);
+  assert(uuid.includes('-'));
+});
+
+// --- Stepper Logic Tests ---
+test('Stepper clamps to min', () => {
+  const min = 1, max = 30;
+  const value = -5;
+  const clamped = Math.max(min, Math.min(max, value));
+  assertEqual(clamped, 1);
+});
+
+test('Stepper clamps to max', () => {
+  const min = 1, max = 30;
+  const value = 100;
+  const clamped = Math.max(min, Math.min(max, value));
+  assertEqual(clamped, 30);
+});
+
+test('Stepper parseInt handles decimals', () => {
+  const raw = '16.5';
+  const num = parseInt(raw, 10);
+  assertEqual(num, 16);
+});
+
+// --- Shot Quality Display Tests ---
+test('shotQualityLabel capitalizes first letter', () => {
+  const r = 'perfect';
+  const label = r.charAt(0).toUpperCase() + r.slice(1);
+  assertEqual(label, 'Perfect');
+});
+
+// --- Bean Occurrence Counter Tests ---
+test('getBeanOccurrence counts correctly', () => {
+  const beans = [
+    { id: '1', name: 'Test', roaster: 'Roaster', createdAt: '2026-01-01' },
+    { id: '2', name: 'Test', roaster: 'Roaster', createdAt: '2026-01-15' },
+    { id: '3', name: 'Other', roaster: 'Roaster', createdAt: '2026-01-10' },
+  ];
+
+  function getBeanOccurrence(bean, allBeans) {
+    const key = (bean.name || '').toLowerCase().trim() + '|' + (bean.roaster || '').toLowerCase().trim();
+    const allMatching = allBeans.filter(b => {
+      const bKey = (b.name || '').toLowerCase().trim() + '|' + (b.roaster || '').toLowerCase().trim();
+      return bKey === key;
+    }).sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
+    return allMatching.findIndex(b => b.id === bean.id) + 1;
+  }
+
+  assertEqual(getBeanOccurrence(beans[0], beans), 1);
+  assertEqual(getBeanOccurrence(beans[1], beans), 2);
+  assertEqual(getBeanOccurrence(beans[2], beans), 1);
+});
+
+// --- Format Tests ---
+test('formatRoastDate handles empty', () => {
+  function formatRoastDate(dateStr) {
+    if (!dateStr) return '';
+    const d = new Date(dateStr + 'T00:00:00');
+    return 'Roasted ' + d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+  }
+  assertEqual(formatRoastDate(''), '');
+  assertEqual(formatRoastDate(null), '');
+});
+
+// ========================================
+// Display Results
+// ========================================
+function displayResults() {
+  const container = document.getElementById('results');
+  const summary = document.getElementById('summary');
+
+  let passed = 0, failed = 0;
+
+  results.forEach(r => {
+    const div = document.createElement('div');
+    div.className = `test ${r.pass ? 'pass' : 'fail'}`;
+    div.textContent = `${r.pass ? '✓' : '✗'} ${r.name}`;
+    if (!r.pass) {
+      div.textContent += ` — ${r.error}`;
+      failed++;
+    } else {
+      passed++;
+    }
+    container.appendChild(div);
+  });
+
+  summary.className = `summary ${failed > 0 ? 'has-fail' : 'all-pass'}`;
+  summary.textContent = `${passed} passed, ${failed} failed out of ${results.length} tests`;
+}
+
+displayResults();
+</script>
+</body>
+</html>

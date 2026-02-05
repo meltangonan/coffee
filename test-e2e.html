@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Coffee Journal - E2E Tests</title>
+<style>
+body { font-family: system-ui, sans-serif; max-width: 900px; margin: 40px auto; padding: 0 20px; }
+h1 { color: #2C1810; }
+.test { padding: 8px 12px; margin: 4px 0; border-radius: 4px; font-family: monospace; font-size: 13px; }
+.pass { background: #d4edda; color: #155724; }
+.fail { background: #f8d7da; color: #721c24; }
+.pending { background: #fff3cd; color: #856404; }
+.summary { margin-top: 20px; padding: 16px; border-radius: 8px; font-weight: 600; }
+.summary.all-pass { background: #d4edda; color: #155724; }
+.summary.has-fail { background: #f8d7da; color: #721c24; }
+#app-frame { display: none; }
+</style>
+</head>
+<body>
+<h1>Coffee Journal - E2E Integration Tests</h1>
+<p>These tests load the actual app and verify functionality works as expected.</p>
+<div id="results"></div>
+<div id="summary"></div>
+
+<!-- Hidden iframe to load the app -->
+<iframe id="app-frame" src="index.html" width="400" height="600"></iframe>
+
+<script>
+const results = [];
+let appWindow = null;
+let Alpine = null;
+let app = null;
+
+function test(name, fn) {
+  return new Promise(async (resolve) => {
+    const div = document.createElement('div');
+    div.className = 'test pending';
+    div.textContent = `⏳ ${name}`;
+    document.getElementById('results').appendChild(div);
+
+    try {
+      await fn();
+      div.className = 'test pass';
+      div.textContent = `✓ ${name}`;
+      results.push({ name, pass: true });
+    } catch (e) {
+      div.className = 'test fail';
+      div.textContent = `✗ ${name} — ${e.message}`;
+      results.push({ name, pass: false, error: e.message });
+    }
+    resolve();
+  });
+}
+
+function assert(condition, message) {
+  if (!condition) throw new Error(message || 'Assertion failed');
+}
+
+function assertEqual(actual, expected, message) {
+  if (actual !== expected) {
+    throw new Error(message || `Expected ${JSON.stringify(expected)}, got ${JSON.stringify(actual)}`);
+  }
+}
+
+function wait(ms) {
+  return new Promise(r => setTimeout(r, ms));
+}
+
+async function waitForAlpine() {
+  const frame = document.getElementById('app-frame');
+  appWindow = frame.contentWindow;
+
+  // Wait for Alpine to be ready
+  for (let i = 0; i < 50; i++) {
+    if (appWindow.Alpine && appWindow.Alpine.store) {
+      Alpine = appWindow.Alpine;
+      break;
+    }
+    await wait(100);
+  }
+
+  if (!Alpine) throw new Error('Alpine.js did not load');
+
+  // Wait for app to initialize
+  await wait(200);
+
+  // Get the app data
+  const appEl = appWindow.document.querySelector('[x-data="app()"]');
+  if (appEl && appEl._x_dataStack) {
+    app = appEl._x_dataStack[0];
+  }
+
+  if (!app) throw new Error('App data not accessible');
+}
+
+// Clear localStorage before tests
+function resetApp() {
+  appWindow.localStorage.removeItem('coffee_beans');
+  appWindow.localStorage.removeItem('coffee_shots');
+  appWindow.location.reload();
+}
+
+async function runTests() {
+  const frame = document.getElementById('app-frame');
+  frame.style.display = 'block';
+
+  // Wait for iframe to load
+  await new Promise(resolve => {
+    frame.onload = resolve;
+    if (frame.contentDocument?.readyState === 'complete') resolve();
+  });
+
+  await waitForAlpine();
+
+  // ========================================
+  // TESTS
+  // ========================================
+
+  await test('App initializes with seed data', async () => {
+    assert(app.beans.length > 0, 'Should have beans');
+    assert(app.shots.length > 0, 'Should have shots');
+  });
+
+  await test('currentBeans filters out archived beans', async () => {
+    const archived = app.beans.filter(b => b.isArchived);
+    const current = app.currentBeans;
+    assert(archived.length > 0, 'Should have archived beans in seed data');
+    current.forEach(b => {
+      assert(!b.isArchived, 'Current beans should not be archived');
+    });
+  });
+
+  await test('archivedBeans returns only archived beans', async () => {
+    const archived = app.archivedBeans;
+    archived.forEach(b => {
+      assert(b.isArchived, 'Archived beans should be archived');
+    });
+  });
+
+  await test('getFreshness returns correct status for each stage', async () => {
+    // Create test beans with different roast dates
+    const today = new Date().toISOString().slice(0, 10);
+
+    // Resting (0-6 days)
+    const restingBean = { roastDate: today };
+    assertEqual(app.getFreshness(restingBean).status, 'resting');
+
+    // Optimal (7-21 days)
+    const optimalDate = new Date();
+    optimalDate.setDate(optimalDate.getDate() - 10);
+    const optimalBean = { roastDate: optimalDate.toISOString().slice(0, 10) };
+    assertEqual(app.getFreshness(optimalBean).status, 'optimal');
+
+    // Past peak (22+ days)
+    const pastDate = new Date();
+    pastDate.setDate(pastDate.getDate() - 30);
+    const pastBean = { roastDate: pastDate.toISOString().slice(0, 10) };
+    assertEqual(app.getFreshness(pastBean).status, 'past');
+  });
+
+  await test('getBeanById returns correct bean', async () => {
+    const firstBean = app.beans[0];
+    const found = app.getBeanById(firstBean.id);
+    assertEqual(found.id, firstBean.id);
+    assertEqual(found.name, firstBean.name);
+  });
+
+  await test('getBeanById returns null for invalid id', async () => {
+    const found = app.getBeanById('nonexistent-id');
+    assert(found === null, 'Should return null for invalid id');
+  });
+
+  await test('getShotsForBean returns shots for specific bean', async () => {
+    const beanWithShots = app.beans.find(b =>
+      app.shots.some(s => s.beanId === b.id)
+    );
+    if (beanWithShots) {
+      const shots = app.getShotsForBean(beanWithShots.id);
+      assert(shots.length > 0, 'Should have shots');
+      shots.forEach(s => {
+        assertEqual(s.beanId, beanWithShots.id);
+      });
+    }
+  });
+
+  await test('todayShots filters to only today', async () => {
+    const todayShots = app.todayShots;
+    const today = new Date();
+    todayShots.forEach(s => {
+      const shotDate = new Date(s.createdAt);
+      assertEqual(shotDate.toDateString(), today.toDateString());
+    });
+  });
+
+  await test('sortedBeans puts non-archived before archived', async () => {
+    const sorted = app.sortedBeans;
+    let foundArchived = false;
+    sorted.forEach(b => {
+      if (b.isArchived) foundArchived = true;
+      if (!b.isArchived && foundArchived) {
+        throw new Error('Non-archived bean found after archived bean');
+      }
+    });
+  });
+
+  await test('openBeanForm sets up form correctly for new bean', async () => {
+    app.openBeanForm(null);
+    assertEqual(app.editingBeanId, null);
+    assertEqual(app.beansView, 'form');
+    assertEqual(app.beanForm.name, '');
+    assertEqual(app.beanForm.roaster, '');
+  });
+
+  await test('openBeanForm populates form for existing bean', async () => {
+    const bean = app.beans.find(b => b.name && b.roaster);
+    app.openBeanForm(bean.id);
+    assertEqual(app.editingBeanId, bean.id);
+    assertEqual(app.beanForm.name, bean.name);
+    assertEqual(app.beanForm.roaster, bean.roaster);
+  });
+
+  await test('saveBean validation rejects empty name', async () => {
+    const initialCount = app.beans.length;
+    app.openBeanForm(null);
+    app.beanForm.name = '';
+    app.beanForm.roaster = 'Test Roaster';
+    app.saveBean();
+    // Should not add a new bean
+    assertEqual(app.beans.length, initialCount);
+  });
+
+  await test('saveBean validation rejects empty roaster', async () => {
+    const initialCount = app.beans.length;
+    app.openBeanForm(null);
+    app.beanForm.name = 'Test Bean';
+    app.beanForm.roaster = '';
+    app.saveBean();
+    // Should not add a new bean
+    assertEqual(app.beans.length, initialCount);
+  });
+
+  await test('saveBean creates new bean with valid data', async () => {
+    const initialCount = app.beans.length;
+    app.openBeanForm(null);
+    app.beanForm.name = 'E2E Test Bean';
+    app.beanForm.roaster = 'E2E Test Roaster';
+    app.beanForm.roastDate = '2026-02-01';
+    app.saveBean();
+    assertEqual(app.beans.length, initialCount + 1);
+    const newBean = app.beans.find(b => b.name === 'E2E Test Bean');
+    assert(newBean, 'New bean should exist');
+    assertEqual(newBean.roaster, 'E2E Test Roaster');
+  });
+
+  await test('archiveBean sets isArchived flag', async () => {
+    const bean = app.beans.find(b => !b.isArchived);
+    const id = bean.id;
+    app.selectBean(id);
+    app.archiveBean(id);
+    const archivedBean = app.getBeanById(id);
+    assert(archivedBean.isArchived, 'Bean should be archived');
+  });
+
+  await test('unarchiveBean clears isArchived flag', async () => {
+    const bean = app.beans.find(b => b.isArchived);
+    if (bean) {
+      const id = bean.id;
+      app.unarchiveBean(id);
+      const unarchivedBean = app.getBeanById(id);
+      assert(!unarchivedBean.isArchived, 'Bean should not be archived');
+    }
+  });
+
+  await test('openShotForm initializes form correctly', async () => {
+    const bean = app.beans.find(b => !b.isArchived);
+    app.openShotForm(bean.id);
+    assertEqual(app.shotFormBeanId, bean.id);
+    assertEqual(app.showShotForm, true);
+    assertEqual(app.editingShotId, null);
+  });
+
+  await test('closeShotForm resets form state', async () => {
+    const bean = app.beans.find(b => !b.isArchived);
+    app.currentTab = 'today';
+    app.dailySelectedBeanId = bean.id;
+    app.openShotForm(bean.id);
+    app.closeShotForm();
+    assertEqual(app.showShotForm, false);
+    assertEqual(app.editingShotId, null);
+    assertEqual(app.dailySelectedBeanId, '');
+  });
+
+  await test('getShotFormDefault returns shot values when editing', async () => {
+    const shot = app.shots[0];
+    app.openShotFormForEdit(shot);
+    assertEqual(app.getShotFormDefault('grindSize'), shot.grindSize);
+    assertEqual(app.getShotFormDefault('doseIn'), shot.doseIn);
+    app.closeShotForm();
+  });
+
+  await test('saveShot creates new shot', async () => {
+    const bean = app.beans.find(b => !b.isArchived);
+    const initialCount = app.shots.length;
+    app.openShotForm(bean.id);
+    app.shotForm.grindSize = 7;
+    app.shotForm.doseIn = 18;
+    app.shotForm.yieldOut = 36;
+    app.shotForm.rating = 'perfect';
+    app.saveShot();
+    assertEqual(app.shots.length, initialCount + 1);
+    const newShot = app.shots.find(s => s.grindSize === 7 && s.doseIn === 18);
+    assert(newShot, 'New shot should exist');
+  });
+
+  await test('deleteShot removes shot', async () => {
+    const shot = app.shots[0];
+    const initialCount = app.shots.length;
+    app.deleteShot(shot.id);
+    assertEqual(app.shots.length, initialCount - 1);
+    const deleted = app.shots.find(s => s.id === shot.id);
+    assert(!deleted, 'Shot should be deleted');
+  });
+
+  await test('deleteBean removes bean and related shots', async () => {
+    // Create a test bean with shots
+    app.openBeanForm(null);
+    app.beanForm.name = 'Delete Test Bean';
+    app.beanForm.roaster = 'Delete Test Roaster';
+    app.saveBean();
+
+    const bean = app.beans.find(b => b.name === 'Delete Test Bean');
+    app.selectBean(bean.id);
+
+    // Add a shot
+    app.openShotForm(bean.id);
+    app.shotForm.grindSize = 5;
+    app.saveShot();
+
+    const beanId = bean.id;
+    const shotsBefore = app.shots.filter(s => s.beanId === beanId).length;
+    assert(shotsBefore > 0, 'Should have shots before delete');
+
+    app.deleteBean(beanId);
+
+    const deletedBean = app.getBeanById(beanId);
+    assert(!deletedBean, 'Bean should be deleted');
+
+    const shotsAfter = app.shots.filter(s => s.beanId === beanId).length;
+    assertEqual(shotsAfter, 0, 'Related shots should be deleted');
+  });
+
+  await test('calendarWeeks generates correct week structure', async () => {
+    const weeks = app.calendarWeeks;
+    assert(weeks.length >= 4 && weeks.length <= 6, 'Should have 4-6 weeks');
+    weeks.forEach(week => {
+      assertEqual(week.length, 7, 'Each week should have 7 days');
+    });
+  });
+
+  await test('formatDate returns formatted string', async () => {
+    const result = app.formatDate('2026-01-15T08:00:00');
+    assert(result.includes('Jan'), 'Should include month');
+    assert(result.includes('15'), 'Should include day');
+  });
+
+  await test('formatRoastDate handles empty input', async () => {
+    assertEqual(app.formatRoastDate(''), '');
+    assertEqual(app.formatRoastDate(null), '');
+  });
+
+  await test('shotQualityLabel capitalizes rating', async () => {
+    assertEqual(app.shotQualityLabel('bad'), 'Bad');
+    assertEqual(app.shotQualityLabel('okay'), 'Okay');
+    assertEqual(app.shotQualityLabel('perfect'), 'Perfect');
+    assertEqual(app.shotQualityLabel(null), null);
+  });
+
+  await test('Tab navigation works', async () => {
+    app.currentTab = 'today';
+    assertEqual(app.currentTab, 'today');
+
+    app.currentTab = 'beans';
+    assertEqual(app.currentTab, 'beans');
+
+    app.currentTab = 'calendar';
+    assertEqual(app.currentTab, 'calendar');
+  });
+
+  await test('localStorage persistence works', async () => {
+    const beansJson = appWindow.localStorage.getItem('coffee_beans');
+    const shotsJson = appWindow.localStorage.getItem('coffee_shots');
+
+    assert(beansJson, 'Beans should be in localStorage');
+    assert(shotsJson, 'Shots should be in localStorage');
+
+    const beans = JSON.parse(beansJson);
+    const shots = JSON.parse(shotsJson);
+
+    assert(Array.isArray(beans), 'Beans should be an array');
+    assert(Array.isArray(shots), 'Shots should be an array');
+  });
+
+  await test('crypto.randomUUID polyfill works', async () => {
+    const uuid = appWindow.crypto.randomUUID();
+    assert(uuid.length === 36, 'UUID should be 36 characters');
+    assert(uuid.includes('-'), 'UUID should contain dashes');
+    // Check format
+    const parts = uuid.split('-');
+    assertEqual(parts.length, 5, 'UUID should have 5 parts');
+  });
+
+  // ========================================
+  // SUMMARY
+  // ========================================
+
+  const passed = results.filter(r => r.pass).length;
+  const failed = results.filter(r => !r.pass).length;
+
+  const summary = document.getElementById('summary');
+  summary.className = `summary ${failed > 0 ? 'has-fail' : 'all-pass'}`;
+  summary.textContent = `${passed} passed, ${failed} failed out of ${results.length} tests`;
+
+  // Hide the iframe after tests
+  frame.style.display = 'none';
+}
+
+// Run tests when page loads
+window.onload = runTests;
+</script>
+</body>
+</html>

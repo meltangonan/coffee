@@ -1,35 +1,49 @@
 # Coffee Journal
 
-A mobile-first single-page app for tracking espresso beans, dialing in shots, monitoring freshness windows, and logging daily brewing.
+A simple app for home espresso enthusiasts to track their beans, dial in shots, and monitor freshness.
 
-Built as a single HTML file with [Alpine.js](https://alpinejs.dev/) 3.x and localStorage. No backend, no build step, no dependencies to install.
+## What It Does
 
-## Features
+**Track your beans** — Add each bag of coffee with the roaster name and roast date. Rate them 1-5 stars, add tasting notes, and archive old bags when they're done.
 
-- **Bean Management** — Add beans with roaster, roast date, rating, and notes. Archive old beans to keep your list clean.
-- **Shot Logging** — Track grind size, dose, yield, and quality (bad/okay/perfect) for each pull. Edit or delete any shot.
-- **Optimal Settings** — Save your dialed-in grind/dose/yield per bean, independent of the shot log.
-- **Quick Log** — Select a bean and reuse your last shot settings with one tap, or adjust before logging.
-- **Freshness Tracking** — Automatic freshness status based on roast date: Resting (<7 days), Optimal (7-21 days), Past Peak (>21 days).
-- **Calendar View** — Monthly calendar with colored bars showing each bean's optimal freshness window.
+**Log your shots** — Record grind size, dose, and yield for each pull. Mark shots as bad, okay, or perfect to track your dial-in progress.
 
-## Getting Started
+**Save your best settings** — Once you've dialed in a bean, save the optimal grind/dose/yield. These stay with the bean even as you log more experimental shots.
 
-No build step required. Open `index.html` directly in a browser, or serve it locally:
+**Know when to drink it** — Freshness tracking tells you when each bean is:
+- **Resting** (0-6 days) — Still off-gassing, extraction may be inconsistent
+- **At Peak** (7-21 days) — Sweet spot for most espresso
+- **Past Peak** (22+ days) — Still drinkable, but flavors fade
 
+**Plan your rotation** — The calendar view shows colored bars for each bean's optimal window, so you can see at a glance what's peaking this month.
+
+## Quick Start
+
+Just open `index.html` in your browser. That's it.
+
+To serve locally (useful for mobile testing):
 ```
 python3 -m http.server
 ```
+Then visit `http://localhost:8000` on any device on your network.
 
-Deploy by copying `index.html` to any static host (GitHub Pages, Netlify, etc.).
+## Your Data
 
-## Tech Stack
+Everything is saved in your browser's localStorage. Your data stays on your device — there's no account, no cloud sync, no backend.
 
-- **Alpine.js 3.x** — Reactive UI via CDN
-- **localStorage** — Data persistence (`coffee_beans`, `coffee_shots`)
-- **Playfair Display + DM Sans** — Typography via Google Fonts
-- **Zero dependencies** — No npm, no bundler, no framework beyond Alpine
+**First time?** The app loads with sample data so you can explore. Clear your browser's localStorage to start fresh.
 
-## Data
+**Switching browsers/devices?** Your data doesn't sync automatically. Export isn't built in yet, but you can copy the `coffee_beans` and `coffee_shots` keys from localStorage if needed.
 
-All data is stored in the browser's localStorage. On first load, seed data is generated to demonstrate the app. Clear localStorage to reset.
+## Tips
+
+- **Swipe left** on any shot to reveal the delete button (on mobile)
+- **Tap a bean** in the list to see its full history and optimal settings
+- **Archive** beans you've finished instead of deleting — you can easily "bring back" the same coffee when you buy it again, and it remembers your settings
+- **Quick log** — Select a bean on the Today tab and it opens the shot form pre-filled with your last settings
+
+## Design Philosophy
+
+This is a single HTML file with no build step, no dependencies to install, and no server required. It runs entirely in your browser.
+
+Why? Because coffee logging should be fast and friction-free. Open tab, log shot, done.
