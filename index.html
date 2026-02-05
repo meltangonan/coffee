@@ -1338,27 +1338,6 @@ function hexToRgba(hex, alpha) {
   return `rgba(${parseInt(m[1], 16)},${parseInt(m[2], 16)},${parseInt(m[3], 16)},${alpha})`;
 }
 
-function generateSeedData() {
-  const beans = [
-    { id: crypto.randomUUID(), name: 'Light Roast', roaster: 'Starbucks', roastDate: '2026-01-10', rating: null, notes: '', createdAt: '2026-01-10T08:00:00.000Z', isArchived: true },
-    { id: crypto.randomUUID(), name: 'Espresso Roast', roaster: 'Starbucks', roastDate: '2026-01-12', rating: null, notes: 'Manually grind all', createdAt: '2026-01-12T08:00:00.000Z', isArchived: true },
-    { id: crypto.randomUUID(), name: 'Guatemala David Solano', roaster: 'Temple', roastDate: '2026-01-20', rating: 4, notes: 'Good as a cortado', createdAt: '2026-01-20T08:00:00.000Z', isArchived: true },
-    { id: crypto.randomUUID(), name: 'A Love Supreme', roaster: 'Dark Matter', roastDate: '2026-01-22', rating: 3, notes: 'Nothing special', createdAt: '2026-01-22T08:00:00.000Z', isArchived: true },
-    { id: crypto.randomUUID(), name: 'Unicorn Blood', roaster: 'Dark Matter', roastDate: '2026-01-25', rating: 4, notes: 'Came out a bit fast, maybe +1g', createdAt: '2026-01-25T08:00:00.000Z', isArchived: true },
-    { id: crypto.randomUUID(), name: 'Big Riff', roaster: 'Metric', roastDate: '2026-01-28', rating: null, notes: '', createdAt: '2026-01-28T08:00:00.000Z' },
-    { id: crypto.randomUUID(), name: 'Pilipinas', roaster: '4LW', roastDate: '2026-02-01', rating: null, notes: '', createdAt: '2026-02-01T08:00:00.000Z' },
-  ];
-  const shots = [
-    { id: crypto.randomUUID(), beanId: beans[0].id, grindSize: 4, doseIn: 16, yieldOut: null, rating: null, notes: '', createdAt: '2026-01-15T07:30:00.000Z' },
-    { id: crypto.randomUUID(), beanId: beans[1].id, grindSize: 4, doseIn: 16, yieldOut: null, rating: null, notes: '', createdAt: '2026-01-16T07:30:00.000Z' },
-    { id: crypto.randomUUID(), beanId: beans[2].id, grindSize: 6, doseIn: 18, yieldOut: 31, rating: 'perfect', notes: '', createdAt: '2026-01-24T07:30:00.000Z' },
-    { id: crypto.randomUUID(), beanId: beans[3].id, grindSize: 5, doseIn: 18, yieldOut: 29, rating: 'okay', notes: '', createdAt: '2026-01-26T07:30:00.000Z' },
-    { id: crypto.randomUUID(), beanId: beans[4].id, grindSize: 5, doseIn: 16, yieldOut: 32, rating: 'perfect', notes: 'Came out a bit fast', createdAt: '2026-01-29T07:30:00.000Z' },
-    { id: crypto.randomUUID(), beanId: beans[5].id, grindSize: 6, doseIn: 16, yieldOut: 34, rating: null, notes: '', createdAt: '2026-01-31T07:30:00.000Z' },
-    { id: crypto.randomUUID(), beanId: beans[6].id, grindSize: 4, doseIn: 16, yieldOut: null, rating: null, notes: '', createdAt: '2026-02-02T07:30:00.000Z' },
-  ];
-  return { beans, shots };
-}
 
 function isSameDay(d1, d2) {
   const a = new Date(d1), b = new Date(d2);
@@ -1424,9 +1403,6 @@ function app() {
         });
         if (shotsDirty) this.saveShots();
       } else {
-        const seed = generateSeedData();
-        this.beans = seed.beans;
-        this.shots = seed.shots;
         this.saveBeans();
         this.saveShots();
       }
