@@ -24,11 +24,11 @@ Serve the directory and open:
 
 ## Architecture
 
-The entire application lives in `index.html` (~1,700 lines) with three inline sections:
+The entire application lives in `index.html` (~1,850 lines) with three inline sections:
 
-1. **CSS** (lines ~18-417): Design system with CSS variables, component styles, responsive layout, and spacing utilities. Uses "Warm Industrial Café" aesthetic with Playfair Display (headings) and DM Sans (body) fonts.
-2. **HTML** (lines ~418-1033): Alpine.js template directives. Root element uses `x-data="app()" x-init="init()"`. Tab-based navigation (Today, Beans, Calendar) with no routing library.
-3. **JavaScript** (lines ~1035-1700): Alpine components, helper functions, main `app()` object, and seed data generator.
+1. **CSS** (lines ~18-482): Design system with CSS variables, component styles, responsive layout, and spacing utilities. Uses "Warm Industrial Café" aesthetic with Playfair Display (headings) and DM Sans (body) fonts.
+2. **HTML** (lines ~486-1170): Alpine.js template directives. Root element uses `x-data="app()" x-init="init()"`. Tab-based navigation (Today, Beans, Calendar) with no routing library.
+3. **JavaScript** (lines ~1171-1847): Alpine components, helper functions, main `app()` object, and seed data generator.
 
 ### Core Abstractions
 
@@ -50,13 +50,13 @@ const FRESHNESS_OPTIMAL_DAYS = 21;  // Days 7-21: At Peak
 
 ### Key Functional Modules (all methods on the `app()` object)
 
-- **Bean Management**: `saveBean`, `deleteBean`, `selectBean`, `updateBeanRating`, `archiveBean`, `unarchiveBean`, `duplicateFromArchive`
-- **Shot Logging**: `saveShot`, `deleteShot`, `openShotForm`, `openShotFormForEdit`, `closeShotForm`, `getShotFormDefault`
+- **Bean Management**: `saveBean`, `deleteBean`, `selectBean`, `updateBeanRating`, `archiveBean`, `unarchiveBean`, `duplicateFromArchive`, `duplicateBean` (pre-fill form from existing bean; used by "Fill from previous bean" and duplicate-from-detail)
+- **Shot Logging**: `saveShot`, `deleteShot`, `openShotForm`, `openShotFormForEdit`, `closeShotForm`, `getShotFormDefault`; shot form includes optional `shotDate` (date picker) for backdating
 - **Daily Tracking**: `onDailyBeanSelect`, `openShotFormFromDaily`, `openShotFormFromBean`
 - **Optimal Settings**: `startEditingOptimal`, `saveOptimalSettings`, `cancelEditingOptimal`
 - **Freshness**: `getFreshness` — returns `{ status, label, detail }`
 - **Calendar**: `calendarWeeks`, `calendarBars`, `calendarBarsUnique`, `calendarBarsForWeek`, `getRangeBandStyle`
-- **Computed Properties**: `todayShots`, `selectedBean`, `sortedBeans`, `currentBeans`, `archivedBeans`, `todayFormatted`, `calendarMonthLabel`
+- **Computed Properties**: `todayShots` (filtered by `shotDate === today`), `selectedBean`, `sortedBeans`, `currentBeans`, `archivedBeans`, `todayFormatted`, `calendarMonthLabel`; `getUniqueBeanSources()` for "Fill from previous bean" picker (de-duped by name+roaster, best representative)
 
 ### Data Model
 
@@ -89,7 +89,8 @@ Stored in localStorage under keys `coffee_beans` and `coffee_shots`.
   yieldOut: number|null,   // grams, typically 28-50
   rating: string|null,     // 'bad'|'okay'|'perfect'
   notes: string,
-  createdAt: string        // ISO timestamp
+  shotDate: string,        // ISO date "YYYY-MM-DD" — when the shot was made (defaults to today; backfill from createdAt if missing)
+  createdAt: string        // ISO timestamp — when the record was logged
 }
 ```
 
@@ -113,7 +114,7 @@ Stored in localStorage under keys `coffee_beans` and `coffee_shots`.
 |-----------|---------|--------------|
 | `stepper()` | Numeric +/- input for shot form | `shotForm` |
 | `optimalStepper()` | Numeric +/- input for optimal settings | `optimalForm` |
-| `datePicker()` | Calendar date selector | Dynamic via `dpModelKey` |
+| `datePicker()` | Calendar date selector (roast date, shot date) | Dynamic via `dpModelKey` (e.g. `beanForm.roastDate`, `shotForm.shotDate`) |
 
 ### Design Tokens
 
@@ -144,6 +145,7 @@ Calendar bar colors are defined in JS `BAR_COLORS` array. Spacing utilities (`.m
 
 ### When Editing Shot Form Logic
 - Use `getShotFormDefault(field)` to get initial values — it handles both new shots and edits
+- Shot form includes `shotDate` (defaults to today for new shots; existing shots use `shotDate || createdAt` for display/filtering)
 - Always call `closeShotForm()` to close — it handles cleanup for both tabs
 
 ### When Adding New Freshness-Related Logic
@@ -165,6 +167,8 @@ Calendar bar colors are defined in JS `BAR_COLORS` array. Spacing utilities (`.m
 - `brainstorms/2026-01-25-coffee-bean-tracker-prd.md` — Product requirements
 - `brainstorms/2026-01-25-coffee-bean-tracker-brainstorm.md` — Design decisions
 - `brainstorms/2026-02-04-coffee-bean-tracker-audit.md` — PRD/design audit and next steps
+- `brainstorms/2026-02-05-shot-date-picker-brainstorm.md` — Shot date picker (backdate shots)
+- `brainstorms/2026-02-05-duplicate-bean-anywhere-brainstorm.md` — Duplicate / Fill from previous bean
 
 ## Testing
 

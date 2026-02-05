@@ -1,49 +1,80 @@
 # Coffee Journal
 
-A simple app for home espresso enthusiasts to track their beans, dial in shots, and monitor freshness.
+A simple web app for home espresso enthusiasts: track your beans, log your shots, dial in your grind, and see at a glance when each coffee is at its best.
+
+---
+
+## Who It’s For
+
+**Home baristas** who:
+
+- Pull 1–2 shots a day and want to remember what worked
+- Buy from different roasters and forget which settings suited which bean
+- Care about freshness (resting vs peak vs past peak) and want to plan their rotation
+- Don’t want a heavy app — just a quick way to log and look things up
+
+No account, no install. Open the link, use it on your phone or laptop. Your data stays in your browser.
+
+---
 
 ## What It Does
 
-**Track your beans** — Add each bag of coffee with the roaster name and roast date. Rate them 1-5 stars, add tasting notes, and archive old bags when they're done.
+### Today
 
-**Log your shots** — Record grind size, dose, and yield for each pull. Mark shots as bad, okay, or perfect to track your dial-in progress.
+Your daily log. Pick which bean you’re pulling, then log the shot (grind, dose, yield, how it tasted). You can backdate a shot if you forgot to log it yesterday. Today’s list shows everything you pulled “today” so you can edit or delete from there.
 
-**Save your best settings** — Once you've dialed in a bean, save the optimal grind/dose/yield. These stay with the bean even as you log more experimental shots.
+### Coffee (Beans)
 
-**Know when to drink it** — Freshness tracking tells you when each bean is:
-- **Resting** (0-6 days) — Still off-gassing, extraction may be inconsistent
-- **At Peak** (7-21 days) — Sweet spot for most espresso
-- **Past Peak** (22+ days) — Still drinkable, but flavors fade
+- **Add beans** — Name, roaster, roast date. Rate the bag 1–5 stars and add notes.
+- **Save optimal settings** — Once a bean is dialed in, save grind/dose/yield on the bean. Next time you add the same coffee (e.g. “Fill from previous bean”), those settings copy over; you only change the roast date.
+- **Archive** — When a bag is finished, archive it. You can bring it back later (e.g. when you buy the same coffee again) and duplicate it so you keep your settings.
+- **Duplicate** — From a bean’s detail page you can duplicate it (new bag, same coffee). From the “Add bean” form you can choose “Fill from previous bean” to copy name, roaster, notes, and optimal settings from any past or current bean.
 
-**Plan your rotation** — The calendar view shows colored bars for each bean's optimal window, so you can see at a glance what's peaking this month.
+### Calendar
 
-## Quick Start
+A month view with colored bars for each bean’s **peak freshness window** (about 7–21 days after roast). See which beans are in the sweet spot this month and plan what to open next.
 
-Just open `index.html` in your browser. That's it.
+### Freshness
 
-To serve locally (useful for mobile testing):
-```
-python3 -m http.server
-```
-Then visit `http://localhost:8000` on any device on your network.
+Each bean shows a status:
+
+- **Resting** (0–6 days) — Still off-gassing; extraction can be inconsistent.
+- **At Peak** (7–21 days) — Sweet spot for most espresso.
+- **Past Peak** (22+ days) — Still drinkable; flavors gradually fade.
+
+---
+
+## How to Use It
+
+**Just open the app in your browser.**  
+If someone shared a link with you (e.g. GitHub Pages or a static host), open that URL on your phone or computer. No sign-up, no install.
+
+- **First time?** The app may load with sample data so you can click around. To start with a clean slate, clear your browser’s localStorage for this site (or use a private window and clear data when you’re done testing).
+- **Add a bean** from the Coffee tab (or from Today if you have no beans yet).
+- **Log a shot** from Today by choosing a bean and filling in the form, or from a bean’s detail page.
+- **Swipe left** on a shot (on mobile) to reveal the delete button.
+
+---
 
 ## Your Data
 
-Everything is saved in your browser's localStorage. Your data stays on your device — there's no account, no cloud sync, no backend.
+Everything is stored in your browser’s **localStorage**. There is no server, no account, and no cloud sync. Data stays on the device you’re using.
 
-**First time?** The app loads with sample data so you can explore. Clear your browser's localStorage to start fresh.
+- **Same browser, same device** — Your beans and shots persist between visits.
+- **Different browser or device** — Data does not sync. Export isn’t built in yet; if you need to move data, you can copy the `coffee_beans` and `coffee_shots` keys from localStorage (e.g. via DevTools).
 
-**Switching browsers/devices?** Your data doesn't sync automatically. Export isn't built in yet, but you can copy the `coffee_beans` and `coffee_shots` keys from localStorage if needed.
+---
 
 ## Tips
 
-- **Swipe left** on any shot to reveal the delete button (on mobile)
-- **Tap a bean** in the list to see its full history and optimal settings
-- **Archive** beans you've finished instead of deleting — you can easily "bring back" the same coffee when you buy it again, and it remembers your settings
-- **Quick log** — Select a bean on the Today tab and it opens the shot form pre-filled with your last settings
+- **Swipe left** on any shot to reveal the delete button (on mobile).
+- **Tap a bean** in the list to see its full history and optimal settings.
+- **Archive** beans when you’re done instead of deleting — you can restore or duplicate them when you buy the same coffee again, and it keeps your settings.
+- **Quick log** — On the Today tab, select a bean and the shot form opens with your last settings for that bean; adjust and save.
+- **Backdate a shot** — In the shot form, use the date picker next to “How was this shot?” to log a shot for a past date.
 
-## Design Philosophy
+---
 
-This is a single HTML file with no build step, no dependencies to install, and no server required. It runs entirely in your browser.
+## For Developers
 
-Why? Because coffee logging should be fast and friction-free. Open tab, log shot, done.
+Single HTML file, no build step. Open `index.html` directly or serve the folder (e.g. `python3 -m http.server`) for local or mobile testing. Deploy by hosting `index.html` (and optional `manifest.json`) on any static host.
