@@ -1,8 +1,3 @@
-Here is a rewritten version that is more coffee-native, more accurate in how espresso people actually talk, and slightly tighter. I kept your structure and intent, but adjusted language, framing, and a few terms to better match serious home barista culture.
-
-You can paste this over your existing README.
-
----
 
 # Coffee Journal
 
@@ -134,7 +129,3 @@ If you need to move data manually, you can copy the `coffee_beans` and `coffee_s
 Single-page app. No build step.
 
 Open `index.html` directly, or serve the folder locally (for example `python3 -m http.server`). Deploy by hosting `index.html` (and optional `manifest.json`) on any static host.
-
----
-
-If you want, next we can tighten the language even further around “best dial-in” vs “reference dial-in”, or add a short philosophy note about taste-first dialing.
