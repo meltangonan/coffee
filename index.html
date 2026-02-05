@@ -140,9 +140,10 @@ body {
 
 .btn-full { width: 100%; }
 
-.fab { position: fixed; bottom: calc(var(--tab-total) + 20px); right: max(16px, calc(50% - 284px)); width: 56px; height: 56px; border-radius: 50%; background: var(--amber); color: var(--espresso); border: none; font-size: 28px; display: flex; align-items: center; justify-content: center; box-shadow: var(--shadow-xl); cursor: pointer; z-index: 50; transition: all 0.2s ease; -webkit-tap-highlight-color: transparent; }
-.fab:hover { transform: scale(1.08); background: var(--amber-dark); color: white; }
-.fab:active { transform: scale(0.95); }
+.fab { position: fixed; bottom: calc(var(--tab-total) + 20px); right: max(16px, calc(50% - 284px)); height: 52px; padding: 0 20px 0 16px; border-radius: 26px; background: var(--amber); color: var(--espresso); border: none; font-family: var(--font-body); font-size: 15px; font-weight: 600; display: flex; align-items: center; gap: 8px; box-shadow: var(--shadow-xl); cursor: pointer; z-index: 50; transition: all 0.2s ease; -webkit-tap-highlight-color: transparent; }
+.fab-icon { font-size: 22px; line-height: 1; font-weight: 400; }
+.fab:hover { transform: scale(1.04); background: var(--amber-dark); color: white; }
+.fab:active { transform: scale(0.97); }
 
 .form-group { margin-bottom: 18px; }
 .form-label { display: block; font-size: 13px; font-weight: 500; color: var(--text-secondary); margin-bottom: 6px; letter-spacing: 0.3px; text-transform: uppercase; }
@@ -762,7 +763,7 @@ textarea.form-input { min-height: 80px; resize: vertical; line-height: 1.5; }
       </div>
 
       <!-- FAB: Add Bean -->
-      <button x-show="currentTab === 'beans' && beansView === 'list' && beans.length > 0" class="fab" @click="openBeanForm(null)" title="Add Bean">+</button>
+      <button x-show="currentTab === 'beans' && beansView === 'list' && beans.length > 0" class="fab" @click="openBeanForm(null)"><span class="fab-icon">+</span> Add Coffee Bean</button>
     </div>
 
     <!-- ═══════════════════════════════════════
@@ -820,8 +821,9 @@ textarea.form-input { min-height: 80px; resize: vertical; line-height: 1.5; }
   <!-- ═══════════════════════════════════════
        SHOT FORM OVERLAY
        ═══════════════════════════════════════ -->
-  <div x-show="showShotForm" class="overlay" @click.self="editingShotId = null; showShotForm = false; if (shotFormReturnTo === 'today') { dailySelectedBeanId = ''; dailyLastShot = null; }" x-cloak>
-    <div class="panel" @click.stop :key="'shot-form-' + (shotFormBeanId || '') + '-' + showShotForm">
+  <template x-if="showShotForm">
+  <div class="overlay" @click.self="editingShotId = null; showShotForm = false; if (shotFormReturnTo === 'today') { dailySelectedBeanId = ''; dailyLastShot = null; }">
+    <div class="panel" @click.stop>
       <div class="panel-handle"></div>
       <div style="display: flex; align-items: center; gap: 12px;" class="mb-20">
         <button class="back-btn" @click="editingShotId = null; showShotForm = false; if (shotFormReturnTo === 'today') { dailySelectedBeanId = ''; dailyLastShot = null; }">&#8592;</button>
@@ -870,6 +872,7 @@ textarea.form-input { min-height: 80px; resize: vertical; line-height: 1.5; }
       </div>
     </div>
   </div>
+  </template>
 
   <!-- ═══════════════════════════════════════
        TAB BAR
