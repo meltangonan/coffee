@@ -1123,8 +1123,9 @@ function app() {
       }
       this.saveShots();
       this.showShotForm = false;
-      if (this.shotFormReturnTo === 'today' && this.dailySelectedBeanId) {
-        this.dailyLastShot = this.getLastShot(this.dailySelectedBeanId);
+      if (this.shotFormReturnTo === 'today') {
+        this.dailySelectedBeanId = '';
+        this.dailyLastShot = null;
       }
     },
 
@@ -1142,7 +1143,8 @@ function app() {
     logQuickShot() {
       if (!this.dailySelectedBeanId || !this.dailyLastShot) return;
       this.logQuickShotForBean(this.dailySelectedBeanId);
-      this.dailyLastShot = this.getLastShot(this.dailySelectedBeanId);
+      this.dailySelectedBeanId = '';
+      this.dailyLastShot = null;
     },
 
     get todayFormatted() {
