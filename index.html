@@ -14,6 +14,8 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,400&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
 <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3/dist/cdn.min.js"></script>
 <style>
 /* ═══════════════════════════════════════════
@@ -98,18 +100,19 @@ body {
 .badge-past { background: var(--freshness-past-bg); color: var(--freshness-past); }
 .badge-archived { background: rgba(44,24,16,0.06); color: var(--text-muted); }
 .badge-dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
-.badge[data-tooltip], .freshness-display[data-tooltip] { position: relative; cursor: help; }
-.badge[data-tooltip]::after, .freshness-display[data-tooltip]::after {
-  content: attr(data-tooltip); position: absolute; bottom: calc(100% + 8px); left: 50%; transform: translateX(-50%);
-  background: var(--espresso); color: var(--cream); font-size: 12px; font-weight: 400; line-height: 1.4;
-  padding: 8px 12px; border-radius: var(--radius); white-space: normal; width: max-content; max-width: 220px;
-  opacity: 0; pointer-events: none; transition: opacity 0.15s ease; z-index: 10; text-align: center;
-}
-.badge[data-tooltip]:hover::after, .badge[data-tooltip]:focus::after,
-.freshness-display[data-tooltip]:hover::after, .freshness-display[data-tooltip]:focus::after { opacity: 1; }
-@media (pointer: coarse) {
-  .badge[data-tooltip]:active::after, .freshness-display[data-tooltip]:active::after { opacity: 1; }
-}
+
+.freshness-legend { padding-bottom: 8px; }
+.freshness-legend-items { background: var(--cream-dark); border-radius: var(--radius); padding: 4px 16px; }
+.freshness-legend-item { display: flex; align-items: flex-start; gap: 10px; padding: 8px 0; }
+.freshness-legend-item + .freshness-legend-item { border-top: 1px solid rgba(44,24,16,0.06); }
+.freshness-legend-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; margin-top: 4px; }
+.freshness-legend-dot.resting { background: var(--freshness-resting); }
+.freshness-legend-dot.at-peak { background: var(--freshness-optimal); }
+.freshness-legend-dot.past-peak { background: var(--freshness-past); }
+.freshness-legend-text { display: flex; flex-direction: column; gap: 1px; }
+.freshness-legend-label { font-size: 13px; font-weight: 600; color: var(--text-primary); }
+.freshness-legend-days { font-size: 11px; font-weight: 500; color: var(--text-muted); }
+.freshness-legend-desc { font-size: 12px; color: var(--text-secondary); line-height: 1.4; margin-top: 2px; }
 
 .btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; padding: 12px 24px; min-height: 44px; border: none; border-radius: var(--radius); font-family: var(--font-body); font-size: 15px; font-weight: 500; cursor: pointer; transition: all 0.2s ease; -webkit-tap-highlight-color: transparent; }
 .btn-primary { background: var(--espresso); color: var(--cream); }
@@ -145,6 +148,31 @@ body {
 .form-input:focus { outline: none; border-color: var(--amber); box-shadow: 0 0 0 3px rgba(212,165,116,0.15); }
 .form-input::placeholder { color: var(--text-muted); }
 textarea.form-input { min-height: 80px; resize: vertical; line-height: 1.5; }
+
+/* Flatpickr café theme */
+.flatpickr-calendar { background: #FFFCF7; border: 1.5px solid rgba(44,24,16,0.1); border-radius: var(--radius-lg); box-shadow: 0 12px 40px rgba(44,24,16,0.15), 0 4px 12px rgba(44,24,16,0.08); font-family: var(--font-body); padding: 4px; }
+.flatpickr-calendar.arrowTop::before, .flatpickr-calendar.arrowTop::after { display: none; }
+.flatpickr-months { padding: 8px 4px 4px; border-radius: var(--radius) var(--radius) 0 0; }
+.flatpickr-months .flatpickr-month { height: 36px; }
+.flatpickr-current-month { font-family: var(--font-heading); font-size: 16px; font-weight: 600; color: var(--espresso); padding-top: 4px; }
+.flatpickr-current-month .flatpickr-monthDropdown-months { font-family: var(--font-heading); font-weight: 600; appearance: none; -webkit-appearance: none; background: transparent; }
+.flatpickr-current-month input.cur-year { font-family: var(--font-heading); font-weight: 600; color: var(--espresso); }
+.flatpickr-months .flatpickr-prev-month, .flatpickr-months .flatpickr-next-month { padding: 6px 10px; border-radius: var(--radius-sm); transition: background 0.15s ease; }
+.flatpickr-months .flatpickr-prev-month:hover, .flatpickr-months .flatpickr-next-month:hover { background: rgba(212,165,116,0.15); }
+.flatpickr-months .flatpickr-prev-month svg, .flatpickr-months .flatpickr-next-month svg { fill: var(--text-secondary); }
+span.flatpickr-weekday { font-family: var(--font-body); font-size: 11px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; }
+.flatpickr-day { font-family: var(--font-body); font-size: 14px; color: var(--text-primary); border-radius: 50%; height: 38px; line-height: 38px; max-width: 38px; margin: 1px; border: none; transition: background 0.15s ease, color 0.15s ease; }
+.flatpickr-day:hover { background: rgba(212,165,116,0.18); border: none; }
+.flatpickr-day.today { background: rgba(212,165,116,0.12); color: var(--amber-dark); font-weight: 600; border: none; }
+.flatpickr-day.today:hover { background: rgba(212,165,116,0.25); }
+.flatpickr-day.selected, .flatpickr-day.selected:hover { background: var(--amber-dark); color: white; font-weight: 600; border: none; box-shadow: 0 2px 8px rgba(184,134,78,0.3); }
+.flatpickr-day.flatpickr-disabled, .flatpickr-day.prevMonthDay, .flatpickr-day.nextMonthDay { color: var(--text-muted); opacity: 0.4; }
+.flatpickr-innerContainer { padding: 4px 4px 8px; }
+.dayContainer { min-width: 280px; max-width: 280px; }
+.flatpickr-days { width: 288px !important; }
+.date-input-wrapper { position: relative; cursor: pointer; }
+.date-input-wrapper .form-input { cursor: pointer; padding-right: 40px; }
+.date-input-wrapper .date-icon { position: absolute; right: 12px; top: 50%; transform: translateY(-50%); color: var(--text-muted); pointer-events: none; font-size: 16px; line-height: 1; }
 
 .stepper { display: flex; align-items: center; gap: 0; border: 1.5px solid rgba(44,24,16,0.12); border-radius: var(--radius); background: white; overflow: hidden; }
 .stepper-btn { width: 44px; min-height: 44px; display: flex; align-items: center; justify-content: center; font-size: 18px; font-weight: 600; color: var(--text-primary); background: transparent; border: none; cursor: pointer; transition: background 0.15s ease; -webkit-tap-highlight-color: transparent; }
@@ -218,7 +246,10 @@ textarea.form-input { min-height: 80px; resize: vertical; line-height: 1.5; }
 .freshness-display.resting { background: var(--freshness-resting-bg); }
 .freshness-display.optimal { background: var(--freshness-optimal-bg); }
 .freshness-display.past { background: var(--freshness-past-bg); }
-.freshness-icon { font-size: 24px; }
+.freshness-icon { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+.freshness-display.resting .freshness-icon { background: var(--freshness-resting); }
+.freshness-display.optimal .freshness-icon { background: var(--freshness-optimal); }
+.freshness-display.past .freshness-icon { background: var(--freshness-past); }
 .freshness-text { font-size: 14px; font-weight: 500; }
 
 .recipe-card { background: linear-gradient(135deg, var(--espresso) 0%, var(--espresso-light) 100%); border-radius: var(--radius-lg); padding: 20px; color: var(--cream); margin-bottom: 20px; position: relative; overflow: hidden; }
@@ -243,9 +274,32 @@ textarea.form-input { min-height: 80px; resize: vertical; line-height: 1.5; }
 .shot-meta { display: flex; align-items: center; gap: 8px; }
 .best-recipe-star { color: var(--amber); font-size: 16px; }
 
-.daily-bean-selector { margin-bottom: 20px; }
-.daily-bean-selector select { width: 100%; padding: 14px 16px; min-height: 48px; border: 2px solid rgba(44,24,16,0.12); border-radius: var(--radius); font-family: var(--font-body); font-size: 16px; color: var(--text-primary); background: white; -webkit-appearance: none; appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%236B5B4E' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 14px center; cursor: pointer; }
-.daily-bean-selector select:focus { outline: none; border-color: var(--amber); box-shadow: 0 0 0 3px rgba(212,165,116,0.15); }
+.daily-bean-selector { margin-bottom: 20px; position: relative; }
+.bean-picker-trigger { width: 100%; padding: 14px 16px; min-height: 48px; border: 2px solid rgba(44,24,16,0.12); border-radius: var(--radius); font-family: var(--font-body); font-size: 16px; color: var(--text-primary); background: white; cursor: pointer; display: flex; align-items: center; justify-content: space-between; gap: 12px; transition: border-color 0.2s ease, box-shadow 0.2s ease; -webkit-tap-highlight-color: transparent; }
+.bean-picker-trigger:focus, .bean-picker-trigger.open { outline: none; border-color: var(--amber); box-shadow: 0 0 0 3px rgba(212,165,116,0.15); }
+.bean-picker-trigger .picker-placeholder { color: var(--text-muted); }
+.bean-picker-trigger .picker-selected { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.bean-picker-trigger .picker-selected-name { font-weight: 500; color: var(--text-primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.bean-picker-trigger .picker-selected-roaster { font-size: 13px; color: var(--text-secondary); white-space: nowrap; }
+.bean-picker-chevron { flex-shrink: 0; width: 18px; height: 18px; color: var(--text-muted); transition: transform 0.25s ease; }
+.bean-picker-trigger.open .bean-picker-chevron { transform: rotate(180deg); }
+.bean-picker-dropdown { position: absolute; top: calc(100% + 6px); left: 0; right: 0; z-index: 50; background: #FFFCF7; border: 1.5px solid rgba(44,24,16,0.1); border-radius: var(--radius-lg); box-shadow: 0 12px 40px rgba(44,24,16,0.15), 0 4px 12px rgba(44,24,16,0.08); max-height: 280px; overflow-y: auto; padding: 6px; opacity: 0; transform: translateY(-6px); transition: opacity 0.2s ease, transform 0.2s ease; pointer-events: none; -webkit-overflow-scrolling: touch; overscroll-behavior: contain; }
+.bean-picker-dropdown.show { opacity: 1; transform: translateY(0); pointer-events: auto; }
+.bean-picker-option { display: flex; align-items: center; gap: 12px; padding: 12px 12px; border-radius: var(--radius); cursor: pointer; transition: background 0.15s ease; -webkit-tap-highlight-color: transparent; }
+.bean-picker-option:hover, .bean-picker-option:focus { background: rgba(212,165,116,0.1); outline: none; }
+.bean-picker-option:active { background: rgba(212,165,116,0.18); }
+.bean-picker-option.selected { background: rgba(212,165,116,0.12); }
+.bean-picker-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; border: 1.5px solid rgba(44,24,16,0.1); }
+.bean-picker-dot.resting { background: var(--freshness-resting); border-color: var(--freshness-resting); }
+.bean-picker-dot.optimal { background: var(--freshness-optimal); border-color: var(--freshness-optimal); }
+.bean-picker-dot.past { background: var(--freshness-past); border-color: var(--freshness-past); }
+.bean-picker-info { min-width: 0; flex: 1; }
+.bean-picker-name { font-family: var(--font-body); font-size: 15px; font-weight: 500; color: var(--text-primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.bean-picker-meta { font-size: 12px; color: var(--text-secondary); margin-top: 1px; display: flex; align-items: center; gap: 6px; }
+.bean-picker-freshness { font-size: 11px; font-weight: 500; padding: 1px 6px; border-radius: 4px; }
+.bean-picker-freshness.resting { color: var(--freshness-resting); background: var(--freshness-resting-bg); }
+.bean-picker-freshness.optimal { color: var(--freshness-optimal); background: var(--freshness-optimal-bg); }
+.bean-picker-freshness.past { color: var(--freshness-past); background: var(--freshness-past-bg); }
 
 .btn.btn-action-small { flex: 0 0 auto; min-height: 44px; padding: 8px 14px; font-size: 14px; }
 
@@ -326,14 +380,35 @@ textarea.form-input { min-height: 80px; resize: vertical; line-height: 1.5; }
       </div>
 
       <!-- Bean Selector — only current (non-archived) beans -->
-      <div class="daily-bean-selector">
+      <div class="daily-bean-selector" x-data="{ pickerOpen: false }" @click.outside="pickerOpen = false" @keydown.escape.window="pickerOpen = false">
         <label class="form-label">What are you pulling?</label>
-        <select x-model="dailySelectedBeanId" @change="onDailyBeanSelect()">
-          <option value="">Choose a coffee bean...</option>
-          <template x-for="bean in currentBeans" :key="bean.id">
-            <option :value="bean.id" x-text="bean.name + ' \u2014 ' + bean.roaster"></option>
+        <div class="bean-picker-trigger" :class="{ open: pickerOpen }" @click="pickerOpen = !pickerOpen" tabindex="0" @keydown.enter.prevent="pickerOpen = !pickerOpen" @keydown.space.prevent="pickerOpen = !pickerOpen" role="combobox" aria-haspopup="listbox" :aria-expanded="pickerOpen">
+          <template x-if="!dailySelectedBeanId">
+            <span class="picker-placeholder">Choose a coffee bean...</span>
           </template>
-        </select>
+          <template x-if="dailySelectedBeanId && getBeanById(dailySelectedBeanId)">
+            <span class="picker-selected">
+              <span class="bean-picker-dot" :class="getFreshness(getBeanById(dailySelectedBeanId)).status"></span>
+              <span class="picker-selected-name" x-text="getBeanById(dailySelectedBeanId).name"></span>
+              <span class="picker-selected-roaster" x-text="'\u2014 ' + getBeanById(dailySelectedBeanId).roaster"></span>
+            </span>
+          </template>
+          <svg class="bean-picker-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>
+        </div>
+        <div class="bean-picker-dropdown" :class="{ show: pickerOpen }" role="listbox">
+          <template x-for="bean in currentBeans" :key="bean.id">
+            <div class="bean-picker-option" :class="{ selected: dailySelectedBeanId === bean.id }" @click="dailySelectedBeanId = bean.id; pickerOpen = false; onDailyBeanSelect()" role="option" :aria-selected="dailySelectedBeanId === bean.id" tabindex="0" @keydown.enter.prevent="dailySelectedBeanId = bean.id; pickerOpen = false; onDailyBeanSelect()">
+              <span class="bean-picker-dot" :class="getFreshness(bean).status"></span>
+              <span class="bean-picker-info">
+                <span class="bean-picker-name" x-text="bean.name"></span>
+                <span class="bean-picker-meta">
+                  <span x-text="bean.roaster"></span>
+                  <span class="bean-picker-freshness" :class="getFreshness(bean).status" x-show="bean.roastDate" x-text="getFreshness(bean).label"></span>
+                </span>
+              </span>
+            </div>
+          </template>
+        </div>
       </div>
 
       <!-- Today's Shots Summary -->
@@ -401,7 +476,7 @@ textarea.form-input { min-height: 80px; resize: vertical; line-height: 1.5; }
                 </span>
               </div>
               <div class="bean-card-footer">
-                <span class="badge" :class="'badge-' + getFreshness(bean).status" :data-tooltip="getFreshness(bean).tooltip" x-show="bean.roastDate" tabindex="0">
+                <span class="badge" :class="'badge-' + getFreshness(bean).status" x-show="bean.roastDate">
                   <span class="badge-dot"></span>
                   <span x-text="getFreshness(bean).label"></span>
                 </span>
@@ -440,6 +515,37 @@ textarea.form-input { min-height: 80px; resize: vertical; line-height: 1.5; }
           <div class="empty-state-text">Start tracking your espresso beans and dial in the perfect shot.</div>
           <button class="btn btn-amber" @click="openBeanForm(null)">Add Bean</button>
         </div>
+
+        <!-- Freshness Legend -->
+        <div x-show="beans.length > 0" class="freshness-legend">
+          <div class="beans-section-label">Freshness Stages</div>
+          <div class="freshness-legend-items">
+          <div class="freshness-legend-item">
+            <span class="freshness-legend-dot resting"></span>
+            <div class="freshness-legend-text">
+              <span class="freshness-legend-label">Resting</span>
+              <span class="freshness-legend-days">0–6 days post-roast</span>
+              <span class="freshness-legend-desc">Extraction can be gassy and less consistent.</span>
+            </div>
+          </div>
+          <div class="freshness-legend-item">
+            <span class="freshness-legend-dot at-peak"></span>
+            <div class="freshness-legend-text">
+              <span class="freshness-legend-label">At Peak</span>
+              <span class="freshness-legend-days">7–21 days post-roast</span>
+              <span class="freshness-legend-desc">Best balance of stable extraction and vibrant flavor.</span>
+            </div>
+          </div>
+          <div class="freshness-legend-item">
+            <span class="freshness-legend-dot past-peak"></span>
+            <div class="freshness-legend-text">
+              <span class="freshness-legend-label">Past Peak</span>
+              <span class="freshness-legend-days">22+ days post-roast</span>
+              <span class="freshness-legend-desc">Flavor and aromatics may fade. Still brewable, but expect less pop.</span>
+            </div>
+          </div>
+          </div>
+        </div>
       </div>
 
       <!-- Bean Detail -->
@@ -451,12 +557,12 @@ textarea.form-input { min-height: 80px; resize: vertical; line-height: 1.5; }
             <div class="text-secondary" x-text="selectedBean?.roaster"></div>
             <span x-show="selectedBean?.isArchived" class="badge badge-archived" style="margin-top: 4px;">Archived</span>
           </div>
-          <button class="btn btn-ghost" style="padding: 8px 12px; font-size: 14px;" @click="openBeanForm(selectedBeanId)">Edit</button>
+          <button x-show="!selectedBean?.isArchived" class="btn btn-ghost" style="padding: 8px 12px; font-size: 14px;" @click="openBeanForm(selectedBeanId)">Edit</button>
         </div>
 
         <!-- Days remaining (roast date is edited only in Edit Bean screen) -->
-        <div x-show="selectedBean?.roastDate" class="freshness-display mb-16" :class="getFreshness(selectedBean).status" :data-tooltip="getFreshness(selectedBean).tooltip" tabindex="0">
-          <span class="freshness-icon" x-text="getFreshness(selectedBean).icon"></span>
+        <div x-show="selectedBean?.roastDate" class="freshness-display mb-16" :class="getFreshness(selectedBean).status">
+          <span class="freshness-icon"></span>
           <span class="freshness-text" x-text="getFreshness(selectedBean).detail"></span>
         </div>
 
@@ -483,7 +589,7 @@ textarea.form-input { min-height: 80px; resize: vertical; line-height: 1.5; }
               <span class="recipe-stat-label">Ratio</span>
               <span class="recipe-stat-value" style="font-size:16px; margin-left: 6px;" x-text="'1:' + (selectedBean.optimalYieldOut / selectedBean.optimalDoseIn).toFixed(1)"></span>
             </div>
-            <button type="button" class="btn btn-ghost recipe-card-edit" @click="startEditingOptimal()">Edit</button>
+            <button x-show="!selectedBean?.isArchived" type="button" class="btn btn-ghost recipe-card-edit" @click="startEditingOptimal()">Edit</button>
           </div>
           <div x-show="editingOptimalBeanId === selectedBeanId" class="recipe-card-edit-form">
             <div class="recipe-card-grid">
@@ -528,7 +634,7 @@ textarea.form-input { min-height: 80px; resize: vertical; line-height: 1.5; }
         <div class="mb-20">
           <div style="display: flex; align-items: center; justify-content: space-between;" class="mb-12">
             <h3 class="heading-md">Shot History</h3>
-            <button class="btn btn-amber" style="padding: 8px 16px; font-size: 14px;" @click="openShotFormFromBean()">+ Log Shot</button>
+            <button x-show="!selectedBean?.isArchived" class="btn btn-amber" style="padding: 8px 16px; font-size: 14px;" @click="openShotFormFromBean()">+ Log Shot</button>
           </div>
 
           <div x-show="getShotsForBean(selectedBeanId).length === 0" class="empty-state" style="padding: 24px;">
@@ -537,12 +643,12 @@ textarea.form-input { min-height: 80px; resize: vertical; line-height: 1.5; }
           </div>
           <template x-for="shot in getShotsForBean(selectedBeanId)" :key="shot.id">
             <div class="today-shot-swipe fade-in" x-data="{ swipeStart: 0, swipeX: 0, reveal: false }"
-                 @touchstart="swipeStart = $event.touches[0].clientX; swipeX = 0"
-                 @touchmove="swipeX = Math.min(0, $event.touches[0].clientX - swipeStart)"
-                 @touchend="if (swipeX < -60) { deleteShot(shot.id); } else { reveal = swipeX < -36; swipeX = reveal ? -72 : 0; }"
+                 @touchstart="if (!selectedBean?.isArchived) { swipeStart = $event.touches[0].clientX; swipeX = 0; }"
+                 @touchmove="if (!selectedBean?.isArchived) { swipeX = Math.min(0, $event.touches[0].clientX - swipeStart); }"
+                 @touchend="if (!selectedBean?.isArchived) { if (swipeX < -60) { deleteShot(shot.id); } else { reveal = swipeX < -36; swipeX = reveal ? -72 : 0; } }"
                  :class="{ 'reveal': reveal }">
               <div class="today-shot-swipe-actions" @click="deleteShot(shot.id)" role="button" tabindex="0" @keydown.enter="deleteShot(shot.id)">Delete</div>
-              <div class="today-shot-swipe-content today-shot-content" :style="'transform: translateX(' + (reveal ? -72 : swipeX) + 'px)'" @click="openShotFormForEdit(shot)">
+              <div class="today-shot-swipe-content today-shot-content" :style="'transform: translateX(' + (reveal ? -72 : swipeX) + 'px)'" @click="if (!selectedBean?.isArchived) openShotFormForEdit(shot)">
                 <div class="shot-row bean-shot-swipe-row">
                   <div class="shot-info">
                     <div class="shot-settings">
@@ -555,8 +661,8 @@ textarea.form-input { min-height: 80px; resize: vertical; line-height: 1.5; }
                   </div>
                   <div class="shot-meta">
                     <span x-show="shotQualityLabel(shot.rating)" class="shot-quality-badge" :class="shotQualityClass(shot.rating)" x-text="shotQualityLabel(shot.rating)"></span>
-                    <button type="button" class="btn btn-ghost today-shot-edit" @click.stop="openShotFormForEdit(shot)" title="Edit shot">Edit</button>
-                    <button type="button" class="btn btn-ghost today-shot-delete" @click.stop="deleteShot(shot.id)" title="Delete shot">&#10005;</button>
+                    <button x-show="!selectedBean?.isArchived" type="button" class="btn btn-ghost today-shot-edit" @click.stop="openShotFormForEdit(shot)" title="Edit shot">Edit</button>
+                    <button x-show="!selectedBean?.isArchived" type="button" class="btn btn-ghost today-shot-delete" @click.stop="deleteShot(shot.id)" title="Delete shot">&#10005;</button>
                   </div>
                 </div>
               </div>
@@ -571,7 +677,8 @@ textarea.form-input { min-height: 80px; resize: vertical; line-height: 1.5; }
             <template x-for="n in 5">
               <span class="star" :class="n <= (selectedBean?.rating || 0) ? 'filled' : ''"
                     x-text="n <= (selectedBean?.rating || 0) ? '\u2605' : '\u2606'"
-                    @click="updateBeanRating(n)"></span>
+                    @click="if (!selectedBean?.isArchived) updateBeanRating(n)"
+                    :style="selectedBean?.isArchived ? 'cursor: default;' : ''"></span>
             </template>
           </div>
         </div>
@@ -598,7 +705,12 @@ textarea.form-input { min-height: 80px; resize: vertical; line-height: 1.5; }
         </div>
         <div class="form-group">
           <label class="form-label">Roast Date</label>
-          <input type="date" class="form-input" x-model="beanForm.roastDate">
+          <div class="date-input-wrapper" @click="$refs.roastDateInput._flatpickr && $refs.roastDateInput._flatpickr.open()">
+            <input type="text" class="form-input" x-ref="roastDateInput" placeholder="Select date" readonly
+              x-init="flatpickr($refs.roastDateInput, { dateFormat: 'Y-m-d', allowInput: false, disableMobile: true, onChange(sel, dateStr) { beanForm.roastDate = dateStr } })"
+              x-effect="if ($refs.roastDateInput._flatpickr) $refs.roastDateInput._flatpickr.setDate(beanForm.roastDate, false)">
+            <span class="date-icon">&#128197;</span>
+          </div>
         </div>
         <div class="form-group">
           <label class="form-label">Notes</label>
@@ -902,9 +1014,9 @@ function app() {
     getFreshness(bean) {
       if (!bean || !bean.roastDate) return { status: 'unknown', label: 'No roast date', detail: '', icon: '' };
       const days = daysBetween(bean.roastDate, new Date());
-      if (days < 7) return { status: 'resting', label: 'Resting', detail: (7 - days) + ' days until peak', tooltip: 'Early post-roast. Extraction can be gassy and less consistent.', icon: '\u{1F464}' };
-      if (days <= 21) return { status: 'optimal', label: 'At Peak', detail: (21 - days) + ' days remaining', tooltip: 'Best balance of stable extraction and vibrant flavor.', icon: '\u2728' };
-      return { status: 'past', label: 'Past Peak', detail: 'Past peak by ' + (days - 21) + ' days', tooltip: 'Flavor and aromatics may start to fade. You can still brew it, but expect less pop.', icon: '\u231B' };
+      if (days < 7) return { status: 'resting', label: 'Resting', detail: (7 - days) + ' days until peak', icon: '\u{1F464}' };
+      if (days <= 21) return { status: 'optimal', label: 'At Peak', detail: (21 - days) + ' days remaining', icon: '\u2728' };
+      return { status: 'past', label: 'Past Peak', detail: 'Past peak by ' + (days - 21) + ' days', icon: '\u231B' };
     },
 
     openBeanForm(id) {
@@ -967,6 +1079,8 @@ function app() {
         bean.isArchived = true;
         this.saveBeans();
         if (this.dailySelectedBeanId === id) { this.dailySelectedBeanId = ''; this.dailyLastShot = null; }
+        this.selectedBeanId = null;
+        this.beansView = 'list';
       }
     },
 
