@@ -56,6 +56,17 @@ If someone shared a link with you (e.g. GitHub Pages or a static host), open tha
 
 ---
 
+## Add to Home Screen (Recommended)
+
+For the best experience on your phone, **save the app to your home screen**. It will open in its own window (no browser bar), feel like a native app, and give you a one-tap shortcut when you’re at the machine.
+
+- **iPhone (Safari):** Open the app in Safari → tap the **Share** button (square with arrow) → **Add to Home Screen** → name it (e.g. “Coffee Journal”) → **Add**.
+- **Android (Chrome):** Open the app in Chrome → tap the **⋮** menu → **Add to Home screen** or **Install app** → confirm.
+
+Your data still lives in the browser for that “install”; it’s the same app, just launched from your home screen.
+
+---
+
 ## Your Data
 
 Everything is stored in your browser’s **localStorage**. There is no server, no account, and no cloud sync. Data stays on the device you’re using.
