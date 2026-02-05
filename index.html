@@ -82,7 +82,7 @@ body {
 
 .content-area { flex: 1; overflow-y: auto; overflow-x: hidden; padding: 20px 16px; padding-bottom: calc(var(--tab-total) + 24px); -webkit-overflow-scrolling: touch; }
 
-.tab-bar { position: fixed; bottom: 0; left: 50%; transform: translateX(-50%); width: 100%; max-width: 600px; height: var(--tab-total); padding-bottom: var(--safe-bottom); background: var(--espresso); display: flex; align-items: flex-start; justify-content: space-around; z-index: 100; box-shadow: 0 -2px 20px rgba(44,24,16,0.15); }
+.tab-bar { position: fixed; bottom: 0; left: 0; right: 0; width: 100%; max-width: 600px; margin: 0 auto; height: var(--tab-total); padding-bottom: var(--safe-bottom); background: var(--espresso); display: flex; align-items: flex-start; justify-content: space-around; z-index: 100; box-shadow: 0 -2px 20px rgba(44,24,16,0.15); }
 .tab-btn { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; padding: 8px 16px; min-width: 64px; height: var(--tab-height); background: none; border: none; color: rgba(245,240,232,0.5); font-family: var(--font-body); font-size: 11px; font-weight: 500; letter-spacing: 0.3px; cursor: pointer; transition: color 0.2s ease; -webkit-tap-highlight-color: transparent; }
 .tab-btn.active { color: var(--amber); }
 .tab-btn:hover { color: var(--amber-light); }
