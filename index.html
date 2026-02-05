@@ -73,6 +73,11 @@ body {
 }
 
 .app-shell { display: flex; flex-direction: column; height: 100dvh; max-width: 600px; margin: 0 auto; position: relative; padding-top: var(--safe-top); }
+/* iOS standalone: 100dvh reports height minus safe area (WebKit bug 254868). Use 100vh so layout fills screen and tab bar sticks to bottom. */
+@media (display-mode: standalone) {
+  html, body { min-height: 100vh; }
+  .app-shell { height: 100vh; }
+}
 @media (min-width: 768px) { .app-shell { border-left: 1px solid rgba(44,24,16,0.06); border-right: 1px solid rgba(44,24,16,0.06); } }
 
 .content-area { flex: 1; overflow-y: auto; overflow-x: hidden; padding: 20px 16px; padding-bottom: calc(var(--tab-total) + 24px); -webkit-overflow-scrolling: touch; }
