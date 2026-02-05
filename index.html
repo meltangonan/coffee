@@ -157,9 +157,10 @@ textarea.form-input { min-height: 80px; resize: vertical; line-height: 1.5; }
 .flatpickr-current-month { font-family: var(--font-heading); font-size: 16px; font-weight: 600; color: var(--espresso); padding-top: 4px; }
 .flatpickr-current-month .flatpickr-monthDropdown-months { font-family: var(--font-heading); font-weight: 600; appearance: none; -webkit-appearance: none; background: transparent; }
 .flatpickr-current-month input.cur-year { font-family: var(--font-heading); font-weight: 600; color: var(--espresso); }
-.flatpickr-months .flatpickr-prev-month, .flatpickr-months .flatpickr-next-month { padding: 6px 10px; border-radius: var(--radius-sm); transition: background 0.15s ease; }
-.flatpickr-months .flatpickr-prev-month:hover, .flatpickr-months .flatpickr-next-month:hover { background: rgba(212,165,116,0.15); }
-.flatpickr-months .flatpickr-prev-month svg, .flatpickr-months .flatpickr-next-month svg { fill: var(--text-secondary); }
+.flatpickr-months .flatpickr-prev-month, .flatpickr-months .flatpickr-next-month { top: 8px; width: 32px; height: 32px; padding: 0; border-radius: 50%; transition: background 0.15s ease; display: flex; align-items: center; justify-content: center; background: rgba(44,24,16,0.05); }
+.flatpickr-months .flatpickr-prev-month:hover, .flatpickr-months .flatpickr-next-month:hover { background: rgba(212,165,116,0.25); }
+.flatpickr-months .flatpickr-prev-month:active, .flatpickr-months .flatpickr-next-month:active { background: rgba(212,165,116,0.35); }
+.flatpickr-months .flatpickr-prev-month svg, .flatpickr-months .flatpickr-next-month svg { width: 14px; height: 14px; fill: var(--espresso); }
 span.flatpickr-weekday { font-family: var(--font-body); font-size: 11px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; }
 .flatpickr-day { font-family: var(--font-body); font-size: 14px; color: var(--text-primary); border-radius: 50%; height: 38px; line-height: 38px; max-width: 38px; margin: 1px; border: none; transition: background 0.15s ease, color 0.15s ease; }
 .flatpickr-day:hover { background: rgba(212,165,116,0.18); border: none; }
@@ -171,8 +172,12 @@ span.flatpickr-weekday { font-family: var(--font-body); font-size: 11px; font-we
 .dayContainer { min-width: 280px; max-width: 280px; }
 .flatpickr-days { width: 288px !important; }
 .date-input-wrapper { position: relative; cursor: pointer; }
-.date-input-wrapper .form-input { cursor: pointer; padding-right: 40px; }
-.date-input-wrapper .date-icon { position: absolute; right: 12px; top: 50%; transform: translateY(-50%); color: var(--text-muted); pointer-events: none; font-size: 16px; line-height: 1; }
+.date-input-wrapper .form-input { cursor: pointer; padding-right: 72px; }
+.date-input-actions { position: absolute; right: 8px; top: 50%; transform: translateY(-50%); display: flex; align-items: center; gap: 2px; }
+.date-clear-btn { width: 30px; height: 30px; display: flex; align-items: center; justify-content: center; border: none; background: transparent; color: var(--text-muted); cursor: pointer; border-radius: 50%; transition: background 0.15s ease, color 0.15s ease; font-size: 16px; line-height: 1; padding: 0; -webkit-tap-highlight-color: transparent; }
+.date-clear-btn:hover { background: rgba(44,24,16,0.06); color: var(--text-secondary); }
+.date-clear-btn:active { background: rgba(44,24,16,0.1); }
+.date-input-wrapper .date-icon { color: var(--text-muted); font-size: 16px; line-height: 1; pointer-events: none; }
 
 .stepper { display: flex; align-items: center; gap: 0; border: 1.5px solid rgba(44,24,16,0.12); border-radius: var(--radius); background: white; overflow: hidden; }
 .stepper-btn { width: 44px; min-height: 44px; display: flex; align-items: center; justify-content: center; font-size: 18px; font-weight: 600; color: var(--text-primary); background: transparent; border: none; cursor: pointer; transition: background 0.15s ease; -webkit-tap-highlight-color: transparent; }
@@ -709,7 +714,10 @@ span.flatpickr-weekday { font-family: var(--font-body); font-size: 11px; font-we
             <input type="text" class="form-input" x-ref="roastDateInput" placeholder="Select date" readonly
               x-init="flatpickr($refs.roastDateInput, { dateFormat: 'Y-m-d', allowInput: false, disableMobile: true, onChange(sel, dateStr) { beanForm.roastDate = dateStr } })"
               x-effect="if ($refs.roastDateInput._flatpickr) $refs.roastDateInput._flatpickr.setDate(beanForm.roastDate, false)">
-            <span class="date-icon">&#128197;</span>
+            <span class="date-input-actions">
+              <button type="button" class="date-clear-btn" x-show="beanForm.roastDate" @click.stop="beanForm.roastDate = ''; $refs.roastDateInput._flatpickr.clear()" title="Clear date">&times;</button>
+              <span class="date-icon">&#128197;</span>
+            </span>
           </div>
         </div>
         <div class="form-group">
