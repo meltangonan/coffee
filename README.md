@@ -1,6 +1,14 @@
+Here is a rewritten version that is more coffee-native, more accurate in how espresso people actually talk, and slightly tighter. I kept your structure and intent, but adjusted language, framing, and a few terms to better match serious home barista culture.
+
+You can paste this over your existing README.
+
+---
+
 # Coffee Journal
 
-A simple web app for home espresso enthusiasts: track your beans, log your shots, dial in your grind, and see at a glance when each coffee is at its best.
+A lightweight journal for home espresso. Track your beans, log shots, save your dial-ins, and see when each coffee is at its best.
+
+No fluff. No accounts. Just the stuff you actually care about at the machine.
 
 ---
 
@@ -8,12 +16,12 @@ A simple web app for home espresso enthusiasts: track your beans, log your shots
 
 **Home baristas** who:
 
-- Pull 1–2 shots a day and want to remember what worked
-- Buy from different roasters and forget which settings suited which bean
-- Care about freshness (resting vs peak vs past peak) and want to plan their rotation
-- Don’t want a heavy app — just a quick way to log and look things up
+* Pull a few shots a day and forget what worked last time
+* Rotate through different roasters and origins
+* Care about rest, peak, and fade, not just roast date
+* Want a quick reference, not a full-blown café POS system
 
-No account, no install. Open the link, use it on your phone or laptop. Your data stays in your browser.
+There’s no sign-up and nothing to install. Open it in a browser on your phone or laptop. All data stays local.
 
 ---
 
@@ -21,71 +29,112 @@ No account, no install. Open the link, use it on your phone or laptop. Your data
 
 ### Today
 
-Your daily log. Pick which bean you’re pulling, then log the shot (grind, dose, yield, how it tasted). You can backdate a shot if you forgot to log it yesterday. Today’s list shows everything you pulled “today” so you can edit or delete from there.
+Your daily shot log.
+
+Pick the coffee you’re pulling and log the shot: grind, dose, yield, and how it tasted. You can backdate shots if you forgot to log them earlier. The Today view shows everything pulled on that date so you can quickly edit or delete.
 
 ### Coffee (Beans)
 
-- **Add beans** — Name, roaster, roast date. Rate the bag 1–5 stars and add notes.
-- **Save optimal settings** — Once a bean is dialed in, save grind/dose/yield on the bean. Next time you add the same coffee (e.g. “Fill from previous bean”), those settings copy over; you only change the roast date.
-- **Archive** — When a bag is finished, archive it. You can bring it back later (e.g. when you buy the same coffee again) and duplicate it so you keep your settings.
-- **Duplicate** — From a bean’s detail page you can duplicate it (new bag, same coffee). From the “Add bean” form you can choose “Fill from previous bean” to copy name, roaster, notes, and optimal settings from any past or current bean.
+Each coffee you’re working through lives here.
+
+* **Add beans**
+  Name, roaster, roast date, notes, and a 1–5 star rating for the bag.
+
+* **Save a dial-in**
+  Once you’ve pulled a shot you like, save the grind, dose, and yield as the bean’s *best dial-in*. When you buy the same coffee again, you can duplicate the bean and keep those settings, changing only the roast date.
+
+* **Archive finished bags**
+  When a bag is done, archive it instead of deleting. You can restore or duplicate it later and keep your history and settings.
+
+* **Duplicate beans**
+  From a bean’s detail page, duplicate it for a new bag of the same coffee. From the Add Bean form, you can also “Fill from previous bean” to copy name, roaster, notes, and dial-in from any past entry.
 
 ### Calendar
 
-A month view with colored bars for each bean’s **peak freshness window** (about 7–21 days after roast). See which beans are in the sweet spot this month and plan what to open next.
+A monthly view showing each coffee’s **peak freshness window**, visualized as bars across the calendar. This makes it easy to see which coffees are peaking, which are still resting, and what to open next.
 
-### Freshness
+Peak is estimated at roughly **7–21 days post-roast**, which works well for most espresso.
 
-Each bean shows a status:
+### Freshness States
 
-- **Resting** (0–6 days) — Still off-gassing; extraction can be inconsistent.
-- **At Peak** (7–21 days) — Sweet spot for most espresso.
-- **Past Peak** (22+ days) — Still drinkable; flavors gradually fade.
+Each bean shows a simple freshness status:
+
+* **Resting** (0–6 days)
+  Early post-roast. Still off-gassing; extraction can be unstable.
+
+* **At Peak** (7–21 days)
+  Best balance of stable extraction and vibrant flavor.
+
+* **Past Peak** (22+ days)
+  Still brewable, but aromatics and clarity may start to fade.
+
+These are guidelines, not rules. Taste always wins.
 
 ---
 
 ## How to Use It
 
-**Just open the app in your browser.**  
-If someone shared a link with you (e.g. GitHub Pages or a static host), open that URL on your phone or computer. No sign-up, no install.
+**Open the app in your browser.**
+If someone shared a link (for example via GitHub Pages or another static host), open it on your phone or computer.
 
-- **First time?** The app may load with sample data so you can click around. To start with a clean slate, clear your browser’s localStorage for this site (or use a private window and clear data when you’re done testing).
-- **Add a bean** from the Coffee tab (or from Today if you have no beans yet).
-- **Log a shot** from Today by choosing a bean and filling in the form, or from a bean’s detail page.
-- **Swipe left** on a shot (on mobile) to reveal the delete button.
+* **First time?**
+  The app may load with sample data so you can explore. To start fresh, clear this site’s localStorage or open it in a private window.
+
+* **Add a bean**
+  From the Coffee tab, or directly from Today if you have no beans yet.
+
+* **Log a shot**
+  From Today or from a bean’s detail page.
+
+* **Delete a shot**
+  Swipe left on mobile, or use the delete control on desktop.
 
 ---
 
 ## Add to Home Screen (Recommended)
 
-For the best experience on your phone, **save the app to your home screen**. It will open in its own window (no browser bar), feel like a native app, and give you a one-tap shortcut when you’re at the machine.
+For day-to-day use, save the app to your phone’s home screen. It opens full-screen, feels like a native app, and gives you one-tap access when you’re at the machine.
 
-- **iPhone (Safari):** Open the app in Safari → tap the **Share** button (square with arrow) → **Add to Home Screen** → name it (e.g. “Coffee Journal”) → **Add**.
-- **Android (Chrome):** Open the app in Chrome → tap the **⋮** menu → **Add to Home screen** or **Install app** → confirm.
+* **iPhone (Safari):**
+  Open the app → Share → Add to Home Screen → name it → Add.
 
-Your data still lives in the browser for that “install”; it’s the same app, just launched from your home screen.
+* **Android (Chrome):**
+  Open the app → ⋮ menu → Add to Home screen or Install app.
+
+This doesn’t move your data. It’s the same app, just launched like an app.
 
 ---
 
 ## Your Data
 
-Everything is stored in your browser’s **localStorage**. There is no server, no account, and no cloud sync. Data stays on the device you’re using.
+All data is stored locally in your browser using **localStorage**.
 
-- **Same browser, same device** — Your beans and shots persist between visits.
-- **Different browser or device** — Data does not sync. Export isn’t built in yet; if you need to move data, you can copy the `coffee_beans` and `coffee_shots` keys from localStorage (e.g. via DevTools).
+* No server
+* No account
+* No cloud sync
+
+Your data persists on the same device and browser. It does not sync across devices.
+
+If you need to move data manually, you can copy the `coffee_beans` and `coffee_shots` keys from localStorage using browser dev tools.
 
 ---
 
 ## Tips
 
-- **Swipe left** on any shot to reveal the delete button (on mobile).
-- **Tap a bean** in the list to see its full history and optimal settings.
-- **Archive** beans when you’re done instead of deleting — you can restore or duplicate them when you buy the same coffee again, and it keeps your settings.
-- **Quick log** — On the Today tab, select a bean and the shot form opens with your last settings for that bean; adjust and save.
-- **Backdate a shot** — In the shot form, use the date picker next to “How was this shot?” to log a shot for a past date.
+* Tap a bean to see its full history and saved dial-in.
+* Archive beans instead of deleting them so you can reuse settings later.
+* When logging a shot from Today, the form preloads your last settings for that coffee.
+* Backdate shots if you forgot to log them when pulling.
+* Treat saved dial-ins as references, not absolutes. Adjust as the coffee ages.
 
 ---
 
 ## For Developers
 
-Single HTML file, no build step. Open `index.html` directly or serve the folder (e.g. `python3 -m http.server`) for local or mobile testing. Deploy by hosting `index.html` (and optional `manifest.json`) on any static host.
+Single-page app. No build step.
+
+Open `index.html` directly, or serve the folder locally (for example `python3 -m http.server`). Deploy by hosting `index.html` (and optional `manifest.json`) on any static host.
+
+---
+
+If you want, next we can tighten the language even further around “best dial-in” vs “reference dial-in”, or add a short philosophy note about taste-first dialing.
