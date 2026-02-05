@@ -273,6 +273,39 @@ textarea.form-input { min-height: 80px; resize: vertical; line-height: 1.5; }
 .archive-picker-view-all { width: 100%; padding: 10px; background: none; border: 1.5px dashed rgba(44,24,16,0.15); border-radius: var(--radius-sm); font-family: var(--font-body); font-size: 13px; font-weight: 500; color: var(--text-secondary); cursor: pointer; transition: all 0.15s ease; -webkit-tap-highlight-color: transparent; }
 .archive-picker-view-all:hover { border-color: var(--amber); color: var(--amber-dark); background: rgba(212,165,116,0.08); }
 
+/* Duplicate bean button — subtle, icon-style */
+.btn-duplicate {
+  width: 36px; height: 36px; padding: 0;
+  display: flex; align-items: center; justify-content: center;
+  background: transparent; border: 1.5px solid rgba(44,24,16,0.12);
+  border-radius: var(--radius-sm); color: var(--text-muted);
+  cursor: pointer; transition: all 0.2s ease;
+  -webkit-tap-highlight-color: transparent;
+}
+.btn-duplicate:hover { border-color: var(--amber); color: var(--amber-dark); background: rgba(212,165,116,0.08); }
+.btn-duplicate:active { transform: scale(0.95); }
+.btn-duplicate svg { width: 16px; height: 16px; }
+
+/* Fill from previous — link in Add Bean form */
+.fill-from-previous { position: relative; }
+.fill-from-previous-trigger {
+  display: inline-flex; align-items: center; gap: 6px;
+  background: none; border: none; padding: 6px 10px; margin: -6px -10px;
+  font-family: var(--font-body); font-size: 13px; font-weight: 500;
+  color: var(--text-muted); cursor: pointer;
+  border-radius: var(--radius-sm); transition: color 0.2s ease, background 0.2s ease;
+  -webkit-tap-highlight-color: transparent;
+}
+.fill-from-previous-trigger:hover { color: var(--amber-dark); background: rgba(212,165,116,0.1); }
+.fill-from-previous-trigger svg { width: 14px; height: 14px; opacity: 0.7; }
+.fill-from-previous-picker {
+  position: absolute; top: calc(100% + 8px); left: 0; right: 0;
+  background: white; border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg); border: 1px solid rgba(44,24,16,0.08);
+  overflow: hidden; z-index: 100;
+  animation: archiveSlideIn 0.2s ease-out;
+}
+
 .date-header { margin-bottom: 24px; }
 .date-header .day-name { font-family: var(--font-heading); font-size: 32px; font-weight: 700; color: var(--espresso); line-height: 1.1; }
 .date-header .date-sub { font-size: 15px; color: var(--text-secondary); margin-top: 4px; }
@@ -684,6 +717,12 @@ textarea.form-input { min-height: 80px; resize: vertical; line-height: 1.5; }
             <div class="text-secondary" x-text="selectedBean?.roaster"></div>
             <span x-show="selectedBean?.isArchived" class="badge badge-archived" style="margin-top: 4px;">Archived</span>
           </div>
+          <button class="btn-duplicate" @click="duplicateBean(selectedBeanId)" title="Duplicate bean">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+              <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+            </svg>
+          </button>
           <button x-show="!selectedBean?.isArchived" class="btn btn-ghost" style="padding: 8px 12px; font-size: 14px;" @click="openBeanForm(selectedBeanId)">Edit</button>
         </div>
 
@@ -855,11 +894,37 @@ textarea.form-input { min-height: 80px; resize: vertical; line-height: 1.5; }
       </div>
 
       <!-- Add/Edit Bean Form -->
-      <div x-show="beansView === 'form'" class="fade-in">
+      <div x-show="beansView === 'form'" class="fade-in" x-data="{ showBeanPicker: false }">
         <div class="detail-header">
           <button class="back-btn" @click="cancelBeanForm()">&#8592;</button>
           <h2 class="heading-lg" x-text="editingBeanId ? 'Edit Bean' : 'Add Bean'"></h2>
         </div>
+
+        <!-- Fill from previous — only shown when adding, not editing -->
+        <div x-show="!editingBeanId && getUniqueBeanSources().length > 0" class="fill-from-previous mb-16" @click.outside="showBeanPicker = false">
+          <button type="button" class="fill-from-previous-trigger" @click="showBeanPicker = !showBeanPicker">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+              <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+            </svg>
+            <span>Fill from previous bean</span>
+          </button>
+          <div x-show="showBeanPicker" x-cloak class="fill-from-previous-picker">
+            <div class="archive-picker-header">
+              <span class="archive-picker-title">Pick a bean to copy</span>
+              <button class="archive-picker-close" @click="showBeanPicker = false">&times;</button>
+            </div>
+            <div class="archive-picker-list">
+              <template x-for="bean in getUniqueBeanSources()" :key="bean.id">
+                <button class="archive-picker-item" @click="duplicateBean(bean.id); showBeanPicker = false;">
+                  <span class="archive-picker-name" x-text="bean.name"></span>
+                  <span class="archive-picker-roaster" x-text="bean.roaster"></span>
+                </button>
+              </template>
+            </div>
+          </div>
+        </div>
+
         <div class="form-group">
           <label class="form-label">Bean Name <span class="required">*</span></label>
           <input type="text" class="form-input" placeholder="e.g. Unicorn Blood" x-model="beanForm.name">
@@ -1339,6 +1404,36 @@ function app() {
     get currentBeans() { return this.sortedBeans.filter(b => !b.isArchived); },
     get archivedBeans() { return this.sortedBeans.filter(b => b.isArchived); },
 
+    // De-duplicated list of beans for "fill from previous" picker
+    // Groups by name+roaster (case-insensitive), picks best representative:
+    // prefer bean with optimal settings filled in, then most recent
+    getUniqueBeanSources() {
+      const groups = {};
+      for (const bean of this.beans) {
+        const key = (bean.name + '|' + bean.roaster).toLowerCase();
+        if (!groups[key]) {
+          groups[key] = [];
+        }
+        groups[key].push(bean);
+      }
+      const result = [];
+      for (const key in groups) {
+        const candidates = groups[key];
+        // Sort: beans with optimal settings first, then by roastDate (or createdAt)
+        candidates.sort((a, b) => {
+          const aHasSettings = a.optimalGrindSize != null || a.optimalDoseIn != null || a.optimalYieldOut != null;
+          const bHasSettings = b.optimalGrindSize != null || b.optimalDoseIn != null || b.optimalYieldOut != null;
+          if (aHasSettings !== bHasSettings) return bHasSettings ? 1 : -1;
+          const aDate = a.roastDate || a.createdAt || '';
+          const bDate = b.roastDate || b.createdAt || '';
+          return bDate.localeCompare(aDate);
+        });
+        result.push(candidates[0]);
+      }
+      // Sort final list alphabetically by name
+      return result.sort((a, b) => a.name.localeCompare(b.name));
+    },
+
     getFreshness(bean) {
       if (!bean?.roastDate) return { status: 'unknown', label: 'No roast date', detail: '' };
       const days = daysBetween(bean.roastDate, new Date());
@@ -1363,8 +1458,8 @@ function app() {
       this.beansView = 'form';
     },
 
-    duplicateFromArchive(archivedBeanId) {
-      const source = this.getBeanById(archivedBeanId);
+    duplicateBean(beanId) {
+      const source = this.getBeanById(beanId);
       if (!source) return;
       const today = new Date().toISOString().slice(0, 10);
       const newBean = {
@@ -1386,6 +1481,11 @@ function app() {
       this._pendingDuplicateBean = newBean; // Store for saveBean to use
       this.currentTab = 'beans';
       this.beansView = 'form';
+    },
+
+    // Legacy alias for existing "restore from archive" in Today tab
+    duplicateFromArchive(beanId) {
+      this.duplicateBean(beanId);
     },
 
     saveBean() {
