@@ -198,7 +198,7 @@ textarea.form-input { min-height: 80px; resize: vertical; line-height: 1.5; }
 .datepicker-day.today.selected { background: var(--amber-dark); color: white; }
 
 .stepper { display: flex; align-items: center; gap: 0; border: 1.5px solid rgba(44,24,16,0.12); border-radius: var(--radius); background: white; overflow: hidden; }
-.stepper-btn { width: 44px; min-height: 44px; display: flex; align-items: center; justify-content: center; font-size: 18px; font-weight: 600; color: var(--text-primary); background: transparent; border: none; cursor: pointer; transition: background 0.15s ease; -webkit-tap-highlight-color: transparent; }
+.stepper-btn { width: 44px; min-height: 44px; display: flex; align-items: center; justify-content: center; font-size: 18px; font-weight: 600; color: var(--text-primary); background: transparent; border: none; cursor: pointer; transition: background 0.15s ease; -webkit-tap-highlight-color: transparent; touch-action: manipulation; }
 .stepper-btn:hover:not(:disabled) { background: rgba(44,24,16,0.06); }
 .stepper-btn:active:not(:disabled) { background: rgba(44,24,16,0.1); }
 .stepper-btn:disabled { opacity: 0.4; cursor: not-allowed; }
