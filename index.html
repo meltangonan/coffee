@@ -498,7 +498,11 @@ textarea.form-input { min-height: 80px; resize: vertical; line-height: 1.5; }
 
 <div class="app-shell" x-data="app()" x-init="init()">
 
-  <div class="content-area">
+  <div class="content-area"
+       @touchstart="onTabSwipeStart($event)"
+       @touchmove="onTabSwipeMove($event)"
+       @touchend="onTabSwipeEnd($event)"
+       @touchcancel="resetTabSwipe()">
 
     <!-- ═══════════════════════════════════════
          TODAY TAB — Daily Log
@@ -1499,6 +1503,9 @@ function app() {
   return {
     beans: [], shots: [],
     currentTab: 'today', beansView: 'list',
+    touchTabSwipeEnabled: false,
+    tabSwipeStartX: 0, tabSwipeStartY: 0, tabSwipeLastX: 0, tabSwipeLastY: 0,
+    tabSwipeTracking: false, tabSwipeAxis: '',
     selectedBeanId: null, editingBeanId: null,
     showShotForm: false, shotFormBeanId: null, shotFormReturnTo: null, editingShotId: null,
     showBeanFormModal: false, beanFormContext: 'beans', beanFormError: '',
@@ -1513,6 +1520,7 @@ function app() {
     init() {
       const savedBeans = localStorage.getItem('coffee_beans');
       const savedShots = localStorage.getItem('coffee_shots');
+      this.touchTabSwipeEnabled = this.isTouchTabSwipeAvailable();
       if (savedBeans) {
         this.beans = JSON.parse(savedBeans);
         this.shots = savedShots ? JSON.parse(savedShots) : [];
@@ -1546,6 +1554,116 @@ function app() {
         this.saveBeans();
         this.saveShots();
       }
+    },
+
+    isTouchTabSwipeAvailable() {
+      return typeof window !== 'undefined'
+        && (window.matchMedia('(pointer: coarse)').matches || navigator.maxTouchPoints > 0);
+    },
+
+    getTabSwipeEdgeWidth() {
+      return window.innerWidth * 0.28;
+    },
+
+    isTabSwipeStartInEdge(x) {
+      const edge = this.getTabSwipeEdgeWidth();
+      return x <= edge || x >= (window.innerWidth - edge);
+    },
+
+    isTabSwipeBlockedTarget(target) {
+      if (!target || typeof target.closest !== 'function') return false;
+      return !!target.closest('input, textarea, select, button, a, [contenteditable="true"], .today-shot-swipe, .bean-picker-dropdown, .custom-datepicker, .archive-picker, .fill-from-previous-picker, .panel');
+    },
+
+    onTabSwipeStart(event) {
+      this.resetTabSwipe();
+      if (!this.touchTabSwipeEnabled) return;
+      if (this.showShotForm || this.showBeanFormModal || this.showDeleteBeanDialog) return;
+      if (!event.touches || event.touches.length !== 1) return;
+      if (this.isTabSwipeBlockedTarget(event.target)) return;
+
+      const touch = event.touches[0];
+      if (!this.isTabSwipeStartInEdge(touch.clientX)) return;
+
+      this.tabSwipeStartX = touch.clientX;
+      this.tabSwipeStartY = touch.clientY;
+      this.tabSwipeLastX = touch.clientX;
+      this.tabSwipeLastY = touch.clientY;
+      this.tabSwipeTracking = true;
+      this.tabSwipeAxis = '';
+    },
+
+    onTabSwipeMove(event) {
+      if (!this.tabSwipeTracking) return;
+      if (!event.touches || event.touches.length !== 1) {
+        this.resetTabSwipe();
+        return;
+      }
+
+      const touch = event.touches[0];
+      const dx = touch.clientX - this.tabSwipeStartX;
+      const dy = touch.clientY - this.tabSwipeStartY;
+      const absDx = Math.abs(dx);
+      const absDy = Math.abs(dy);
+
+      if (!this.tabSwipeAxis) {
+        if (absDx < 10 && absDy < 10) return;
+        this.tabSwipeAxis = absDx > absDy ? 'x' : 'y';
+        if (this.tabSwipeAxis === 'y') {
+          this.resetTabSwipe();
+          return;
+        }
+      }
+
+      this.tabSwipeLastX = touch.clientX;
+      this.tabSwipeLastY = touch.clientY;
+      if (this.tabSwipeAxis === 'x') event.preventDefault();
+    },
+
+    onTabSwipeEnd(event) {
+      if (!this.tabSwipeTracking) return;
+      const endTouch = event.changedTouches && event.changedTouches[0];
+      const endX = endTouch ? endTouch.clientX : this.tabSwipeLastX;
+      const endY = endTouch ? endTouch.clientY : this.tabSwipeLastY;
+      const dx = endX - this.tabSwipeStartX;
+      const dy = endY - this.tabSwipeStartY;
+      const absDx = Math.abs(dx);
+      const absDy = Math.abs(dy);
+
+      if (this.tabSwipeAxis !== 'x' || absDx < 56 || absDx <= absDy) {
+        this.resetTabSwipe();
+        return;
+      }
+
+      this.switchTabFromSwipe(dx > 0 ? 'right' : 'left');
+      this.resetTabSwipe();
+    },
+
+    resetTabSwipe() {
+      this.tabSwipeTracking = false;
+      this.tabSwipeAxis = '';
+      this.tabSwipeStartX = 0;
+      this.tabSwipeStartY = 0;
+      this.tabSwipeLastX = 0;
+      this.tabSwipeLastY = 0;
+    },
+
+    switchTabFromSwipe(direction) {
+      const tabs = ['today', 'beans', 'calendar'];
+      const currentIndex = tabs.indexOf(this.currentTab);
+      if (currentIndex === -1) return;
+
+      const nextIndex = direction === 'right'
+        ? Math.min(currentIndex + 1, tabs.length - 1)
+        : Math.max(currentIndex - 1, 0);
+
+      if (nextIndex === currentIndex) return;
+      const nextTab = tabs[nextIndex];
+      if (nextTab === 'beans' && this.beansView !== 'list') {
+        this.beansView = 'list';
+        this.selectedBeanId = null;
+      }
+      this.currentTab = nextTab;
     },
 
     saveBeans() { localStorage.setItem('coffee_beans', JSON.stringify(this.beans)); },
