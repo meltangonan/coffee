@@ -815,9 +815,9 @@ textarea.form-input { min-height: 80px; resize: vertical; line-height: 1.5; }
                 <button type="button" class="stepper-btn" aria-label="Increase" :disabled="stVal() !== null && stVal() >= stMax" @click="stInc()">+</button>
               </div>
             </div>
-            <div style="display: flex; gap: 8px; margin-top: 12px;">
+            <div style="display: flex; justify-content: space-between; margin-top: 12px;">
+              <button type="button" class="btn btn-ghost" @click="cancelEditingOptimal()">Cancel</button>
               <button type="button" class="btn btn-amber" @click="saveOptimalSettings()">Save</button>
-              <button type="button" class="btn btn-danger-solid btn-action-small" @click="cancelEditingOptimal()">Cancel</button>
             </div>
           </div>
         </div>
