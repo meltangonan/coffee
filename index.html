@@ -246,6 +246,13 @@ textarea.form-input { min-height: 80px; resize: vertical; line-height: 1.5; }
 .panel { background: var(--cream); border-radius: var(--radius-lg); width: 100%; max-width: 600px; max-height: 85vh; overflow-y: auto; padding: 24px 16px; padding-bottom: calc(24px + var(--safe-bottom)); box-shadow: var(--shadow-xl); animation: modalIn 0.25s ease-out; }
 @keyframes modalIn { from { transform: scale(0.96); opacity: 0; } to { transform: scale(1); opacity: 1; } }
 .panel-handle { width: 36px; height: 4px; background: rgba(44,24,16,0.15); border-radius: 2px; margin: 0 auto 16px; }
+.delete-confirm-panel { max-width: 420px; padding: 24px 18px calc(24px + var(--safe-bottom)); }
+.delete-confirm-icon { width: 44px; height: 44px; border-radius: 50%; background: var(--freshness-past-bg); color: var(--freshness-past); display: flex; align-items: center; justify-content: center; margin: 0 auto 14px; font-size: 22px; }
+.delete-confirm-title { text-align: center; margin-bottom: 8px; }
+.delete-confirm-copy { color: var(--text-secondary); font-size: 14px; line-height: 1.5; text-align: center; }
+.delete-confirm-copy strong { color: var(--text-primary); font-weight: 600; }
+.delete-confirm-actions { display: flex; gap: 10px; margin-top: 20px; }
+.delete-confirm-actions .btn { flex: 1; }
 
 .divider { height: 1px; background: rgba(44,24,16,0.08); margin: 16px 0; }
 
@@ -472,6 +479,10 @@ textarea.form-input { min-height: 80px; resize: vertical; line-height: 1.5; }
 .mb-20 { margin-bottom: 20px; }
 .mb-24 { margin-bottom: 24px; }
 .mt-24 { margin-top: 24px; }
+
+@media (max-width: 480px) {
+  .delete-confirm-actions { flex-direction: column-reverse; }
+}
 
 @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
 .fade-in { animation: fadeIn 0.3s ease-out; }
@@ -896,7 +907,7 @@ textarea.form-input { min-height: 80px; resize: vertical; line-height: 1.5; }
         <div class="divider"></div>
         <button x-show="selectedBean && !selectedBean.isArchived" class="btn btn-ghost btn-archive-highlight btn-full mb-8" @click="archiveBean(selectedBeanId)">Archive Bean</button>
         <button x-show="selectedBean && selectedBean.isArchived" class="btn btn-amber btn-full mb-8" @click="unarchiveBean(selectedBeanId)">Bring Back Bean</button>
-        <button class="btn btn-danger btn-delete-highlight btn-full" @click="if(confirm('Are you sure you want to delete this?')) deleteBean(selectedBeanId)">Delete Bean</button>
+        <button class="btn btn-danger btn-delete-highlight btn-full" @click="openDeleteBeanDialog()">Delete Bean</button>
       </div>
 
       <!-- Archive View — Full list of archived beans -->
@@ -1249,6 +1260,24 @@ textarea.form-input { min-height: 80px; resize: vertical; line-height: 1.5; }
   </div>
   </template>
 
+  <template x-if="showDeleteBeanDialog">
+  <div class="overlay" @click.self="closeDeleteBeanDialog()" @keydown.escape.window="closeDeleteBeanDialog()">
+    <div class="panel delete-confirm-panel" @click.stop role="dialog" aria-modal="true" aria-labelledby="delete-bean-title">
+      <div class="delete-confirm-icon" aria-hidden="true">&#9888;</div>
+      <h3 id="delete-bean-title" class="heading-lg delete-confirm-title">Delete Bean?</h3>
+      <p class="delete-confirm-copy">
+        This will permanently delete <strong x-text="selectedBean?.name || 'this bean'"></strong> and
+        <strong><span x-text="getShotsForBean(selectedBeanId).length"></span> <span x-text="getShotsForBean(selectedBeanId).length === 1 ? 'shot' : 'shots'"></span></strong>.
+        This cannot be undone.
+      </p>
+      <div class="delete-confirm-actions">
+        <button type="button" class="btn btn-secondary-solid" @click="closeDeleteBeanDialog()">Cancel</button>
+        <button type="button" class="btn btn-danger-solid" @click="confirmDeleteBean()">Delete Bean</button>
+      </div>
+    </div>
+  </div>
+  </template>
+
   <!-- ═══════════════════════════════════════
        TAB BAR
        ═══════════════════════════════════════ -->
@@ -1473,6 +1502,7 @@ function app() {
     selectedBeanId: null, editingBeanId: null,
     showShotForm: false, shotFormBeanId: null, shotFormReturnTo: null, editingShotId: null,
     showBeanFormModal: false, beanFormContext: 'beans', beanFormError: '',
+    showDeleteBeanDialog: false,
     dailySelectedBeanId: '', dailyLastShot: null,
     editingOptimalBeanId: null,
     optimalForm: { grindSize: null, doseIn: null, yieldOut: null, extractionTime: null },
@@ -1741,11 +1771,30 @@ function app() {
       this.beanFormError = '';
     },
 
+    openDeleteBeanDialog() {
+      if (!this.selectedBeanId) return;
+      this.showDeleteBeanDialog = true;
+    },
+
+    closeDeleteBeanDialog() {
+      this.showDeleteBeanDialog = false;
+    },
+
+    confirmDeleteBean() {
+      if (!this.selectedBeanId) {
+        this.closeDeleteBeanDialog();
+        return;
+      }
+      this.deleteBean(this.selectedBeanId);
+      this.closeDeleteBeanDialog();
+    },
+
     deleteBean(id) {
       this.beans = this.beans.filter(b => b.id !== id);
       this.shots = this.shots.filter(s => s.beanId !== id);
       this.saveBeans();
       this.saveShots();
+      this.showDeleteBeanDialog = false;
       this.beansView = 'list';
       this.selectedBeanId = null;
     },
