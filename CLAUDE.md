@@ -2,6 +2,12 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## Your Rules
+- Ask: "Would a senior engineer say this is overcomplicated?" If yes, simplify
+- Always think of engineering and software engineering/development best practices
+- When uncertain, flag it explicitly rather than guessing and moving on
+- Don't bulk-generate code without a clear, scoped task
+
 ## Project Overview
 
 Coffee Bean Tracker — a mobile-first single-page application for tracking espresso beans, dialing in shots, monitoring freshness windows, and logging daily brewing. Built as a zero-dependency, zero-build single HTML file using Alpine.js 3.x with localStorage persistence. No backend, no authentication (single-user personal tool).
