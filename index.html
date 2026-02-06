@@ -818,7 +818,7 @@ textarea.form-input { min-height: 80px; resize: vertical; line-height: 1.5; }
         </div>
 
         <!-- Shot History -->
-        <div class="mb-20">
+        <div class="mb-20" x-data="{ showAllShots: false }">
           <div style="display: flex; align-items: center; justify-content: space-between;" class="mb-12">
             <h3 class="heading-md">Shot History</h3>
             <button x-show="!selectedBean?.isArchived" class="btn btn-amber" style="padding: 8px 16px; font-size: 14px;" @click="openShotFormFromBean()">+ Log Shot</button>
@@ -828,7 +828,7 @@ textarea.form-input { min-height: 80px; resize: vertical; line-height: 1.5; }
             <div class="empty-state-icon" style="font-size: 32px;">&#9749;</div>
             <div class="empty-state-text">Log your first shot to start dialing in.</div>
           </div>
-          <template x-for="shot in getShotsForBean(selectedBeanId)" :key="shot.id">
+          <template x-for="shot in (showAllShots ? getShotsForBean(selectedBeanId) : getShotsForBean(selectedBeanId).slice(0, 5))" :key="shot.id">
             <div class="today-shot-swipe fade-in" x-data="{ swipeStart: 0, swipeX: 0, reveal: false }"
                  @touchstart="if (!selectedBean?.isArchived) { swipeStart = $event.touches[0].clientX; swipeX = 0; }"
                  @touchmove="if (!selectedBean?.isArchived) { swipeX = Math.min(0, $event.touches[0].clientX - swipeStart); }"
@@ -856,6 +856,7 @@ textarea.form-input { min-height: 80px; resize: vertical; line-height: 1.5; }
               </div>
             </div>
           </template>
+          <button x-show="!showAllShots && getShotsForBean(selectedBeanId).length > 5" class="beans-section-link" style="display: block; margin-top: 8px; width: 100%; text-align: center;" @click="showAllShots = true">View all</button>
         </div>
 
         <!-- Rating (editable only here, not on Edit Bean form) -->
