@@ -24,18 +24,18 @@ Serve the directory and open:
 
 ## Architecture
 
-The entire application lives in `index.html` (~1,850 lines) with three inline sections:
+The entire application lives in `index.html` (~1,890 lines) with three inline sections:
 
-1. **CSS** (lines ~18-482): Design system with CSS variables, component styles, responsive layout, and spacing utilities. Uses "Warm Industrial Café" aesthetic with Playfair Display (headings) and DM Sans (body) fonts.
-2. **HTML** (lines ~486-1170): Alpine.js template directives. Root element uses `x-data="app()" x-init="init()"`. Tab-based navigation (Today, Beans, Calendar) with no routing library.
-3. **JavaScript** (lines ~1171-1847): Alpine components, helper functions, main `app()` object, and seed data generator.
+1. **CSS** (lines ~29-480): Design system with CSS variables, component styles, responsive layout, and spacing utilities. Uses "Warm Industrial Café" aesthetic with Playfair Display (headings) and DM Sans (body) fonts.
+2. **HTML** (lines ~482-1193): Alpine.js template directives. Root element uses `x-data="app()" x-init="init()"`. Tab-based navigation (Today, Beans, Calendar) with no routing library.
+3. **JavaScript** (lines ~1194-1888): Alpine components, helper functions, and main `app()` object.
 
 ### Core Abstractions
 
 | Abstraction | What it represents | What it owns |
 |-------------|-------------------|--------------|
 | **Bean** | A coffee bean bag/batch | name, roaster, roastDate, rating, notes, isArchived, optimal settings |
-| **Shot** | A single espresso pull | beanId (foreign key), grindSize, doseIn, yieldOut, rating, notes, createdAt |
+| **Shot** | A single espresso pull | beanId (foreign key), grindSize, doseIn, yieldOut, extractionTime, rating, notes, shotDate, createdAt |
 | **Freshness** | Bean age status | Derived from roastDate: resting/optimal/past |
 | **Tab** | Navigation state | today/beans/calendar |
 | **View** | Sub-navigation in Beans tab | list/detail/form/archive |
@@ -51,8 +51,9 @@ const FRESHNESS_OPTIMAL_DAYS = 21;  // Days 7-21: At Peak
 ### Key Functional Modules (all methods on the `app()` object)
 
 - **Bean Management**: `saveBean`, `deleteBean`, `selectBean`, `updateBeanRating`, `archiveBean`, `unarchiveBean`, `duplicateFromArchive`, `duplicateBean` (pre-fill form from existing bean; used by "Fill from previous bean" and duplicate-from-detail)
-- **Shot Logging**: `saveShot`, `deleteShot`, `openShotForm`, `openShotFormForEdit`, `closeShotForm`, `getShotFormDefault`; shot form includes optional `shotDate` (date picker) for backdating
+- **Shot Logging**: `saveShot`, `deleteShot`, `openShotForm`, `openShotFormForEdit`, `closeShotForm`, `getShotFormDefault`, `getShotsForBean`, `getLastShot`; shot form includes optional `shotDate` (date picker) for backdating
 - **Daily Tracking**: `onDailyBeanSelect`, `openShotFormFromDaily`, `openShotFormFromBean`
+- **Helpers**: `getBeanById`, `getBeanOccurrence` (occurrence count for beans with same name+roaster), `shotQualityLabel`, `shotQualityClass`
 - **Optimal Settings**: `startEditingOptimal`, `saveOptimalSettings`, `cancelEditingOptimal`
 - **Freshness**: `getFreshness` — returns `{ status, label, detail }`
 - **Calendar**: `calendarWeeks`, `calendarBars`, `calendarBarsUnique`, `calendarBarsForWeek`, `getRangeBandStyle`
@@ -118,6 +119,31 @@ Stored in localStorage under keys `coffee_beans` and `coffee_shots`.
 | `optimalStepper()` | Numeric +/- input for optimal settings | `optimalForm` |
 | `datePicker()` | Calendar date selector (roast date, shot date) | Dynamic via `dpModelKey` (e.g. `beanForm.roastDate`, `shotForm.shotDate`) |
 
+### UI Patterns
+
+**Swipe-to-Delete (Mobile):**
+- Touch gesture on shot cards: 36px threshold reveals a 72px delete action area
+- Uses `touch-action: pan-y` on swipe containers to prevent scroll conflicts
+- Disabled for archived beans
+
+**Confirmation Dialog:**
+- Local `confirmDelete` state: first tap shows "Delete?" confirmation, second tap deletes
+- Used on shot deletion in both Today and Bean detail views
+
+**Shot History Toggle:**
+- Bean detail shows first 5 shots with a "View all X shots" button to expand
+- Local `showAllShots` state in `x-data`
+
+**Shot Card Display Format:**
+```
+Grind 5 · 16g → 32g (1:2.0) · 25s
+Notes: Sweet with chocolate notes...        [Perfect]
+```
+- Ratio calculated as `yieldOut / doseIn`, shown as `1:X.X`
+- Extraction time appended as `· Xs` (only if present)
+- Notes truncated with ellipsis, max 80 characters
+- Quality badge: Bad / Okay / Perfect
+
 ### Design Tokens
 
 CSS variables define the full design system:
@@ -162,7 +188,15 @@ Calendar bar colors are defined in JS `BAR_COLORS` array. Spacing utilities (`.m
 ### When Modifying Forms
 - Forms are Alpine component-scoped (`x-data`)
 - Stepper components need `x-init` with `stInit(field, min, max, default)`
+- Steppers select all text on focus (`stOnFocus`) for easy value replacement
+- Stepper buttons use `touch-action: manipulation` to prevent double-tap zoom on mobile
+- When a stepper field is empty/null, clicking +/- sets it to the default value (not increment from 0)
 - Always reset form state on open and close
+
+### When Adding Extraction Time / New Shot Fields
+- Shot form defaults: grindSize=5, doseIn=16, yieldOut=32, extractionTime=25
+- New fields should be nullable (optional) — the app handles null gracefully in display
+- `init()` runs migrations on load to backfill new fields on existing data (e.g. `optimalExtractionTime` seeded from first shot)
 
 ## Documentation
 

@@ -26,7 +26,7 @@ There’s no sign-up and nothing to install. Open it in a browser on your phone 
 
 Your daily shot log.
 
-Pick the coffee you’re pulling and log the shot: grind, dose, yield, and how it tasted. You can backdate shots if you forgot to log them earlier. The Today view shows everything pulled on that date so you can quickly edit or delete.
+Pick the coffee you're pulling and log the shot: grind, dose, yield, extraction time, and how it tasted. Each shot card shows the ratio and notes at a glance. You can backdate shots if you forgot to log them earlier. The Today view shows everything pulled on that date so you can quickly edit or delete.
 
 ### Coffee (Beans)
 
@@ -36,7 +36,7 @@ Each coffee you’re working through lives here.
   Name, roaster, roast date, notes, and a 1–5 star rating for the bag.
 
 * **Save a dial-in**
-  Once you’ve pulled a shot you like, save the grind, dose, and yield as the bean’s *best dial-in*. When you buy the same coffee again, you can duplicate the bean and keep those settings, changing only the roast date.
+  Once you've pulled a shot you like, save the grind, dose, yield, and extraction time as the bean's *best dial-in*. When you buy the same coffee again, you can duplicate the bean and keep those settings, changing only the roast date.
 
 * **Archive finished bags**
   When a bag is done, archive it instead of deleting. You can restore or duplicate it later and keep your history and settings.
@@ -73,7 +73,7 @@ These are guidelines, not rules. Taste always wins.
 If someone shared a link (for example via GitHub Pages or another static host), open it on your phone or computer.
 
 * **First time?**
-  The app may load with sample data so you can explore. To start fresh, clear this site’s localStorage or open it in a private window.
+  The app starts empty. Add your first bean from the Coffee tab and start logging.
 
 * **Add a bean**
   From the Coffee tab, or directly from Today if you have no beans yet.
@@ -116,10 +116,11 @@ If you need to move data manually, you can copy the `coffee_beans` and `coffee_s
 
 ## Tips
 
-* Tap a bean to see its full history and saved dial-in.
+* Tap a bean to see its full history and saved dial-in (including extraction time).
 * Archive beans instead of deleting them so you can reuse settings later.
 * When logging a shot from Today, the form preloads your last settings for that coffee.
 * Backdate shots if you forgot to log them when pulling.
+* Shot cards show ratio (1:X.X) and notes inline so you can compare at a glance.
 * Treat saved dial-ins as references, not absolutes. Adjust as the coffee ages.
 
 ---
