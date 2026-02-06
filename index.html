@@ -964,7 +964,7 @@ textarea.form-input { min-height: 80px; resize: vertical; line-height: 1.5; }
         </div>
 
         <!-- Fill from previous — only shown when adding, not editing -->
-        <div x-show="!editingBeanId && getUniqueBeanSources().length > 0" class="fill-from-previous mb-16" @click.outside="showBeanPicker = false">
+        <div x-show="!editingBeanId && !_pendingDuplicateBean && getUniqueBeanSources().length > 0" class="fill-from-previous mb-16" @click.outside="showBeanPicker = false">
           <button type="button" class="fill-from-previous-trigger" @click="showBeanPicker = !showBeanPicker">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
@@ -1205,10 +1205,34 @@ textarea.form-input { min-height: 80px; resize: vertical; line-height: 1.5; }
        ═══════════════════════════════════════ -->
   <template x-if="showBeanFormModal">
   <div class="overlay" @click.self="cancelBeanForm()">
-    <div class="panel" @click.stop>
+    <div class="panel" @click.stop x-data="{ showBeanPicker: false }">
       <div style="display: flex; align-items: center; gap: 12px;" class="mb-20">
         <button class="back-btn" @click="cancelBeanForm()">&#8592;</button>
         <h3 class="heading-lg">Add Bean</h3>
+      </div>
+      <!-- Fill from previous (archived beans only) -->
+      <div x-show="!_pendingDuplicateBean && getUniqueBeanSources({ archivedOnly: true }).length > 0" class="fill-from-previous mb-16" @click.outside="showBeanPicker = false">
+        <button type="button" class="fill-from-previous-trigger" @click="showBeanPicker = !showBeanPicker">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+            <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+          </svg>
+          <span>Fill from previous bean</span>
+        </button>
+        <div x-show="showBeanPicker" x-cloak class="fill-from-previous-picker">
+          <div class="archive-picker-header">
+            <span class="archive-picker-title">Pick a bean to copy</span>
+            <button class="archive-picker-close" @click="showBeanPicker = false">&times;</button>
+          </div>
+          <div class="archive-picker-list">
+            <template x-for="bean in getUniqueBeanSources({ archivedOnly: true })" :key="bean.id">
+              <button class="archive-picker-item" @click="fillBeanFormFrom(bean.id); showBeanPicker = false;">
+                <span class="archive-picker-name" x-text="bean.name"></span>
+                <span class="archive-picker-roaster" x-text="bean.roaster"></span>
+              </button>
+            </template>
+          </div>
+        </div>
       </div>
       <div class="form-group">
         <label class="form-label">Bean Name <span class="required">*</span></label>
@@ -1748,9 +1772,11 @@ function app() {
     // De-duplicated list of beans for "fill from previous" picker
     // Groups by name+roaster (case-insensitive), picks best representative:
     // prefer bean with optimal settings filled in, then most recent
-    getUniqueBeanSources() {
+    getUniqueBeanSources(options = {}) {
+      const archivedOnly = options.archivedOnly === true;
       const groups = {};
       for (const bean of this.beans) {
+        if (archivedOnly && !bean.isArchived) continue;
         const key = (bean.name + '|' + bean.roaster).toLowerCase();
         if (!groups[key]) {
           groups[key] = [];
@@ -1840,6 +1866,25 @@ function app() {
     // Legacy alias for existing "restore from archive" in Today tab
     duplicateFromArchive(beanId) {
       this.duplicateBean(beanId);
+    },
+
+    // Fill bean form fields from a source bean without navigating (used in modal)
+    fillBeanFormFrom(beanId) {
+      const source = this.getBeanById(beanId);
+      if (!source) return;
+      const today = localDateStr();
+      this.beanForm = { name: source.name, roaster: source.roaster, roastDate: today, rating: source.rating, notes: source.notes ?? '' };
+      this._pendingDuplicateBean = {
+        id: crypto.randomUUID(),
+        name: source.name, roaster: source.roaster, roastDate: today,
+        rating: source.rating, notes: source.notes ?? '',
+        isArchived: false,
+        optimalGrindSize: source.optimalGrindSize,
+        optimalDoseIn: source.optimalDoseIn,
+        optimalYieldOut: source.optimalYieldOut,
+        optimalExtractionTime: source.optimalExtractionTime,
+        createdAt: new Date().toISOString()
+      };
     },
 
     normalizeBeanName(name) {
