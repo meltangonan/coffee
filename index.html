@@ -1652,10 +1652,14 @@ function app() {
       return (name || '').trim().toLowerCase();
     },
 
-    beanNameExists(name, excludeId = null) {
+    beanNameExists(name, excludeId = null, options = {}) {
+      const includeArchived = options.includeArchived === true;
       const normalized = this.normalizeBeanName(name);
       if (!normalized) return false;
-      return this.beans.some(b => this.normalizeBeanName(b.name) === normalized && b.id !== excludeId);
+      return this.beans.some(b => {
+        if (!includeArchived && b.isArchived) return false;
+        return this.normalizeBeanName(b.name) === normalized && b.id !== excludeId;
+      });
     },
 
     openAddBeanFromToday() {
@@ -1671,7 +1675,7 @@ function app() {
       if (!name || !roaster) return;
       this.beanFormError = '';
       const isTodayPickerFlow = this.beanFormContext === 'today-picker';
-      if (isTodayPickerFlow && this.beanNameExists(name, this.editingBeanId)) {
+      if (isTodayPickerFlow && this.beanNameExists(name, this.editingBeanId, { includeArchived: false })) {
         this.beanFormError = 'Bean already exists. Choose a different name.';
         return;
       }
