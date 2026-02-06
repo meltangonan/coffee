@@ -48,6 +48,12 @@ function assertDeepEqual(actual, expected, message) {
 // Helper functions (extracted from app)
 // ========================================
 
+function localDateStr(d) {
+  if (!d) d = new Date();
+  if (typeof d === 'string') d = new Date(d);
+  return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+}
+
 function isSameDay(d1, d2) {
   const a = new Date(d1), b = new Date(d2);
   return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
@@ -93,6 +99,27 @@ function getFreshness(bean) {
 // ========================================
 // Tests
 // ========================================
+
+// --- localDateStr Tests ---
+test('localDateStr - returns YYYY-MM-DD from Date object', () => {
+  assertEqual(localDateStr(new Date(2026, 0, 15)), '2026-01-15');
+});
+
+test('localDateStr - pads single-digit month and day', () => {
+  assertEqual(localDateStr(new Date(2026, 1, 5)), '2026-02-05');
+});
+
+test('localDateStr - works with no argument (returns today local)', () => {
+  const now = new Date();
+  const expected = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0') + '-' + String(now.getDate()).padStart(2, '0');
+  assertEqual(localDateStr(), expected);
+});
+
+test('localDateStr - handles late-night dates correctly (no UTC shift)', () => {
+  // Simulate 11pm on Feb 5 in local time — should still be Feb 5
+  const lateNight = new Date(2026, 1, 5, 23, 0, 0);
+  assertEqual(localDateStr(lateNight), '2026-02-05');
+});
 
 // --- Date Helper Tests ---
 test('isSameDay - same day returns true', () => {

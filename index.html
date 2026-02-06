@@ -1301,14 +1301,14 @@ document.addEventListener('alpine:init', () => {
       for (let i = startDow - 1; i >= 0; i--) {
         const day = prevMonth.getDate() - i;
         const d = new Date(this.dpYear, this.dpMonth - 1, day);
-        const dateStr = d.toISOString().slice(0, 10);
+        const dateStr = localDateStr(d);
         days.push({ key: 'prev-' + day, day, date: dateStr, outside: true, isToday: false, isSelected: false });
       }
 
       // Current month days
       for (let day = 1; day <= lastDay.getDate(); day++) {
         const d = new Date(this.dpYear, this.dpMonth, day);
-        const dateStr = d.toISOString().slice(0, 10);
+        const dateStr = localDateStr(d);
         const isToday = d.getFullYear() === today.getFullYear() && d.getMonth() === today.getMonth() && d.getDate() === today.getDate();
         const isSelected = selectedVal === dateStr;
         days.push({ key: 'cur-' + day, day, date: dateStr, outside: false, isToday, isSelected });
@@ -1318,7 +1318,7 @@ document.addEventListener('alpine:init', () => {
       const remaining = Math.max(0, 35 - days.length);
       for (let i = 1; i <= remaining; i++) {
         const d = new Date(this.dpYear, this.dpMonth + 1, i);
-        const dateStr = d.toISOString().slice(0, 10);
+        const dateStr = localDateStr(d);
         days.push({ key: 'next-' + i, day: i, date: dateStr, outside: true, isToday: false, isSelected: false });
       }
 
@@ -1338,6 +1338,12 @@ function hexToRgba(hex, alpha) {
   return `rgba(${parseInt(m[1], 16)},${parseInt(m[2], 16)},${parseInt(m[3], 16)},${alpha})`;
 }
 
+
+function localDateStr(d) {
+  if (!d) d = new Date();
+  if (typeof d === 'string') d = new Date(d);
+  return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+}
 
 function isSameDay(d1, d2) {
   const a = new Date(d1), b = new Date(d2);
@@ -1418,7 +1424,7 @@ function app() {
     getLastShot(beanId) { const ss = this.getShotsForBean(beanId); return ss.length > 0 ? ss[0] : null; },
 
     get todayShots() {
-      const todayStr = new Date().toISOString().split('T')[0];
+      const todayStr = localDateStr();
       return this.shots
         .filter(s => {
           const shotDate = s.shotDate || s.createdAt.split('T')[0];
@@ -1498,7 +1504,7 @@ function app() {
     duplicateBean(beanId) {
       const source = this.getBeanById(beanId);
       if (!source) return;
-      const today = new Date().toISOString().slice(0, 10);
+      const today = localDateStr();
       const newBean = {
         id: crypto.randomUUID(),
         name: source.name,
@@ -1609,7 +1615,7 @@ function app() {
       this.editingShotId = null;
       this.shotFormBeanId = beanId;
       this.shotFormReturnTo = this.currentTab;
-      const today = new Date().toISOString().split('T')[0];
+      const today = localDateStr();
       this.shotForm = { grindSize: null, doseIn: null, yieldOut: null, rating: null, notes: '', shotDate: today };
       this.showShotForm = true;
     },
@@ -1684,7 +1690,7 @@ function app() {
         yieldOut: yieldVal,
         rating: this.shotForm.rating,
         notes: this.shotForm.notes || '',
-        shotDate: this.shotForm.shotDate || new Date().toISOString().split('T')[0]
+        shotDate: this.shotForm.shotDate || localDateStr()
       };
       if (this.editingShotId) {
         const shot = this.shots.find(s => s.id === this.editingShotId);
