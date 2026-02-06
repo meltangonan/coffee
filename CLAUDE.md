@@ -75,6 +75,7 @@ Stored in localStorage under keys `coffee_beans` and `coffee_shots`.
   optimalGrindSize: number|null,
   optimalDoseIn: number|null,
   optimalYieldOut: number|null,
+  optimalExtractionTime: number|null, // seconds
   createdAt: string        // ISO timestamp
 }
 ```
@@ -87,6 +88,7 @@ Stored in localStorage under keys `coffee_beans` and `coffee_shots`.
   grindSize: number,       // typically 1-30
   doseIn: number,          // grams, typically 14-22
   yieldOut: number|null,   // grams, typically 28-50
+  extractionTime: number|null, // seconds, typically 20-35
   rating: string|null,     // 'bad'|'okay'|'perfect'
   notes: string,
   shotDate: string,        // ISO date "YYYY-MM-DD" — when the shot was made (defaults to today; backfill from createdAt if missing)

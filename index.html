@@ -370,7 +370,7 @@ textarea.form-input { min-height: 80px; resize: vertical; line-height: 1.5; }
 .recipe-card { background: linear-gradient(135deg, var(--espresso) 0%, var(--espresso-light) 100%); border-radius: var(--radius-lg); padding: 20px; color: var(--cream); margin-bottom: 20px; position: relative; overflow: hidden; }
 .recipe-card::before { content: ''; position: absolute; top: -20px; right: -20px; width: 80px; height: 80px; background: rgba(212,165,116,0.1); border-radius: 50%; }
 .recipe-card-label { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 1.5px; color: var(--amber); margin-bottom: 12px; }
-.recipe-card-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; }
+.recipe-card-grid { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 12px; }
 .recipe-stat-label { font-size: 11px; color: rgba(245,240,232,0.6); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px; }
 .recipe-stat-value { font-family: var(--font-heading); font-size: 22px; font-weight: 600; }
 .recipe-card-edit { margin-top: 14px; color: var(--amber); font-size: 13px; padding: 6px 0; }
@@ -380,9 +380,7 @@ textarea.form-input { min-height: 80px; resize: vertical; line-height: 1.5; }
 .recipe-card-edit-form .stepper-dark .stepper-btn:disabled { opacity: 0.4; color: var(--text-muted); }
 .recipe-card-edit-form .stepper-dark .stepper-input { color: var(--espresso); font-size: 17px; font-weight: 600; border-left-color: rgba(44,24,16,0.12); border-right-color: rgba(44,24,16,0.12); }
 .recipe-card-edit-form .stepper-dark .stepper-input::placeholder { color: var(--text-muted); }
-@media (max-width: 600px) {
-  .recipe-card-edit-form .recipe-card-grid { grid-template-columns: 1fr; }
-}
+
 
 .shot-row { display: flex; align-items: center; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid rgba(44,24,16,0.06); }
 .shot-row:last-child { border-bottom: none; }
@@ -599,6 +597,7 @@ textarea.form-input { min-height: 80px; resize: vertical; line-height: 1.5; }
                         <span x-show="shot.doseIn"> &middot; <span x-text="shot.doseIn + 'g'"></span></span>
                         <span x-show="shot.yieldOut"> &#8594; <span x-text="shot.yieldOut + 'g'"></span></span>
                         <span x-show="shot.doseIn && shot.yieldOut"> (<span x-text="'1:' + (shot.yieldOut / shot.doseIn).toFixed(1)"></span>)</span>
+                        <span x-show="shot.extractionTime"> &middot; <span x-text="shot.extractionTime + 's'"></span></span>
                       </div>
                       <div x-show="shot.notes" class="text-muted" style="margin-top:2px; font-style:italic; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" x-text="shot.notes"></div>
                     </div>
@@ -770,6 +769,10 @@ textarea.form-input { min-height: 80px; resize: vertical; line-height: 1.5; }
                 <div class="recipe-stat-label">Yield</div>
                 <div class="recipe-stat-value" x-text="selectedBean?.optimalYieldOut != null ? selectedBean.optimalYieldOut + 'g' : '\u2014'"></div>
               </div>
+              <div>
+                <div class="recipe-stat-label">Time</div>
+                <div class="recipe-stat-value" x-text="selectedBean?.optimalExtractionTime != null ? selectedBean.optimalExtractionTime + 's' : '\u2014'"></div>
+              </div>
             </div>
             <div x-show="selectedBean?.optimalDoseIn && selectedBean?.optimalYieldOut" style="margin-top:10px;">
               <span class="recipe-stat-label">Ratio</span>
@@ -778,15 +781,15 @@ textarea.form-input { min-height: 80px; resize: vertical; line-height: 1.5; }
             <button x-show="!selectedBean?.isArchived" type="button" class="btn btn-ghost recipe-card-edit" @click="startEditingOptimal()">Edit</button>
           </div>
           <div x-show="editingOptimalBeanId === selectedBeanId" class="recipe-card-edit-form">
-            <div class="recipe-card-grid">
-              <div x-data="optimalStepper()" x-init="stInit('grindSize', 1, 10, selectedBean?.optimalGrindSize ?? 5)">
-                <div class="recipe-stat-label">Grind</div>
-                <div class="stepper stepper-dark">
-                  <button type="button" class="stepper-btn" aria-label="Decrease" :disabled="stVal() !== null && stVal() <= stMin" @click="stDec()">−</button>
-                  <input type="number" inputmode="numeric" class="stepper-input" :min="stMin" :max="stMax" :placeholder="stPlaceholder()" :value="stVal() === null ? '' : stVal()" @input="stOnInput($event)">
-                  <button type="button" class="stepper-btn" aria-label="Increase" :disabled="stVal() !== null && stVal() >= stMax" @click="stInc()">+</button>
-                </div>
+            <div x-data="optimalStepper()" x-init="stInit('grindSize', 1, 10, selectedBean?.optimalGrindSize ?? 5)">
+              <div class="recipe-stat-label">Grind</div>
+              <div class="stepper stepper-dark">
+                <button type="button" class="stepper-btn" aria-label="Decrease" :disabled="stVal() !== null && stVal() <= stMin" @click="stDec()">−</button>
+                <input type="number" inputmode="numeric" class="stepper-input" :min="stMin" :max="stMax" :placeholder="stPlaceholder()" :value="stVal() === null ? '' : stVal()" @input="stOnInput($event)">
+                <button type="button" class="stepper-btn" aria-label="Increase" :disabled="stVal() !== null && stVal() >= stMax" @click="stInc()">+</button>
               </div>
+            </div>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 12px;">
               <div x-data="optimalStepper()" x-init="stInit('doseIn', 1, 50, selectedBean?.optimalDoseIn ?? 16)">
                 <div class="recipe-stat-label">Dose (g)</div>
                 <div class="stepper stepper-dark">
@@ -802,6 +805,14 @@ textarea.form-input { min-height: 80px; resize: vertical; line-height: 1.5; }
                   <input type="number" inputmode="numeric" class="stepper-input" :min="stMin" :max="stMax" :placeholder="stPlaceholder()" :value="stVal() === null ? '' : stVal()" @input="stOnInput($event)">
                   <button type="button" class="stepper-btn" aria-label="Increase" :disabled="stVal() !== null && stVal() >= stMax" @click="stInc()">+</button>
                 </div>
+              </div>
+            </div>
+            <div style="margin-top: 12px;" x-data="optimalStepper()" x-init="stInit('extractionTime', 1, 60, selectedBean?.optimalExtractionTime ?? 25)">
+              <div class="recipe-stat-label">Extraction Time (s)</div>
+              <div class="stepper stepper-dark">
+                <button type="button" class="stepper-btn" aria-label="Decrease" :disabled="stVal() !== null && stVal() <= stMin" @click="stDec()">−</button>
+                <input type="number" inputmode="numeric" class="stepper-input" :min="stMin" :max="stMax" :placeholder="stPlaceholder()" :value="stVal() === null ? '' : stVal()" @input="stOnInput($event)">
+                <button type="button" class="stepper-btn" aria-label="Increase" :disabled="stVal() !== null && stVal() >= stMax" @click="stInc()">+</button>
               </div>
             </div>
             <div style="display: flex; gap: 8px; margin-top: 12px;">
@@ -842,6 +853,7 @@ textarea.form-input { min-height: 80px; resize: vertical; line-height: 1.5; }
                       <span x-show="shot.doseIn"> &middot; <span x-text="shot.doseIn + 'g'"></span></span>
                       <span x-show="shot.yieldOut"> &#8594; <span x-text="shot.yieldOut + 'g'"></span></span>
                       <span x-show="shot.doseIn && shot.yieldOut"> (<span x-text="'1:' + (shot.yieldOut / shot.doseIn).toFixed(1)"></span>)</span>
+                      <span x-show="shot.extractionTime"> &middot; <span x-text="shot.extractionTime + 's'"></span></span>
                     </div>
                     <div class="shot-date" x-text="formatDate(shot.shotDate || shot.createdAt)"></div>
                     <div x-show="shot.notes" class="text-muted" style="margin-top:2px; font-style:italic; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" x-text="shot.notes"></div>
@@ -1092,6 +1104,14 @@ textarea.form-input { min-height: 80px; resize: vertical; line-height: 1.5; }
             <input type="number" inputmode="numeric" class="stepper-input" :min="stMin" :max="stMax" :placeholder="stPlaceholder()" :value="stVal() === null ? '' : stVal()" @input="stOnInput($event)">
             <button type="button" class="stepper-btn" aria-label="Increase" :disabled="stVal() !== null && stVal() >= stMax" @click="stInc()">+</button>
           </div>
+        </div>
+      </div>
+      <div class="form-group" x-data="stepper()" x-init="stInit('extractionTime', 1, 60, getShotFormDefault('extractionTime'))">
+        <label class="form-label">Extraction Time (s)</label>
+        <div class="stepper">
+          <button type="button" class="stepper-btn" aria-label="Decrease" :disabled="stVal() !== null && stVal() <= stMin" @click="stDec()">−</button>
+          <input type="number" inputmode="numeric" class="stepper-input" :min="stMin" :max="stMax" :placeholder="stPlaceholder()" :value="stVal() === null ? '' : stVal()" @input="stOnInput($event)">
+          <button type="button" class="stepper-btn" aria-label="Increase" :disabled="stVal() !== null && stVal() >= stMax" @click="stInc()">+</button>
         </div>
       </div>
       <div class="form-group">
@@ -1375,9 +1395,9 @@ function app() {
     showShotForm: false, shotFormBeanId: null, shotFormReturnTo: null, editingShotId: null,
     dailySelectedBeanId: '', dailyLastShot: null,
     editingOptimalBeanId: null,
-    optimalForm: { grindSize: null, doseIn: null, yieldOut: null },
+    optimalForm: { grindSize: null, doseIn: null, yieldOut: null, extractionTime: null },
     beanForm: { name: '', roaster: '', roastDate: '', rating: null, notes: '' },
-    shotForm: { grindSize: null, doseIn: null, yieldOut: null, rating: null, notes: '', shotDate: '' },
+    shotForm: { grindSize: null, doseIn: null, yieldOut: null, extractionTime: null, rating: null, notes: '', shotDate: '' },
     calendarYear: new Date().getFullYear(), calendarMonth: new Date().getMonth(),
 
     init() {
@@ -1398,6 +1418,7 @@ function app() {
               b.optimalGrindSize = firstShot.grindSize;
               b.optimalDoseIn = firstShot.doseIn;
               b.optimalYieldOut = firstShot.yieldOut;
+              b.optimalExtractionTime = firstShot.extractionTime ?? null;
             }
           }
         });
@@ -1519,6 +1540,7 @@ function app() {
         optimalGrindSize: source.optimalGrindSize,
         optimalDoseIn: source.optimalDoseIn,
         optimalYieldOut: source.optimalYieldOut,
+        optimalExtractionTime: source.optimalExtractionTime,
         createdAt: new Date().toISOString()
       };
       // Pre-fill the form for user review/edit
@@ -1619,7 +1641,7 @@ function app() {
       this.shotFormBeanId = beanId;
       this.shotFormReturnTo = this.currentTab;
       const today = localDateStr();
-      this.shotForm = { grindSize: null, doseIn: null, yieldOut: null, rating: null, notes: '', shotDate: today };
+      this.shotForm = { grindSize: null, doseIn: null, yieldOut: null, extractionTime: null, rating: null, notes: '', shotDate: today };
       this.showShotForm = true;
     },
 
@@ -1633,6 +1655,7 @@ function app() {
         grindSize: shot.grindSize,
         doseIn: shot.doseIn,
         yieldOut: shot.yieldOut,
+        extractionTime: shot.extractionTime ?? null,
         rating: normalizeRating(shot.rating),
         notes: shot.notes ?? '',
         shotDate: shotDate
@@ -1643,7 +1666,7 @@ function app() {
     startEditingOptimal() {
       this.editingOptimalBeanId = this.selectedBeanId;
       const b = this.selectedBean;
-      this.optimalForm = { grindSize: b?.optimalGrindSize ?? null, doseIn: b?.optimalDoseIn ?? null, yieldOut: b?.optimalYieldOut ?? null };
+      this.optimalForm = { grindSize: b?.optimalGrindSize ?? null, doseIn: b?.optimalDoseIn ?? null, yieldOut: b?.optimalYieldOut ?? null, extractionTime: b?.optimalExtractionTime ?? null };
     },
     saveOptimalSettings() {
       const bean = this.getBeanById(this.selectedBeanId);
@@ -1652,6 +1675,7 @@ function app() {
       bean.optimalGrindSize = num(this.optimalForm.grindSize);
       bean.optimalDoseIn = num(this.optimalForm.doseIn);
       bean.optimalYieldOut = num(this.optimalForm.yieldOut);
+      bean.optimalExtractionTime = num(this.optimalForm.extractionTime);
       this.saveBeans();
       this.editingOptimalBeanId = null;
     },
@@ -1671,7 +1695,7 @@ function app() {
 
     /** Get default value for shot form field - uses edited shot values when editing, otherwise last shot or fallback */
     getShotFormDefault(field) {
-      const defaults = { grindSize: 5, doseIn: 16, yieldOut: 32 };
+      const defaults = { grindSize: 5, doseIn: 16, yieldOut: 32, extractionTime: 25 };
       // When editing, use the shotForm values that were populated in openShotFormForEdit
       if (this.editingShotId && this.shotForm[field] != null) {
         return this.shotForm[field];
@@ -1687,10 +1711,12 @@ function app() {
       const grind = this.shotForm.grindSize != null ? Math.round(Number(this.shotForm.grindSize)) : (last?.grindSize ?? 5);
       const dose = this.shotForm.doseIn != null ? Math.round(Number(this.shotForm.doseIn)) : (last?.doseIn ?? 16);
       const yieldVal = this.shotForm.yieldOut != null ? Math.round(Number(this.shotForm.yieldOut)) : (last?.yieldOut ?? 32);
+      const extractionTime = this.shotForm.extractionTime != null ? Math.round(Number(this.shotForm.extractionTime)) : (last?.extractionTime ?? 25);
       const shotData = {
         grindSize: grind,
         doseIn: dose,
         yieldOut: yieldVal,
+        extractionTime: extractionTime,
         rating: this.shotForm.rating,
         notes: this.shotForm.notes || '',
         shotDate: this.shotForm.shotDate || localDateStr()
