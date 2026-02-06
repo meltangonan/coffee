@@ -599,7 +599,9 @@ textarea.form-input { min-height: 80px; resize: vertical; line-height: 1.5; }
                         <span x-text="'Grind ' + shot.grindSize"></span>
                         <span x-show="shot.doseIn"> &middot; <span x-text="shot.doseIn + 'g'"></span></span>
                         <span x-show="shot.yieldOut"> &#8594; <span x-text="shot.yieldOut + 'g'"></span></span>
+                        <span x-show="shot.doseIn && shot.yieldOut"> (<span x-text="'1:' + (shot.yieldOut / shot.doseIn).toFixed(1)"></span>)</span>
                       </div>
+                      <div x-show="shot.notes" class="text-muted" style="margin-top:2px; font-style:italic; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" x-text="shot.notes"></div>
                     </div>
                     <div class="today-shot-meta">
                       <span x-show="shotQualityLabel(shot.rating)" class="shot-quality-badge" :class="shotQualityClass(shot.rating)" x-text="shotQualityLabel(shot.rating)"></span>
@@ -840,9 +842,10 @@ textarea.form-input { min-height: 80px; resize: vertical; line-height: 1.5; }
                       Grind <span x-text="shot.grindSize"></span>
                       <span x-show="shot.doseIn"> &middot; <span x-text="shot.doseIn + 'g'"></span></span>
                       <span x-show="shot.yieldOut"> &#8594; <span x-text="shot.yieldOut + 'g'"></span></span>
+                      <span x-show="shot.doseIn && shot.yieldOut"> (<span x-text="'1:' + (shot.yieldOut / shot.doseIn).toFixed(1)"></span>)</span>
                     </div>
                     <div class="shot-date" x-text="formatDate(shot.shotDate || shot.createdAt)"></div>
-                    <div x-show="shot.notes" class="text-muted" style="margin-top:2px; font-style:italic;" x-text="shot.notes"></div>
+                    <div x-show="shot.notes" class="text-muted" style="margin-top:2px; font-style:italic; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" x-text="shot.notes"></div>
                   </div>
                   <div class="shot-meta">
                     <span x-show="shotQualityLabel(shot.rating)" class="shot-quality-badge" :class="shotQualityClass(shot.rating)" x-text="shotQualityLabel(shot.rating)"></span>
@@ -1139,7 +1142,7 @@ textarea.form-input { min-height: 80px; resize: vertical; line-height: 1.5; }
       </div>
       <div class="form-group">
         <label class="form-label">Notes</label>
-        <textarea class="form-input" placeholder="How did it taste?" x-model="shotForm.notes"></textarea>
+        <input type="text" class="form-input" placeholder="How did it taste?" x-model="shotForm.notes" maxlength="80">
       </div>
       <div class="form-actions">
         <button class="btn btn-primary" style="flex: 1;" @click="saveShot()">Save Shot</button>
