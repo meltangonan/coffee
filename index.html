@@ -384,7 +384,7 @@ textarea.form-input { min-height: 80px; resize: vertical; line-height: 1.5; }
 
 .shot-row { display: flex; align-items: center; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid rgba(44,24,16,0.06); }
 .shot-row:last-child { border-bottom: none; }
-.shot-info { display: flex; flex-direction: column; gap: 3px; }
+.shot-info { display: flex; flex-direction: column; gap: 3px; min-width: 0; flex: 1; }
 .shot-settings { font-size: 14px; font-weight: 500; color: var(--text-primary); }
 .shot-date { font-size: 12px; color: var(--text-muted); }
 .shot-meta { display: flex; align-items: center; gap: 8px; }
@@ -785,7 +785,7 @@ textarea.form-input { min-height: 80px; resize: vertical; line-height: 1.5; }
               <div class="recipe-stat-label">Grind</div>
               <div class="stepper stepper-dark">
                 <button type="button" class="stepper-btn" aria-label="Decrease" :disabled="stVal() !== null && stVal() <= stMin" @click="stDec()">−</button>
-                <input type="number" inputmode="numeric" class="stepper-input" :min="stMin" :max="stMax" :placeholder="stPlaceholder()" :value="stVal() === null ? '' : stVal()" @input="stOnInput($event)">
+                <input type="number" inputmode="numeric" class="stepper-input" :min="stMin" :max="stMax" :placeholder="stPlaceholder()" :value="stVal() === null ? '' : stVal()" @input="stOnInput($event)" @focus="stOnFocus($event)">
                 <button type="button" class="stepper-btn" aria-label="Increase" :disabled="stVal() !== null && stVal() >= stMax" @click="stInc()">+</button>
               </div>
             </div>
@@ -794,7 +794,7 @@ textarea.form-input { min-height: 80px; resize: vertical; line-height: 1.5; }
                 <div class="recipe-stat-label">Dose (g)</div>
                 <div class="stepper stepper-dark">
                   <button type="button" class="stepper-btn" aria-label="Decrease" :disabled="stVal() !== null && stVal() <= stMin" @click="stDec()">−</button>
-                  <input type="number" inputmode="numeric" class="stepper-input" :min="stMin" :max="stMax" :placeholder="stPlaceholder()" :value="stVal() === null ? '' : stVal()" @input="stOnInput($event)">
+                  <input type="number" inputmode="numeric" class="stepper-input" :min="stMin" :max="stMax" :placeholder="stPlaceholder()" :value="stVal() === null ? '' : stVal()" @input="stOnInput($event)" @focus="stOnFocus($event)">
                   <button type="button" class="stepper-btn" aria-label="Increase" :disabled="stVal() !== null && stVal() >= stMax" @click="stInc()">+</button>
                 </div>
               </div>
@@ -802,7 +802,7 @@ textarea.form-input { min-height: 80px; resize: vertical; line-height: 1.5; }
                 <div class="recipe-stat-label">Yield (g)</div>
                 <div class="stepper stepper-dark">
                   <button type="button" class="stepper-btn" aria-label="Decrease" :disabled="stVal() !== null && stVal() <= stMin" @click="stDec()">−</button>
-                  <input type="number" inputmode="numeric" class="stepper-input" :min="stMin" :max="stMax" :placeholder="stPlaceholder()" :value="stVal() === null ? '' : stVal()" @input="stOnInput($event)">
+                  <input type="number" inputmode="numeric" class="stepper-input" :min="stMin" :max="stMax" :placeholder="stPlaceholder()" :value="stVal() === null ? '' : stVal()" @input="stOnInput($event)" @focus="stOnFocus($event)">
                   <button type="button" class="stepper-btn" aria-label="Increase" :disabled="stVal() !== null && stVal() >= stMax" @click="stInc()">+</button>
                 </div>
               </div>
@@ -811,7 +811,7 @@ textarea.form-input { min-height: 80px; resize: vertical; line-height: 1.5; }
               <div class="recipe-stat-label">Extraction Time (s)</div>
               <div class="stepper stepper-dark">
                 <button type="button" class="stepper-btn" aria-label="Decrease" :disabled="stVal() !== null && stVal() <= stMin" @click="stDec()">−</button>
-                <input type="number" inputmode="numeric" class="stepper-input" :min="stMin" :max="stMax" :placeholder="stPlaceholder()" :value="stVal() === null ? '' : stVal()" @input="stOnInput($event)">
+                <input type="number" inputmode="numeric" class="stepper-input" :min="stMin" :max="stMax" :placeholder="stPlaceholder()" :value="stVal() === null ? '' : stVal()" @input="stOnInput($event)" @focus="stOnFocus($event)">
                 <button type="button" class="stepper-btn" aria-label="Increase" :disabled="stVal() !== null && stVal() >= stMax" @click="stInc()">+</button>
               </div>
             </div>
@@ -1084,7 +1084,7 @@ textarea.form-input { min-height: 80px; resize: vertical; line-height: 1.5; }
         <label class="form-label">Grind Size</label>
         <div class="stepper">
           <button type="button" class="stepper-btn" aria-label="Decrease" :disabled="stVal() !== null && stVal() <= stMin" @click="stDec()">−</button>
-          <input type="number" inputmode="numeric" class="stepper-input" :min="stMin" :max="stMax" :placeholder="stPlaceholder()" :value="stVal() === null ? '' : stVal()" @input="stOnInput($event)">
+          <input type="number" inputmode="numeric" class="stepper-input" :min="stMin" :max="stMax" :placeholder="stPlaceholder()" :value="stVal() === null ? '' : stVal()" @input="stOnInput($event)" @focus="stOnFocus($event)">
           <button type="button" class="stepper-btn" aria-label="Increase" :disabled="stVal() !== null && stVal() >= stMax" @click="stInc()">+</button>
         </div>
       </div>
@@ -1093,7 +1093,7 @@ textarea.form-input { min-height: 80px; resize: vertical; line-height: 1.5; }
           <label class="form-label">Dose In (g)</label>
           <div class="stepper">
             <button type="button" class="stepper-btn" aria-label="Decrease" :disabled="stVal() !== null && stVal() <= stMin" @click="stDec()">−</button>
-            <input type="number" inputmode="numeric" class="stepper-input" :min="stMin" :max="stMax" :placeholder="stPlaceholder()" :value="stVal() === null ? '' : stVal()" @input="stOnInput($event)">
+            <input type="number" inputmode="numeric" class="stepper-input" :min="stMin" :max="stMax" :placeholder="stPlaceholder()" :value="stVal() === null ? '' : stVal()" @input="stOnInput($event)" @focus="stOnFocus($event)">
             <button type="button" class="stepper-btn" aria-label="Increase" :disabled="stVal() !== null && stVal() >= stMax" @click="stInc()">+</button>
           </div>
         </div>
@@ -1101,7 +1101,7 @@ textarea.form-input { min-height: 80px; resize: vertical; line-height: 1.5; }
           <label class="form-label">Yield Out (g)</label>
           <div class="stepper">
             <button type="button" class="stepper-btn" aria-label="Decrease" :disabled="stVal() !== null && stVal() <= stMin" @click="stDec()">−</button>
-            <input type="number" inputmode="numeric" class="stepper-input" :min="stMin" :max="stMax" :placeholder="stPlaceholder()" :value="stVal() === null ? '' : stVal()" @input="stOnInput($event)">
+            <input type="number" inputmode="numeric" class="stepper-input" :min="stMin" :max="stMax" :placeholder="stPlaceholder()" :value="stVal() === null ? '' : stVal()" @input="stOnInput($event)" @focus="stOnFocus($event)">
             <button type="button" class="stepper-btn" aria-label="Increase" :disabled="stVal() !== null && stVal() >= stMax" @click="stInc()">+</button>
           </div>
         </div>
@@ -1110,7 +1110,7 @@ textarea.form-input { min-height: 80px; resize: vertical; line-height: 1.5; }
         <label class="form-label">Extraction Time (s)</label>
         <div class="stepper">
           <button type="button" class="stepper-btn" aria-label="Decrease" :disabled="stVal() !== null && stVal() <= stMin" @click="stDec()">−</button>
-          <input type="number" inputmode="numeric" class="stepper-input" :min="stMin" :max="stMax" :placeholder="stPlaceholder()" :value="stVal() === null ? '' : stVal()" @input="stOnInput($event)">
+          <input type="number" inputmode="numeric" class="stepper-input" :min="stMin" :max="stMax" :placeholder="stPlaceholder()" :value="stVal() === null ? '' : stVal()" @input="stOnInput($event)" @focus="stOnFocus($event)">
           <button type="button" class="stepper-btn" aria-label="Increase" :disabled="stVal() !== null && stVal() >= stMax" @click="stInc()">+</button>
         </div>
       </div>
@@ -1214,6 +1214,7 @@ document.addEventListener('alpine:init', () => {
         const cur = this.stVal();
         this.stForm()[this.stField] = cur === null ? Math.max(this.stMin, this.stDefault - 1) : Math.max(this.stMin, cur - 1);
       },
+      stOnFocus(e) { e.target.select(); },
       stOnInput(e) {
         const raw = e.target.value.trim();
         if (raw === '') { this.stForm()[this.stField] = null; return; }
