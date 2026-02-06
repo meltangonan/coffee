@@ -407,6 +407,8 @@ textarea.form-input { min-height: 80px; resize: vertical; line-height: 1.5; }
 .bean-picker-option:hover, .bean-picker-option:focus { background: rgba(212,165,116,0.1); outline: none; }
 .bean-picker-option:active { background: rgba(212,165,116,0.18); }
 .bean-picker-option.selected { background: rgba(212,165,116,0.12); }
+.bean-picker-option.add-new { margin-top: 4px; padding-top: 14px; border-top: 1px solid rgba(44,24,16,0.08); }
+.bean-picker-add-icon { font-size: 18px; color: var(--amber-dark); line-height: 1; width: 14px; text-align: center; }
 .bean-picker-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; border: 1.5px solid rgba(44,24,16,0.1); }
 .bean-picker-dot.resting { background: var(--freshness-resting); border-color: var(--freshness-resting); }
 .bean-picker-dot.optimal { background: var(--freshness-optimal); border-color: var(--freshness-optimal); }
@@ -577,6 +579,12 @@ textarea.form-input { min-height: 80px; resize: vertical; line-height: 1.5; }
                   </span>
                 </div>
               </template>
+              <div class="bean-picker-option add-new" @click="pickerOpen = false; openAddBeanFromToday()" role="option" aria-selected="false" tabindex="0" @keydown.enter.prevent="pickerOpen = false; openAddBeanFromToday()">
+                <span class="bean-picker-add-icon">+</span>
+                <span class="bean-picker-info">
+                  <span class="bean-picker-name">Add a new bean</span>
+                </span>
+              </div>
             </div>
           </div>
 
@@ -1174,6 +1182,74 @@ textarea.form-input { min-height: 80px; resize: vertical; line-height: 1.5; }
   </template>
 
   <!-- ═══════════════════════════════════════
+       ADD BEAN MODAL (FROM TODAY PICKER)
+       ═══════════════════════════════════════ -->
+  <template x-if="showBeanFormModal">
+  <div class="overlay" @click.self="cancelBeanForm()">
+    <div class="panel" @click.stop>
+      <div class="panel-handle"></div>
+      <div style="display: flex; align-items: center; gap: 12px;" class="mb-20">
+        <button class="back-btn" @click="cancelBeanForm()">&#8592;</button>
+        <h3 class="heading-lg">Add Bean</h3>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Bean Name <span class="required">*</span></label>
+        <input type="text" class="form-input" placeholder="e.g. Unicorn Blood" x-model="beanForm.name">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Roaster <span class="required">*</span></label>
+        <input type="text" class="form-input" placeholder="e.g. Dark Matter" x-model="beanForm.roaster">
+      </div>
+      <div class="form-group date-picker-group" x-data="datePicker()" x-init="dpInit('beanForm.roastDate')">
+        <label class="form-label">Roast Date</label>
+        <div class="date-input-wrapper" x-ref="dateInputWrapper" @click="dpToggle()">
+          <input type="text" class="form-input" :value="dpDisplayValue()" placeholder="Select date" readonly>
+          <span class="date-input-actions">
+            <button type="button" class="date-clear-btn" x-show="dpValue()" @click.stop="dpClear()" title="Clear date">&times;</button>
+          </span>
+        </div>
+        <template x-if="dpOpen">
+          <div class="custom-datepicker" x-ref="datepickerEl" @click.stop>
+            <div class="datepicker-nav">
+              <div class="datepicker-month-year" x-text="dpMonthYearLabel()"></div>
+              <div class="datepicker-nav-actions">
+                <button type="button" class="datepicker-today-btn" @click="dpGoToday()">Today</button>
+                <button type="button" class="datepicker-nav-btn" @click="dpPrevMonth()" aria-label="Previous month">&lsaquo;</button>
+                <button type="button" class="datepicker-nav-btn" @click="dpNextMonth()" aria-label="Next month">&rsaquo;</button>
+              </div>
+            </div>
+            <div class="datepicker-weekdays">
+              <template x-for="d in ['Su','Mo','Tu','We','Th','Fr','Sa']">
+                <div class="datepicker-weekday" x-text="d"></div>
+              </template>
+            </div>
+            <div class="datepicker-days">
+              <template x-for="day in dpDays()" :key="day.key">
+                <button type="button" class="datepicker-day"
+                  :class="{ outside: day.outside, today: day.isToday, selected: day.isSelected }"
+                  @click.stop="!day.outside && dpSelect(day.date)"
+                  x-text="day.day"></button>
+              </template>
+            </div>
+            <div class="datepicker-footer">
+              <button type="button" class="datepicker-clear-btn" x-show="dpValue()" @click="dpClear()">Clear</button>
+            </div>
+          </div>
+        </template>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Notes</label>
+        <textarea class="form-input" placeholder="Tasting notes, brew tips..." x-model="beanForm.notes"></textarea>
+      </div>
+      <div x-show="beanFormError" class="mb-12" style="color: var(--freshness-past); font-size: 13px;" x-text="beanFormError"></div>
+      <div class="form-actions">
+        <button class="btn btn-primary" style="flex: 1;" @click="saveBean()">Save</button>
+      </div>
+    </div>
+  </div>
+  </template>
+
+  <!-- ═══════════════════════════════════════
        TAB BAR
        ═══════════════════════════════════════ -->
   <nav class="tab-bar">
@@ -1396,6 +1472,7 @@ function app() {
     currentTab: 'today', beansView: 'list',
     selectedBeanId: null, editingBeanId: null,
     showShotForm: false, shotFormBeanId: null, shotFormReturnTo: null, editingShotId: null,
+    showBeanFormModal: false, beanFormContext: 'beans', beanFormError: '',
     dailySelectedBeanId: '', dailyLastShot: null,
     editingOptimalBeanId: null,
     optimalForm: { grindSize: null, doseIn: null, yieldOut: null, extractionTime: null },
@@ -1516,7 +1593,11 @@ function app() {
       return { status: 'past', label: 'Past Peak', detail: `Past peak by ${days - FRESHNESS_OPTIMAL_DAYS} days` };
     },
 
-    openBeanForm(id) {
+    openBeanForm(id, options = {}) {
+      const context = options.context || 'beans';
+      this.beanFormContext = context;
+      this.beanFormError = '';
+      this._pendingDuplicateBean = null;
       this.editingBeanId = id;
       if (id) {
         const b = this.getBeanById(id);
@@ -1525,6 +1606,11 @@ function app() {
       } else {
         this.beanForm = { name: '', roaster: '', roastDate: '', rating: null, notes: '' };
       }
+      if (context === 'today-picker') {
+        this.showBeanFormModal = true;
+        return;
+      }
+      this.showBeanFormModal = false;
       this.beansView = 'form';
     },
 
@@ -1550,6 +1636,9 @@ function app() {
       this.beanForm = { name: newBean.name, roaster: newBean.roaster, roastDate: newBean.roastDate, rating: newBean.rating, notes: newBean.notes };
       this.editingBeanId = null;
       this._pendingDuplicateBean = newBean; // Store for saveBean to use
+      this.beanFormContext = 'beans';
+      this.showBeanFormModal = false;
+      this.beanFormError = '';
       this.currentTab = 'beans';
       this.beansView = 'form';
     },
@@ -1559,42 +1648,93 @@ function app() {
       this.duplicateBean(beanId);
     },
 
+    normalizeBeanName(name) {
+      return (name || '').trim().toLowerCase();
+    },
+
+    beanNameExists(name, excludeId = null) {
+      const normalized = this.normalizeBeanName(name);
+      if (!normalized) return false;
+      return this.beans.some(b => this.normalizeBeanName(b.name) === normalized && b.id !== excludeId);
+    },
+
+    openAddBeanFromToday() {
+      this.dailySelectedBeanId = '';
+      this.dailyLastShot = null;
+      this.openBeanForm(null, { context: 'today-picker' });
+    },
+
     saveBean() {
       const name = (this.beanForm.name || '').trim();
       const roaster = (this.beanForm.roaster || '').trim();
       const roastDate = this.beanForm.roastDate ? String(this.beanForm.roastDate).slice(0, 10) : '';
       if (!name || !roaster) return;
+      this.beanFormError = '';
+      const isTodayPickerFlow = this.beanFormContext === 'today-picker';
+      if (isTodayPickerFlow && this.beanNameExists(name, this.editingBeanId)) {
+        this.beanFormError = 'Bean already exists. Choose a different name.';
+        return;
+      }
+      let savedBeanId = null;
       if (this.editingBeanId) {
         const idx = this.beans.findIndex(b => b.id === this.editingBeanId);
         if (idx !== -1) {
           const updated = { ...this.beans[idx], name, roaster, roastDate, notes: this.beanForm.notes ?? '' };
           this.beans[idx] = updated;
+          savedBeanId = updated.id;
         }
       } else if (this._pendingDuplicateBean) {
         // Duplicating from archive — preserve optimal settings
         const pending = this._pendingDuplicateBean;
-        this.beans.push({
+        const duplicatedBean = {
           ...pending,
           name, roaster, roastDate,
           notes: this.beanForm.notes ?? ''
-        });
+        };
+        this.beans.push(duplicatedBean);
+        savedBeanId = duplicatedBean.id;
         this._pendingDuplicateBean = null;
       } else {
-        this.beans.push({
+        const newBean = {
           id: crypto.randomUUID(), name, roaster, roastDate,
           rating: null, notes: this.beanForm.notes ?? '',
           isArchived: false, createdAt: new Date().toISOString()
-        });
+        };
+        this.beans.push(newBean);
+        savedBeanId = newBean.id;
       }
       this.saveBeans();
+      if (isTodayPickerFlow) {
+        this.showBeanFormModal = false;
+        this.editingBeanId = null;
+        this.beanFormContext = 'beans';
+        this.beanFormError = '';
+        this.dailySelectedBeanId = savedBeanId || '';
+        this.dailyLastShot = null;
+        if (this.dailySelectedBeanId) this.onDailyBeanSelect();
+        return;
+      }
       this.beansView = this.editingBeanId ? 'detail' : 'list';
       this.editingBeanId = null;
+      this.beanFormContext = 'beans';
     },
 
     cancelBeanForm() {
+      if (this.beanFormContext === 'today-picker') {
+        this.showBeanFormModal = false;
+        this.editingBeanId = null;
+        this._pendingDuplicateBean = null;
+        this.beanFormContext = 'beans';
+        this.beanFormError = '';
+        this.dailySelectedBeanId = '';
+        this.dailyLastShot = null;
+        return;
+      }
       this.beansView = this.editingBeanId ? 'detail' : 'list';
       this.editingBeanId = null;
       this._pendingDuplicateBean = null;
+      this.beanFormContext = 'beans';
+      this.beanFormError = '';
     },
 
     deleteBean(id) {
