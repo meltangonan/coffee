@@ -32,6 +32,7 @@ if (typeof crypto !== 'undefined' && !crypto.randomUUID) {
    ═══════════════════════════════════════════ */
 
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+[x-cloak] { display: none !important; }
 
 :root {
   --espresso: #2C1810;
@@ -91,7 +92,8 @@ body {
 }
 @media (min-width: 768px) { .app-shell { border-left: 1px solid rgba(44,24,16,0.06); border-right: 1px solid rgba(44,24,16,0.06); } }
 
-.content-area { flex: 1; overflow-y: auto; overflow-x: hidden; padding: 20px 16px; padding-bottom: calc(var(--tab-total) + 24px); -webkit-overflow-scrolling: touch; }
+.content-area { flex: 1; position: relative; overflow-y: auto; overflow-x: hidden; padding: 20px 16px; padding-bottom: calc(var(--tab-total) + 24px); -webkit-overflow-scrolling: touch; }
+.tab-stage { position: relative; }
 
 .tab-bar { position: fixed; bottom: 0; left: 0; right: 0; width: 100%; max-width: 600px; margin: 0 auto; height: var(--tab-total); padding-bottom: var(--safe-bottom); background: var(--espresso); display: flex; align-items: flex-start; justify-content: space-around; z-index: 100; box-shadow: 0 -2px 20px rgba(44,24,16,0.15); }
 .tab-btn { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; padding: 8px 16px; min-width: 64px; height: var(--tab-height); background: none; border: none; color: rgba(245,240,232,0.5); font-family: var(--font-body); font-size: 11px; font-weight: 500; letter-spacing: 0.3px; cursor: pointer; transition: color 0.2s ease; -webkit-tap-highlight-color: transparent; }
@@ -503,11 +505,12 @@ textarea.form-input { min-height: 80px; resize: vertical; line-height: 1.5; }
        @touchmove="onTabSwipeMove($event)"
        @touchend="onTabSwipeEnd($event)"
        @touchcancel="resetTabSwipe()">
+    <div class="tab-stage">
 
     <!-- ═══════════════════════════════════════
          TODAY TAB — Daily Log
          ═══════════════════════════════════════ -->
-    <div x-show="currentTab === 'today'" x-cloak class="fade-in">
+    <div x-cloak class="tab-pane" :style="tabPaneStyle('today')">
 
       <!-- No Beans Empty State — shown when user has no active beans -->
       <template x-if="currentBeans.length === 0">
@@ -650,7 +653,7 @@ textarea.form-input { min-height: 80px; resize: vertical; line-height: 1.5; }
     <!-- ═══════════════════════════════════════
          BEANS TAB — Dashboard
          ═══════════════════════════════════════ -->
-    <div x-show="currentTab === 'beans'" x-cloak>
+    <div x-cloak class="tab-pane" :style="tabPaneStyle('beans')">
 
       <!-- Bean List -->
       <div x-show="beansView === 'list'" class="fade-in">
@@ -1045,7 +1048,7 @@ textarea.form-input { min-height: 80px; resize: vertical; line-height: 1.5; }
     <!-- ═══════════════════════════════════════
          CALENDAR TAB
          ═══════════════════════════════════════ -->
-    <div x-show="currentTab === 'calendar'" x-cloak class="fade-in">
+    <div x-cloak class="tab-pane" :style="tabPaneStyle('calendar')">
       <h1 class="heading-xl mb-12">Roast Freshness Calendar</h1>
       <p class="calendar-description">See when each coffee is at peak freshness this month.</p>
       <div class="calendar-card">
@@ -1090,6 +1093,7 @@ textarea.form-input { min-height: 80px; resize: vertical; line-height: 1.5; }
         </div>
         <p class="calendar-note">Peak freshness window: ~7–21 days post-roast, when off-gassing has settled and flavors are at their best.</p>
       </div>
+    </div>
     </div>
 
   </div>
@@ -1286,15 +1290,15 @@ textarea.form-input { min-height: 80px; resize: vertical; line-height: 1.5; }
        TAB BAR
        ═══════════════════════════════════════ -->
   <nav class="tab-bar">
-    <button class="tab-btn" :class="{ 'active': currentTab === 'today' }" @click="currentTab = 'today'">
+    <button class="tab-btn" :class="{ 'active': currentTab === 'today' }" @click="activateTab('today')">
       <span class="tab-icon">&#9749;</span>
       <span>Today</span>
     </button>
-    <button class="tab-btn" :class="{ 'active': currentTab === 'beans' }" @click="currentTab = 'beans'; if(beansView !== 'list') { beansView = 'list'; selectedBeanId = null; }">
+    <button class="tab-btn" :class="{ 'active': currentTab === 'beans' }" @click="activateTab('beans')">
       <span class="tab-icon">&#127793;</span>
       <span>Coffee</span>
     </button>
-    <button class="tab-btn" :class="{ 'active': currentTab === 'calendar' }" @click="currentTab = 'calendar'">
+    <button class="tab-btn" :class="{ 'active': currentTab === 'calendar' }" @click="activateTab('calendar')">
       <span class="tab-icon">&#128197;</span>
       <span>Calendar</span>
     </button>
@@ -1504,8 +1508,9 @@ function app() {
     beans: [], shots: [],
     currentTab: 'today', beansView: 'list',
     touchTabSwipeEnabled: false,
-    tabSwipeStartX: 0, tabSwipeStartY: 0, tabSwipeLastX: 0, tabSwipeLastY: 0,
+    tabSwipeStartX: 0, tabSwipeStartY: 0,
     tabSwipeTracking: false, tabSwipeAxis: '',
+    tabSwipeOffsetX: 0, tabSwipeWidth: 0, tabSwipeAdjacentTab: '',
     selectedBeanId: null, editingBeanId: null,
     showShotForm: false, shotFormBeanId: null, shotFormReturnTo: null, editingShotId: null,
     showBeanFormModal: false, beanFormContext: 'beans', beanFormError: '',
@@ -1561,18 +1566,69 @@ function app() {
         && (window.matchMedia('(pointer: coarse)').matches || navigator.maxTouchPoints > 0);
     },
 
-    getTabSwipeEdgeWidth() {
-      return window.innerWidth * 0.28;
+    tabOrder() {
+      return ['today', 'beans', 'calendar'];
     },
 
-    isTabSwipeStartInEdge(x) {
-      const edge = this.getTabSwipeEdgeWidth();
-      return x <= edge || x >= (window.innerWidth - edge);
+    getTabIndex(tab) {
+      return this.tabOrder().indexOf(tab);
+    },
+
+    activateTab(tab) {
+      if (!this.tabOrder().includes(tab)) return;
+      if (tab === 'beans' && this.beansView !== 'list') {
+        this.beansView = 'list';
+        this.selectedBeanId = null;
+      }
+      this.currentTab = tab;
+    },
+
+    isTabSwipeDragging() {
+      return this.tabSwipeTracking && this.tabSwipeAxis === 'x';
+    },
+
+    tabPaneStyle(tab) {
+      const isActive = tab === this.currentTab;
+      if (!this.isTabSwipeDragging()) {
+        return isActive ? 'display:block;position:relative;' : 'display:none;';
+      }
+
+      if (isActive) {
+        return `display:block;position:relative;z-index:2;transform:translateX(${this.tabSwipeOffsetX}px);`;
+      }
+
+      if (tab === this.tabSwipeAdjacentTab) {
+        const base = this.tabSwipeOffsetX < 0 ? this.tabSwipeWidth : -this.tabSwipeWidth;
+        const offset = base + this.tabSwipeOffsetX;
+        return `display:block;position:absolute;top:0;left:0;width:100%;z-index:1;transform:translateX(${offset}px);`;
+      }
+
+      return 'display:none;';
+    },
+
+    getTabSwipeEdgeWidth(width) {
+      return width * 0.28;
+    },
+
+    isTabSwipeStartInEdge(clientX, bounds) {
+      if (!bounds) return false;
+      const localX = clientX - bounds.left;
+      const edge = this.getTabSwipeEdgeWidth(bounds.width);
+      return localX <= edge || localX >= (bounds.width - edge);
     },
 
     isTabSwipeBlockedTarget(target) {
       if (!target || typeof target.closest !== 'function') return false;
       return !!target.closest('input, textarea, select, button, a, [contenteditable="true"], .today-shot-swipe, .bean-picker-dropdown, .custom-datepicker, .archive-picker, .fill-from-previous-picker, .panel');
+    },
+
+    getAdjacentTabForOffset(offset) {
+      const currentIndex = this.getTabIndex(this.currentTab);
+      if (currentIndex === -1 || offset === 0) return '';
+      const nextIndex = offset < 0 ? currentIndex + 1 : currentIndex - 1;
+      const order = this.tabOrder();
+      if (nextIndex < 0 || nextIndex >= order.length) return '';
+      return order[nextIndex];
     },
 
     onTabSwipeStart(event) {
@@ -1583,14 +1639,16 @@ function app() {
       if (this.isTabSwipeBlockedTarget(event.target)) return;
 
       const touch = event.touches[0];
-      if (!this.isTabSwipeStartInEdge(touch.clientX)) return;
+      const bounds = event.currentTarget?.getBoundingClientRect();
+      if (!this.isTabSwipeStartInEdge(touch.clientX, bounds)) return;
 
       this.tabSwipeStartX = touch.clientX;
       this.tabSwipeStartY = touch.clientY;
-      this.tabSwipeLastX = touch.clientX;
-      this.tabSwipeLastY = touch.clientY;
+      this.tabSwipeWidth = bounds.width;
       this.tabSwipeTracking = true;
       this.tabSwipeAxis = '';
+      this.tabSwipeOffsetX = 0;
+      this.tabSwipeAdjacentTab = '';
     },
 
     onTabSwipeMove(event) {
@@ -1615,27 +1673,33 @@ function app() {
         }
       }
 
-      this.tabSwipeLastX = touch.clientX;
-      this.tabSwipeLastY = touch.clientY;
-      if (this.tabSwipeAxis === 'x') event.preventDefault();
+      if (this.tabSwipeAxis !== 'x') return;
+
+      let dragX = dx;
+      const maxDrag = this.tabSwipeWidth || window.innerWidth;
+      dragX = Math.max(-maxDrag, Math.min(maxDrag, dragX));
+
+      // At boundaries, apply resistance so it feels natural but doesn't fully slide a non-existent tab.
+      if (!this.getAdjacentTabForOffset(dragX)) {
+        dragX *= 0.28;
+      }
+
+      this.tabSwipeOffsetX = dragX;
+      this.tabSwipeAdjacentTab = this.getAdjacentTabForOffset(dragX);
+      event.preventDefault();
     },
 
-    onTabSwipeEnd(event) {
+    onTabSwipeEnd() {
       if (!this.tabSwipeTracking) return;
-      const endTouch = event.changedTouches && event.changedTouches[0];
-      const endX = endTouch ? endTouch.clientX : this.tabSwipeLastX;
-      const endY = endTouch ? endTouch.clientY : this.tabSwipeLastY;
-      const dx = endX - this.tabSwipeStartX;
-      const dy = endY - this.tabSwipeStartY;
-      const absDx = Math.abs(dx);
-      const absDy = Math.abs(dy);
-
-      if (this.tabSwipeAxis !== 'x' || absDx < 56 || absDx <= absDy) {
+      if (this.tabSwipeAxis !== 'x') {
         this.resetTabSwipe();
         return;
       }
 
-      this.switchTabFromSwipe(dx > 0 ? 'right' : 'left');
+      const threshold = Math.max(56, (this.tabSwipeWidth || window.innerWidth) * 0.18);
+      if (this.tabSwipeAdjacentTab && Math.abs(this.tabSwipeOffsetX) >= threshold) {
+        this.activateTab(this.tabSwipeAdjacentTab);
+      }
       this.resetTabSwipe();
     },
 
@@ -1644,26 +1708,9 @@ function app() {
       this.tabSwipeAxis = '';
       this.tabSwipeStartX = 0;
       this.tabSwipeStartY = 0;
-      this.tabSwipeLastX = 0;
-      this.tabSwipeLastY = 0;
-    },
-
-    switchTabFromSwipe(direction) {
-      const tabs = ['today', 'beans', 'calendar'];
-      const currentIndex = tabs.indexOf(this.currentTab);
-      if (currentIndex === -1) return;
-
-      const nextIndex = direction === 'right'
-        ? Math.min(currentIndex + 1, tabs.length - 1)
-        : Math.max(currentIndex - 1, 0);
-
-      if (nextIndex === currentIndex) return;
-      const nextTab = tabs[nextIndex];
-      if (nextTab === 'beans' && this.beansView !== 'list') {
-        this.beansView = 'list';
-        this.selectedBeanId = null;
-      }
-      this.currentTab = nextTab;
+      this.tabSwipeOffsetX = 0;
+      this.tabSwipeWidth = 0;
+      this.tabSwipeAdjacentTab = '';
     },
 
     saveBeans() { localStorage.setItem('coffee_beans', JSON.stringify(this.beans)); },
