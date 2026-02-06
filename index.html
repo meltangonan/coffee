@@ -380,6 +380,8 @@ textarea.form-input { min-height: 80px; resize: vertical; line-height: 1.5; }
 .recipe-card-edit-form .stepper-dark .stepper-btn:disabled { opacity: 0.4; color: var(--text-muted); }
 .recipe-card-edit-form .stepper-dark .stepper-input { color: var(--espresso); font-size: 17px; font-weight: 600; border-left-color: rgba(44,24,16,0.12); border-right-color: rgba(44,24,16,0.12); }
 .recipe-card-edit-form .stepper-dark .stepper-input::placeholder { color: var(--text-muted); }
+.recipe-card-edit-form .btn-cancel { background: rgba(245,240,232,0.15); color: var(--cream); }
+.recipe-card-edit-form .btn-cancel:hover { background: rgba(245,240,232,0.25); }
 
 
 .shot-row { display: flex; align-items: center; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid rgba(44,24,16,0.06); }
@@ -816,7 +818,7 @@ textarea.form-input { min-height: 80px; resize: vertical; line-height: 1.5; }
               </div>
             </div>
             <div style="display: flex; justify-content: space-between; margin-top: 12px;">
-              <button type="button" class="btn btn-ghost" @click="cancelEditingOptimal()">Cancel</button>
+              <button type="button" class="btn btn-cancel" @click="cancelEditingOptimal()">Cancel</button>
               <button type="button" class="btn btn-amber" @click="saveOptimalSettings()">Save</button>
             </div>
           </div>
