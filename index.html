@@ -593,11 +593,11 @@ textarea.form-input { min-height: 80px; resize: vertical; line-height: 1.5; }
                     <div class="today-shot-content" @click="openShotFormForEdit(shot)">
                       <div class="today-shot-bean" x-text="getBeanById(shot.beanId)?.name || 'Unknown'"></div>
                       <div class="today-shot-details">
-                        <span x-text="'Grind ' + shot.grindSize"></span>
-                        <span x-show="shot.doseIn"> &middot; <span x-text="shot.doseIn + 'g'"></span></span>
+                        <span x-show="shot.grindSize" x-text="'Grind ' + shot.grindSize"></span>
+                        <span x-show="shot.doseIn"><span x-show="shot.grindSize"> &middot; </span><span x-text="shot.doseIn + 'g'"></span></span>
                         <span x-show="shot.yieldOut"> &#8594; <span x-text="shot.yieldOut + 'g'"></span></span>
                         <span x-show="shot.doseIn && shot.yieldOut"> (<span x-text="'1:' + (shot.yieldOut / shot.doseIn).toFixed(1)"></span>)</span>
-                        <span x-show="shot.extractionTime"> &middot; <span x-text="shot.extractionTime + 's'"></span></span>
+                        <span x-show="shot.extractionTime"><span x-show="shot.grindSize || shot.doseIn || shot.yieldOut"> &middot; </span><span x-text="shot.extractionTime + 's'"></span></span>
                       </div>
                       <div x-show="shot.notes" class="text-muted" style="margin-top:2px; font-style:italic; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" x-text="shot.notes"></div>
                     </div>
@@ -849,11 +849,11 @@ textarea.form-input { min-height: 80px; resize: vertical; line-height: 1.5; }
                 <div class="shot-row bean-shot-swipe-row">
                   <div class="shot-info">
                     <div class="shot-settings">
-                      Grind <span x-text="shot.grindSize"></span>
-                      <span x-show="shot.doseIn"> &middot; <span x-text="shot.doseIn + 'g'"></span></span>
+                      <span x-show="shot.grindSize">Grind <span x-text="shot.grindSize"></span></span>
+                      <span x-show="shot.doseIn"><span x-show="shot.grindSize"> &middot; </span><span x-text="shot.doseIn + 'g'"></span></span>
                       <span x-show="shot.yieldOut"> &#8594; <span x-text="shot.yieldOut + 'g'"></span></span>
                       <span x-show="shot.doseIn && shot.yieldOut"> (<span x-text="'1:' + (shot.yieldOut / shot.doseIn).toFixed(1)"></span>)</span>
-                      <span x-show="shot.extractionTime"> &middot; <span x-text="shot.extractionTime + 's'"></span></span>
+                      <span x-show="shot.extractionTime"><span x-show="shot.grindSize || shot.doseIn || shot.yieldOut"> &middot; </span><span x-text="shot.extractionTime + 's'"></span></span>
                     </div>
                     <div class="shot-date" x-text="formatDate(shot.shotDate || shot.createdAt)"></div>
                     <div x-show="shot.notes" class="text-muted" style="margin-top:2px; font-style:italic; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" x-text="shot.notes"></div>
@@ -1641,7 +1641,15 @@ function app() {
       this.shotFormBeanId = beanId;
       this.shotFormReturnTo = this.currentTab;
       const today = localDateStr();
-      this.shotForm = { grindSize: null, doseIn: null, yieldOut: null, extractionTime: null, rating: null, notes: '', shotDate: today };
+      const last = this.getLastShot(beanId);
+      const defaults = { grindSize: 5, doseIn: 16, yieldOut: 32, extractionTime: 25 };
+      this.shotForm = {
+        grindSize: last?.grindSize ?? defaults.grindSize,
+        doseIn: last?.doseIn ?? defaults.doseIn,
+        yieldOut: last?.yieldOut ?? defaults.yieldOut,
+        extractionTime: null,
+        rating: null, notes: '', shotDate: today
+      };
       this.showShotForm = true;
     },
 
@@ -1707,11 +1715,11 @@ function app() {
 
     saveShot() {
       if (!this.shotFormBeanId) return;
-      const last = this.getLastShot(this.shotFormBeanId);
-      const grind = this.shotForm.grindSize != null ? Math.round(Number(this.shotForm.grindSize)) : (last?.grindSize ?? 5);
-      const dose = this.shotForm.doseIn != null ? Math.round(Number(this.shotForm.doseIn)) : (last?.doseIn ?? 16);
-      const yieldVal = this.shotForm.yieldOut != null ? Math.round(Number(this.shotForm.yieldOut)) : (last?.yieldOut ?? 32);
-      const extractionTime = this.shotForm.extractionTime != null ? Math.round(Number(this.shotForm.extractionTime)) : (last?.extractionTime ?? 25);
+      const num = (v) => v != null && v !== '' ? Math.round(Number(v)) : null;
+      const grind = num(this.shotForm.grindSize);
+      const dose = num(this.shotForm.doseIn);
+      const yieldVal = num(this.shotForm.yieldOut);
+      const extractionTime = num(this.shotForm.extractionTime);
       const shotData = {
         grindSize: grind,
         doseIn: dose,
