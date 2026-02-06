@@ -426,8 +426,7 @@ textarea.form-input { min-height: 80px; resize: vertical; line-height: 1.5; }
 .today-shot-bean { font-weight: 600; font-size: 14px; color: var(--espresso); }
 .today-shot-details { font-size: 13px; color: var(--text-secondary); margin-top: 2px; }
 .today-shot-meta { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
-.today-shot-edit { padding: 4px 10px; font-size: 13px; color: var(--text-muted); }
-.today-shot-edit:hover { color: var(--espresso); }
+.today-shot-delete-confirm { padding: 4px 10px; font-size: 12px; color: white; background: var(--freshness-past); border-radius: var(--radius-sm); font-weight: 500; }
 .today-shot-delete { padding: 4px 8px; font-size: 12px; color: var(--text-muted); }
 .today-shot-delete:hover { color: var(--freshness-past); }
 /* Swipe-to-delete wrapper (touch) */
@@ -585,10 +584,10 @@ textarea.form-input { min-height: 80px; resize: vertical; line-height: 1.5; }
           <div x-show="todayShots.length > 0" class="mt-24">
             <h3 class="heading-md mb-12">Today's Shots</h3>
             <template x-for="shot in todayShots" :key="shot.id">
-              <div class="today-shot-swipe fade-in" x-data="{ swipeStart: 0, swipeX: 0, reveal: false }"
+              <div class="today-shot-swipe fade-in" x-data="{ swipeStart: 0, swipeX: 0, reveal: false, confirmDelete: false }"
                    @touchstart="swipeStart = $event.touches[0].clientX; swipeX = 0"
                    @touchmove="swipeX = Math.min(0, $event.touches[0].clientX - swipeStart)"
-                   @touchend="if (swipeX < -60) { deleteShot(shot.id); } else { reveal = swipeX < -36; swipeX = reveal ? -72 : 0; }"
+                   @touchend="reveal = swipeX < -36; swipeX = reveal ? -72 : 0"
                    :class="{ 'reveal': reveal }">
                 <div class="today-shot-swipe-actions" @click="deleteShot(shot.id)" role="button" tabindex="0" @keydown.enter="deleteShot(shot.id)">Delete</div>
                 <div class="today-shot-swipe-content" :style="'transform: translateX(' + (reveal ? -72 : swipeX) + 'px)'">
@@ -605,8 +604,8 @@ textarea.form-input { min-height: 80px; resize: vertical; line-height: 1.5; }
                     </div>
                     <div class="today-shot-meta">
                       <span x-show="shotQualityLabel(shot.rating)" class="shot-quality-badge" :class="shotQualityClass(shot.rating)" x-text="shotQualityLabel(shot.rating)"></span>
-                      <button type="button" class="btn btn-ghost today-shot-edit" @click.stop="openShotFormForEdit(shot)" title="Edit shot">Edit</button>
-                      <button type="button" class="btn btn-ghost today-shot-delete" @click.stop="deleteShot(shot.id)" title="Delete shot">&#10005;</button>
+                      <button x-show="!confirmDelete" type="button" class="btn btn-ghost today-shot-delete" @click.stop="confirmDelete = true" title="Delete shot">&#10005;</button>
+                      <button x-show="confirmDelete" type="button" class="btn today-shot-delete-confirm" @click.stop="deleteShot(shot.id)" @click.away="confirmDelete = false" title="Confirm delete">Delete?</button>
                     </div>
                   </div>
                 </div>
@@ -829,10 +828,10 @@ textarea.form-input { min-height: 80px; resize: vertical; line-height: 1.5; }
             <div class="empty-state-text">Log your first shot to start dialing in.</div>
           </div>
           <template x-for="shot in (showAllShots ? getShotsForBean(selectedBeanId) : getShotsForBean(selectedBeanId).slice(0, 5))" :key="shot.id">
-            <div class="today-shot-swipe fade-in" x-data="{ swipeStart: 0, swipeX: 0, reveal: false }"
+            <div class="today-shot-swipe fade-in" x-data="{ swipeStart: 0, swipeX: 0, reveal: false, confirmDelete: false }"
                  @touchstart="if (!selectedBean?.isArchived) { swipeStart = $event.touches[0].clientX; swipeX = 0; }"
                  @touchmove="if (!selectedBean?.isArchived) { swipeX = Math.min(0, $event.touches[0].clientX - swipeStart); }"
-                 @touchend="if (!selectedBean?.isArchived) { if (swipeX < -60) { deleteShot(shot.id); } else { reveal = swipeX < -36; swipeX = reveal ? -72 : 0; } }"
+                 @touchend="if (!selectedBean?.isArchived) { reveal = swipeX < -36; swipeX = reveal ? -72 : 0; }"
                  :class="{ 'reveal': reveal }">
               <div class="today-shot-swipe-actions" @click="deleteShot(shot.id)" role="button" tabindex="0" @keydown.enter="deleteShot(shot.id)">Delete</div>
               <div class="today-shot-swipe-content today-shot-content" :style="'transform: translateX(' + (reveal ? -72 : swipeX) + 'px)'" @click="if (!selectedBean?.isArchived) openShotFormForEdit(shot)">
@@ -849,8 +848,8 @@ textarea.form-input { min-height: 80px; resize: vertical; line-height: 1.5; }
                   </div>
                   <div class="shot-meta">
                     <span x-show="shotQualityLabel(shot.rating)" class="shot-quality-badge" :class="shotQualityClass(shot.rating)" x-text="shotQualityLabel(shot.rating)"></span>
-                    <button x-show="!selectedBean?.isArchived" type="button" class="btn btn-ghost today-shot-edit" @click.stop="openShotFormForEdit(shot)" title="Edit shot">Edit</button>
-                    <button x-show="!selectedBean?.isArchived" type="button" class="btn btn-ghost today-shot-delete" @click.stop="deleteShot(shot.id)" title="Delete shot">&#10005;</button>
+                    <button x-show="!selectedBean?.isArchived && !confirmDelete" type="button" class="btn btn-ghost today-shot-delete" @click.stop="confirmDelete = true" title="Delete shot">&#10005;</button>
+                    <button x-show="!selectedBean?.isArchived && confirmDelete" type="button" class="btn today-shot-delete-confirm" @click.stop="deleteShot(shot.id)" @click.away="confirmDelete = false" title="Confirm delete">Delete?</button>
                   </div>
                 </div>
               </div>
