@@ -551,7 +551,7 @@ textarea.form-input { min-height: 80px; resize: vertical; line-height: 1.5; }
                   </template>
                 </div>
                 <div x-show="archivedBeans.length >= 5" class="archive-picker-footer">
-                  <button class="archive-picker-view-all" @click="currentTab = 'beans'; beansView = 'archive'; showArchive = false;">
+                  <button class="archive-picker-view-all" @click="currentTab = 'beans'; beansView = 'archive'; showArchive = false; document.querySelector('.content-area').scrollTop = 0;">
                     View all <span x-text="archivedBeans.length"></span> archived beans &rarr;
                   </button>
                 </div>
@@ -692,7 +692,7 @@ textarea.form-input { min-height: 80px; resize: vertical; line-height: 1.5; }
         <div x-show="archivedBeans.length > 0">
           <div class="beans-section-header">
             <div class="beans-section-label">Archived</div>
-            <button class="beans-section-link" @click="beansView = 'archive'">View all (<span x-text="archivedBeans.length"></span>)</button>
+            <button class="beans-section-link" @click="beansView = 'archive'; document.querySelector('.content-area').scrollTop = 0;">View all (<span x-text="archivedBeans.length"></span>)</button>
           </div>
           <template x-for="bean in archivedBeans.slice(0, 3)" :key="bean.id">
             <div class="bean-card archived" @click="selectBean(bean.id)">
@@ -759,7 +759,7 @@ textarea.form-input { min-height: 80px; resize: vertical; line-height: 1.5; }
       <!-- Bean Detail -->
       <div x-show="beansView === 'detail' && selectedBean" class="fade-in">
         <div class="detail-header">
-          <button class="back-btn" @click="beansView = 'list'; selectedBeanId = null;">&#8592;</button>
+          <button class="back-btn" @click="beansView = 'list'; selectedBeanId = null; document.querySelector('.content-area').scrollTop = 0;">&#8592;</button>
           <div style="flex:1;">
             <h2 class="heading-lg" x-text="selectedBean?.name"></h2>
             <div class="text-secondary" x-text="selectedBean?.roaster"></div>
@@ -921,7 +921,7 @@ textarea.form-input { min-height: 80px; resize: vertical; line-height: 1.5; }
       <!-- Archive View — Full list of archived beans -->
       <div x-show="beansView === 'archive'" class="fade-in">
         <div class="archive-view-header">
-          <button class="back-btn" @click="beansView = 'list'">&#8592;</button>
+          <button class="back-btn" @click="beansView = 'list'; document.querySelector('.content-area').scrollTop = 0;">&#8592;</button>
           <div class="archive-view-title">
             <h2 class="heading-lg">Archived Beans</h2>
             <p class="text-muted" style="margin-top: 2px;"><span x-text="archivedBeans.length"></span> beans in archive</p>
@@ -1604,6 +1604,7 @@ function app() {
         this.selectedBeanId = null;
       }
       this.currentTab = tab;
+      document.querySelector('.content-area').scrollTop = 0;
     },
 
     isTabSwipeDragging() {
@@ -1832,6 +1833,7 @@ function app() {
       }
       this.showBeanFormModal = false;
       this.beansView = 'form';
+      document.querySelector('.content-area').scrollTop = 0;
     },
 
     duplicateBean(beanId) {
@@ -1861,6 +1863,7 @@ function app() {
       this.beanFormError = '';
       this.currentTab = 'beans';
       this.beansView = 'form';
+      document.querySelector('.content-area').scrollTop = 0;
     },
 
     // Legacy alias for existing "restore from archive" in Today tab
@@ -1960,6 +1963,7 @@ function app() {
       this.beansView = this.editingBeanId ? 'detail' : 'list';
       this.editingBeanId = null;
       this.beanFormContext = 'beans';
+      document.querySelector('.content-area').scrollTop = 0;
     },
 
     cancelBeanForm() {
@@ -1978,6 +1982,7 @@ function app() {
       this._pendingDuplicateBean = null;
       this.beanFormContext = 'beans';
       this.beanFormError = '';
+      document.querySelector('.content-area').scrollTop = 0;
     },
 
     openDeleteBeanDialog() {
@@ -2006,11 +2011,13 @@ function app() {
       this.showDeleteBeanDialog = false;
       this.beansView = 'list';
       this.selectedBeanId = null;
+      document.querySelector('.content-area').scrollTop = 0;
     },
 
     selectBean(id) {
       this.selectedBeanId = id;
       this.beansView = 'detail';
+      document.querySelector('.content-area').scrollTop = 0;
     },
 
     archiveBean(id) {
@@ -2028,6 +2035,7 @@ function app() {
         }
         this.selectedBeanId = null;
         this.beansView = 'list';
+        document.querySelector('.content-area').scrollTop = 0;
       }
     },
 
