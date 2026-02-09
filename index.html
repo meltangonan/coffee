@@ -1507,10 +1507,6 @@ function localDateStr(d) {
   return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
 }
 
-function isSameDay(d1, d2) {
-  const a = new Date(d1), b = new Date(d2);
-  return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
-}
 function addDays(date, days) { const d = new Date(date); d.setDate(d.getDate() + days); return d; }
 function daysBetween(d1, d2) { return Math.floor((new Date(d2) - new Date(d1)) / 86400000); }
 
@@ -1526,6 +1522,10 @@ function normalizeRating(r) {
   return null;
 }
 
+const TAB_ORDER = ['today', 'beans', 'calendar'];
+const FRESHNESS_SORT_ORDER = { optimal: 0, resting: 1, past: 2, unknown: 3 };
+const SHOT_DEFAULTS = { grindSize: 5, doseIn: 16, yieldOut: 32, extractionTime: 25 };
+
 function app() {
   return {
     beans: [], shots: [],
@@ -1539,9 +1539,10 @@ function app() {
     showBeanFormModal: false, beanFormContext: 'beans', beanFormError: '',
     showDeleteBeanDialog: false,
     dailySelectedBeanId: '', dailyLastShot: null,
+    _pendingDuplicateBean: null,
     editingOptimalBeanId: null,
     optimalForm: { grindSize: null, doseIn: null, yieldOut: null, extractionTime: null },
-    beanForm: { name: '', roaster: '', roastDate: '', rating: null, notes: '' },
+    beanForm: { name: '', roaster: '', roastDate: '', notes: '' },
     shotForm: { grindSize: null, doseIn: null, yieldOut: null, extractionTime: null, rating: null, notes: '', shotDate: '' },
     calendarYear: new Date().getFullYear(), calendarMonth: new Date().getMonth(),
 
@@ -1584,27 +1585,83 @@ function app() {
       }
     },
 
+    scrollContentToTop() {
+      const contentArea = document.querySelector('.content-area');
+      if (contentArea) contentArea.scrollTop = 0;
+    },
+
+    resetDailySelection() {
+      this.dailySelectedBeanId = '';
+      this.dailyLastShot = null;
+    },
+
+    resetBeanFormState() {
+      this.editingBeanId = null;
+      this._pendingDuplicateBean = null;
+      this.beanFormContext = 'beans';
+      this.beanFormError = '';
+    },
+
+    setBeanForm(bean = null) {
+      this.beanForm = {
+        name: bean?.name || '',
+        roaster: bean?.roaster || '',
+        roastDate: bean?.roastDate ? String(bean.roastDate).slice(0, 10) : '',
+        notes: bean?.notes ?? ''
+      };
+    },
+
+    createDuplicateBean(source, roastDate = localDateStr()) {
+      return {
+        id: crypto.randomUUID(),
+        name: source.name,
+        roaster: source.roaster,
+        roastDate,
+        rating: source.rating,
+        notes: source.notes ?? '',
+        isArchived: false,
+        optimalGrindSize: source.optimalGrindSize,
+        optimalDoseIn: source.optimalDoseIn,
+        optimalYieldOut: source.optimalYieldOut,
+        optimalExtractionTime: source.optimalExtractionTime,
+        createdAt: new Date().toISOString()
+      };
+    },
+
+    beanHasOptimalSettings(bean) {
+      return bean.optimalGrindSize != null || bean.optimalDoseIn != null || bean.optimalYieldOut != null;
+    },
+
+    beanSourceDateValue(bean) {
+      return bean.roastDate || bean.createdAt || '';
+    },
+
+    toNullableInt(value) {
+      return value != null && value !== '' ? Math.round(Number(value)) : null;
+    },
+
+    toNullableOneDecimal(value) {
+      const parsed = parseFloat(value);
+      return value === '' || value == null || isNaN(parsed) ? null : Math.round(parsed * 10) / 10;
+    },
+
     isTouchTabSwipeAvailable() {
       return typeof window !== 'undefined'
         && (window.matchMedia('(pointer: coarse)').matches || navigator.maxTouchPoints > 0);
     },
 
-    tabOrder() {
-      return ['today', 'beans', 'calendar'];
-    },
-
     getTabIndex(tab) {
-      return this.tabOrder().indexOf(tab);
+      return TAB_ORDER.indexOf(tab);
     },
 
     activateTab(tab) {
-      if (!this.tabOrder().includes(tab)) return;
+      if (!TAB_ORDER.includes(tab)) return;
       if (tab === 'beans' && this.beansView !== 'list') {
         this.beansView = 'list';
         this.selectedBeanId = null;
       }
       this.currentTab = tab;
-      document.querySelector('.content-area').scrollTop = 0;
+      this.scrollContentToTop();
     },
 
     isTabSwipeDragging() {
@@ -1650,9 +1707,8 @@ function app() {
       const currentIndex = this.getTabIndex(this.currentTab);
       if (currentIndex === -1 || offset === 0) return '';
       const nextIndex = offset < 0 ? currentIndex + 1 : currentIndex - 1;
-      const order = this.tabOrder();
-      if (nextIndex < 0 || nextIndex >= order.length) return '';
-      return order[nextIndex];
+      if (nextIndex < 0 || nextIndex >= TAB_ORDER.length) return '';
+      return TAB_ORDER[nextIndex];
     },
 
     onTabSwipeStart(event) {
@@ -1704,12 +1760,13 @@ function app() {
       dragX = Math.max(-maxDrag, Math.min(maxDrag, dragX));
 
       // At boundaries, apply resistance so it feels natural but doesn't fully slide a non-existent tab.
-      if (!this.getAdjacentTabForOffset(dragX)) {
+      const adjacentTab = this.getAdjacentTabForOffset(dragX);
+      if (!adjacentTab) {
         dragX *= 0.28;
       }
 
       this.tabSwipeOffsetX = dragX;
-      this.tabSwipeAdjacentTab = this.getAdjacentTabForOffset(dragX);
+      this.tabSwipeAdjacentTab = adjacentTab;
       event.preventDefault();
     },
 
@@ -1761,8 +1818,9 @@ function app() {
       return [...this.beans].sort((a,b) => {
         if (!!a.isArchived !== !!b.isArchived) return a.isArchived ? 1 : -1;
         const fa = this.getFreshness(a), fb = this.getFreshness(b);
-        const order = { optimal: 0, resting: 1, past: 2, unknown: 3 };
-        if (order[fa.status] !== order[fb.status]) return order[fa.status] - order[fb.status];
+        if (FRESHNESS_SORT_ORDER[fa.status] !== FRESHNESS_SORT_ORDER[fb.status]) {
+          return FRESHNESS_SORT_ORDER[fa.status] - FRESHNESS_SORT_ORDER[fb.status];
+        }
         return new Date(b.roastDate || 0) - new Date(a.roastDate || 0);
       });
     },
@@ -1775,31 +1833,27 @@ function app() {
     // prefer bean with optimal settings filled in, then most recent
     getUniqueBeanSources(options = {}) {
       const archivedOnly = options.archivedOnly === true;
-      const groups = {};
+      const groups = new Map();
       for (const bean of this.beans) {
         if (archivedOnly && !bean.isArchived) continue;
-        const key = (bean.name + '|' + bean.roaster).toLowerCase();
-        if (!groups[key]) {
-          groups[key] = [];
+        const key = ((bean.name || '') + '|' + (bean.roaster || '')).toLowerCase();
+        const current = groups.get(key);
+        if (!current) {
+          groups.set(key, bean);
+          continue;
         }
-        groups[key].push(bean);
-      }
-      const result = [];
-      for (const key in groups) {
-        const candidates = groups[key];
-        // Sort: beans with optimal settings first, then by roastDate (or createdAt)
-        candidates.sort((a, b) => {
-          const aHasSettings = a.optimalGrindSize != null || a.optimalDoseIn != null || a.optimalYieldOut != null;
-          const bHasSettings = b.optimalGrindSize != null || b.optimalDoseIn != null || b.optimalYieldOut != null;
-          if (aHasSettings !== bHasSettings) return bHasSettings ? 1 : -1;
-          const aDate = a.roastDate || a.createdAt || '';
-          const bDate = b.roastDate || b.createdAt || '';
-          return bDate.localeCompare(aDate);
-        });
-        result.push(candidates[0]);
+        const beanHasSettings = this.beanHasOptimalSettings(bean);
+        const currentHasSettings = this.beanHasOptimalSettings(current);
+        if (beanHasSettings !== currentHasSettings) {
+          if (beanHasSettings) groups.set(key, bean);
+          continue;
+        }
+        if (this.beanSourceDateValue(bean) > this.beanSourceDateValue(current)) {
+          groups.set(key, bean);
+        }
       }
       // Sort final list alphabetically by name
-      return result.sort((a, b) => a.name.localeCompare(b.name));
+      return Array.from(groups.values()).sort((a, b) => a.name.localeCompare(b.name));
     },
 
     getFreshness(bean) {
@@ -1822,10 +1876,10 @@ function app() {
       this.editingBeanId = id;
       if (id) {
         const b = this.getBeanById(id);
-        const roastDate = b.roastDate ? String(b.roastDate).slice(0, 10) : '';
-        this.beanForm = { name: b.name, roaster: b.roaster, roastDate, rating: b.rating, notes: b.notes ?? '' };
+        if (!b) return;
+        this.setBeanForm(b);
       } else {
-        this.beanForm = { name: '', roaster: '', roastDate: '', rating: null, notes: '' };
+        this.setBeanForm();
       }
       if (context === 'today-picker') {
         this.showBeanFormModal = true;
@@ -1833,29 +1887,15 @@ function app() {
       }
       this.showBeanFormModal = false;
       this.beansView = 'form';
-      document.querySelector('.content-area').scrollTop = 0;
+      this.scrollContentToTop();
     },
 
     duplicateBean(beanId) {
       const source = this.getBeanById(beanId);
       if (!source) return;
-      const today = localDateStr();
-      const newBean = {
-        id: crypto.randomUUID(),
-        name: source.name,
-        roaster: source.roaster,
-        roastDate: today,
-        rating: source.rating,
-        notes: source.notes ?? '',
-        isArchived: false,
-        optimalGrindSize: source.optimalGrindSize,
-        optimalDoseIn: source.optimalDoseIn,
-        optimalYieldOut: source.optimalYieldOut,
-        optimalExtractionTime: source.optimalExtractionTime,
-        createdAt: new Date().toISOString()
-      };
+      const newBean = this.createDuplicateBean(source);
       // Pre-fill the form for user review/edit
-      this.beanForm = { name: newBean.name, roaster: newBean.roaster, roastDate: newBean.roastDate, rating: newBean.rating, notes: newBean.notes };
+      this.setBeanForm(newBean);
       this.editingBeanId = null;
       this._pendingDuplicateBean = newBean; // Store for saveBean to use
       this.beanFormContext = 'beans';
@@ -1863,7 +1903,7 @@ function app() {
       this.beanFormError = '';
       this.currentTab = 'beans';
       this.beansView = 'form';
-      document.querySelector('.content-area').scrollTop = 0;
+      this.scrollContentToTop();
     },
 
     // Legacy alias for existing "restore from archive" in Today tab
@@ -1875,19 +1915,8 @@ function app() {
     fillBeanFormFrom(beanId) {
       const source = this.getBeanById(beanId);
       if (!source) return;
-      const today = localDateStr();
-      this.beanForm = { name: source.name, roaster: source.roaster, roastDate: today, rating: source.rating, notes: source.notes ?? '' };
-      this._pendingDuplicateBean = {
-        id: crypto.randomUUID(),
-        name: source.name, roaster: source.roaster, roastDate: today,
-        rating: source.rating, notes: source.notes ?? '',
-        isArchived: false,
-        optimalGrindSize: source.optimalGrindSize,
-        optimalDoseIn: source.optimalDoseIn,
-        optimalYieldOut: source.optimalYieldOut,
-        optimalExtractionTime: source.optimalExtractionTime,
-        createdAt: new Date().toISOString()
-      };
+      this._pendingDuplicateBean = this.createDuplicateBean(source);
+      this.setBeanForm(this._pendingDuplicateBean);
     },
 
     normalizeBeanName(name) {
@@ -1905,8 +1934,7 @@ function app() {
     },
 
     openAddBeanFromToday() {
-      this.dailySelectedBeanId = '';
-      this.dailyLastShot = null;
+      this.resetDailySelection();
       this.openBeanForm(null, { context: 'today-picker' });
     },
 
@@ -1921,6 +1949,7 @@ function app() {
         this.beanFormError = 'Bean already exists. Choose a different name.';
         return;
       }
+      const wasEditing = !!this.editingBeanId;
       let savedBeanId = null;
       if (this.editingBeanId) {
         const idx = this.beans.findIndex(b => b.id === this.editingBeanId);
@@ -1952,37 +1981,27 @@ function app() {
       this.saveBeans();
       if (isTodayPickerFlow) {
         this.showBeanFormModal = false;
-        this.editingBeanId = null;
-        this.beanFormContext = 'beans';
-        this.beanFormError = '';
+        this.resetBeanFormState();
         this.dailySelectedBeanId = savedBeanId || '';
         this.dailyLastShot = null;
         if (this.dailySelectedBeanId) this.onDailyBeanSelect();
         return;
       }
-      this.beansView = this.editingBeanId ? 'detail' : 'list';
-      this.editingBeanId = null;
-      this.beanFormContext = 'beans';
-      document.querySelector('.content-area').scrollTop = 0;
+      this.beansView = wasEditing ? 'detail' : 'list';
+      this.resetBeanFormState();
+      this.scrollContentToTop();
     },
 
     cancelBeanForm() {
       if (this.beanFormContext === 'today-picker') {
         this.showBeanFormModal = false;
-        this.editingBeanId = null;
-        this._pendingDuplicateBean = null;
-        this.beanFormContext = 'beans';
-        this.beanFormError = '';
-        this.dailySelectedBeanId = '';
-        this.dailyLastShot = null;
+        this.resetBeanFormState();
+        this.resetDailySelection();
         return;
       }
       this.beansView = this.editingBeanId ? 'detail' : 'list';
-      this.editingBeanId = null;
-      this._pendingDuplicateBean = null;
-      this.beanFormContext = 'beans';
-      this.beanFormError = '';
-      document.querySelector('.content-area').scrollTop = 0;
+      this.resetBeanFormState();
+      this.scrollContentToTop();
     },
 
     openDeleteBeanDialog() {
@@ -2011,13 +2030,13 @@ function app() {
       this.showDeleteBeanDialog = false;
       this.beansView = 'list';
       this.selectedBeanId = null;
-      document.querySelector('.content-area').scrollTop = 0;
+      this.scrollContentToTop();
     },
 
     selectBean(id) {
       this.selectedBeanId = id;
       this.beansView = 'detail';
-      document.querySelector('.content-area').scrollTop = 0;
+      this.scrollContentToTop();
     },
 
     archiveBean(id) {
@@ -2030,12 +2049,11 @@ function app() {
           this.closeShotForm();
         }
         if (this.dailySelectedBeanId === id) {
-          this.dailySelectedBeanId = '';
-          this.dailyLastShot = null;
+          this.resetDailySelection();
         }
         this.selectedBeanId = null;
         this.beansView = 'list';
-        document.querySelector('.content-area').scrollTop = 0;
+        this.scrollContentToTop();
       }
     },
 
@@ -2055,11 +2073,10 @@ function app() {
       this.shotFormReturnTo = this.currentTab;
       const today = localDateStr();
       const last = this.getLastShot(beanId);
-      const defaults = { grindSize: 5, doseIn: 16, yieldOut: 32, extractionTime: 25 };
       this.shotForm = {
-        grindSize: last?.grindSize ?? defaults.grindSize,
-        doseIn: last?.doseIn ?? defaults.doseIn,
-        yieldOut: last?.yieldOut ?? defaults.yieldOut,
+        grindSize: last?.grindSize ?? SHOT_DEFAULTS.grindSize,
+        doseIn: last?.doseIn ?? SHOT_DEFAULTS.doseIn,
+        yieldOut: last?.yieldOut ?? SHOT_DEFAULTS.yieldOut,
         extractionTime: null,
         rating: null, notes: '', shotDate: today
       };
@@ -2092,11 +2109,10 @@ function app() {
     saveOptimalSettings() {
       const bean = this.getBeanById(this.selectedBeanId);
       if (!bean) return;
-      const num = (v) => { const n = parseFloat(v); return v === '' || v == null || isNaN(n) ? null : Math.round(n * 10) / 10; };
-      bean.optimalGrindSize = num(this.optimalForm.grindSize);
-      bean.optimalDoseIn = num(this.optimalForm.doseIn);
-      bean.optimalYieldOut = num(this.optimalForm.yieldOut);
-      bean.optimalExtractionTime = num(this.optimalForm.extractionTime);
+      bean.optimalGrindSize = this.toNullableOneDecimal(this.optimalForm.grindSize);
+      bean.optimalDoseIn = this.toNullableOneDecimal(this.optimalForm.doseIn);
+      bean.optimalYieldOut = this.toNullableOneDecimal(this.optimalForm.yieldOut);
+      bean.optimalExtractionTime = this.toNullableOneDecimal(this.optimalForm.extractionTime);
       this.saveBeans();
       this.editingOptimalBeanId = null;
     },
@@ -2109,30 +2125,27 @@ function app() {
       this.editingShotId = null;
       this.showShotForm = false;
       if (this.shotFormReturnTo === 'today') {
-        this.dailySelectedBeanId = '';
-        this.dailyLastShot = null;
+        this.resetDailySelection();
       }
     },
 
     /** Get default value for shot form field - uses edited shot values when editing, otherwise last shot or fallback */
     getShotFormDefault(field) {
-      const defaults = { grindSize: 5, doseIn: 16, yieldOut: 32, extractionTime: 25 };
       // When editing, use the shotForm values that were populated in openShotFormForEdit
       if (this.editingShotId && this.shotForm[field] != null) {
         return this.shotForm[field];
       }
       // When creating new shot, use last shot values or defaults
       const last = this.getLastShot(this.shotFormBeanId);
-      return last?.[field] ?? defaults[field];
+      return last?.[field] ?? SHOT_DEFAULTS[field];
     },
 
     saveShot() {
       if (!this.shotFormBeanId) return;
-      const num = (v) => v != null && v !== '' ? Math.round(Number(v)) : null;
-      const grind = num(this.shotForm.grindSize);
-      const dose = num(this.shotForm.doseIn);
-      const yieldVal = num(this.shotForm.yieldOut);
-      const extractionTime = num(this.shotForm.extractionTime);
+      const grind = this.toNullableInt(this.shotForm.grindSize);
+      const dose = this.toNullableInt(this.shotForm.doseIn);
+      const yieldVal = this.toNullableInt(this.shotForm.yieldOut);
+      const extractionTime = this.toNullableInt(this.shotForm.extractionTime);
       const shotData = {
         grindSize: grind,
         doseIn: dose,
@@ -2155,8 +2168,7 @@ function app() {
       this.saveShots();
       this.showShotForm = false;
       if (this.shotFormReturnTo === 'today') {
-        this.dailySelectedBeanId = '';
-        this.dailyLastShot = null;
+        this.resetDailySelection();
       }
     },
 
