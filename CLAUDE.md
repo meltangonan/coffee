@@ -226,6 +226,8 @@ Calendar bar colors are defined in JS `BAR_COLORS` array. Spacing utilities (`.m
 
 ### When Editing Shot Form Logic
 - Use `getShotFormDefault(field)` to get initial values — it handles both new shots and edits
+- New shot prefill uses bean best dial-in for `grindSize`/`doseIn`/`yieldOut`; missing fields fall back to app defaults
+- New shot extraction time fallback still uses last shot first, then app default
 - Shot form includes `shotDate` (defaults to today for new shots; existing shots use `shotDate || createdAt` for display/filtering)
 - Always call `closeShotForm()` to close — it handles cleanup for both tabs
 
@@ -249,7 +251,7 @@ Calendar bar colors are defined in JS `BAR_COLORS` array. Spacing utilities (`.m
 - Bean form supports two contexts (`beanFormContext`): check which context when modifying save/cancel logic
 
 ### When Adding Extraction Time / New Shot Fields
-- Shot form defaults: grindSize=5, doseIn=16, yieldOut=32, extractionTime=25
+- Shot form defaults: grindSize=5, doseIn=18, yieldOut=36, extractionTime=25
 - New fields should be nullable (optional) — the app handles null gracefully in display
 - `init()` runs migrations on load to backfill new fields on existing data (e.g. `optimalExtractionTime` seeded from first shot)
 

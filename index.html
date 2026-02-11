@@ -819,7 +819,7 @@ textarea.form-input { min-height: 80px; resize: vertical; line-height: 1.5; }
               </div>
             </div>
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 12px;">
-              <div x-data="optimalStepper()" x-init="stInit('doseIn', 1, 50, selectedBean?.optimalDoseIn ?? 16)">
+              <div x-data="optimalStepper()" x-init="stInit('doseIn', 1, 50, selectedBean?.optimalDoseIn ?? 18)">
                 <div class="recipe-stat-label">Dose (g)</div>
                 <div class="stepper stepper-dark">
                   <button type="button" class="stepper-btn" aria-label="Decrease" :disabled="stVal() !== null && stVal() <= stMin" @click="stDec()">−</button>
@@ -827,7 +827,7 @@ textarea.form-input { min-height: 80px; resize: vertical; line-height: 1.5; }
                   <button type="button" class="stepper-btn" aria-label="Increase" :disabled="stVal() !== null && stVal() >= stMax" @click="stInc()">+</button>
                 </div>
               </div>
-              <div x-data="optimalStepper()" x-init="stInit('yieldOut', 1, 100, selectedBean?.optimalYieldOut ?? 32)">
+              <div x-data="optimalStepper()" x-init="stInit('yieldOut', 1, 100, selectedBean?.optimalYieldOut ?? 36)">
                 <div class="recipe-stat-label">Yield (g)</div>
                 <div class="stepper stepper-dark">
                   <button type="button" class="stepper-btn" aria-label="Decrease" :disabled="stVal() !== null && stVal() <= stMin" @click="stDec()">−</button>
@@ -1524,7 +1524,7 @@ function normalizeRating(r) {
 
 const TAB_ORDER = ['today', 'beans', 'calendar'];
 const FRESHNESS_SORT_ORDER = { optimal: 0, resting: 1, past: 2, unknown: 3 };
-const SHOT_DEFAULTS = { grindSize: 5, doseIn: 16, yieldOut: 32, extractionTime: 25 };
+const SHOT_DEFAULTS = { grindSize: 5, doseIn: 18, yieldOut: 36, extractionTime: 25 };
 
 function app() {
   return {
@@ -1802,6 +1802,14 @@ function app() {
       return this.shots.filter(s => s.beanId === id).sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
     },
     getLastShot(beanId) { const ss = this.getShotsForBean(beanId); return ss.length > 0 ? ss[0] : null; },
+    getShotDialInDefaults(beanId) {
+      const bean = this.getBeanById(beanId);
+      return {
+        grindSize: bean?.optimalGrindSize ?? SHOT_DEFAULTS.grindSize,
+        doseIn: bean?.optimalDoseIn ?? SHOT_DEFAULTS.doseIn,
+        yieldOut: bean?.optimalYieldOut ?? SHOT_DEFAULTS.yieldOut
+      };
+    },
 
     get todayShots() {
       const todayStr = localDateStr();
@@ -2072,11 +2080,11 @@ function app() {
       this.shotFormBeanId = beanId;
       this.shotFormReturnTo = this.currentTab;
       const today = localDateStr();
-      const last = this.getLastShot(beanId);
+      const dialInDefaults = this.getShotDialInDefaults(beanId);
       this.shotForm = {
-        grindSize: last?.grindSize ?? SHOT_DEFAULTS.grindSize,
-        doseIn: last?.doseIn ?? SHOT_DEFAULTS.doseIn,
-        yieldOut: last?.yieldOut ?? SHOT_DEFAULTS.yieldOut,
+        grindSize: dialInDefaults.grindSize,
+        doseIn: dialInDefaults.doseIn,
+        yieldOut: dialInDefaults.yieldOut,
         extractionTime: null,
         rating: null, notes: '', shotDate: today
       };
@@ -2104,7 +2112,12 @@ function app() {
     startEditingOptimal() {
       this.editingOptimalBeanId = this.selectedBeanId;
       const b = this.selectedBean;
-      this.optimalForm = { grindSize: b?.optimalGrindSize ?? null, doseIn: b?.optimalDoseIn ?? null, yieldOut: b?.optimalYieldOut ?? null, extractionTime: b?.optimalExtractionTime ?? null };
+      this.optimalForm = {
+        grindSize: b?.optimalGrindSize ?? SHOT_DEFAULTS.grindSize,
+        doseIn: b?.optimalDoseIn ?? SHOT_DEFAULTS.doseIn,
+        yieldOut: b?.optimalYieldOut ?? SHOT_DEFAULTS.yieldOut,
+        extractionTime: b?.optimalExtractionTime ?? null
+      };
     },
     saveOptimalSettings() {
       const bean = this.getBeanById(this.selectedBeanId);
@@ -2129,13 +2142,19 @@ function app() {
       }
     },
 
-    /** Get default value for shot form field - uses edited shot values when editing, otherwise last shot or fallback */
+    /** Get default value for shot form field:
+     * editing => edited values
+     * new shot grind/dose/yield => bean best dial-in with app-default fallback
+     * new shot extractionTime => last shot value or app default */
     getShotFormDefault(field) {
       // When editing, use the shotForm values that were populated in openShotFormForEdit
       if (this.editingShotId && this.shotForm[field] != null) {
         return this.shotForm[field];
       }
-      // When creating new shot, use last shot values or defaults
+      if (field === 'grindSize' || field === 'doseIn' || field === 'yieldOut') {
+        return this.getShotDialInDefaults(this.shotFormBeanId)[field];
+      }
+      // For extraction time (and any other numeric fallback), preserve last-shot behavior
       const last = this.getLastShot(this.shotFormBeanId);
       return last?.[field] ?? SHOT_DEFAULTS[field];
     },

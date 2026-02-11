@@ -279,6 +279,119 @@ async function runTests() {
     assertEqual(app.editingShotId, null);
   });
 
+  await test('openShotForm pre-fills from best dial-in instead of last shot', async () => {
+    const beanName = 'Prefill Optimal Bean ' + Date.now() + '-' + Math.floor(Math.random() * 1000);
+    app.openBeanForm(null);
+    app.beanForm.name = beanName;
+    app.beanForm.roaster = 'E2E Test Roaster';
+    app.saveBean();
+    const bean = app.beans.find(b => b.name === beanName);
+    assert(bean, 'Bean should exist');
+
+    bean.optimalGrindSize = 4;
+    bean.optimalDoseIn = 19;
+    bean.optimalYieldOut = 38;
+    app.saveBeans();
+
+    // Add a conflicting last shot to ensure optimal values win.
+    app.openShotForm(bean.id);
+    app.shotForm.grindSize = 9;
+    app.shotForm.doseIn = 17;
+    app.shotForm.yieldOut = 34;
+    app.saveShot();
+
+    app.openShotForm(bean.id);
+    assertEqual(app.shotForm.grindSize, 4);
+    assertEqual(app.shotForm.doseIn, 19);
+    assertEqual(app.shotForm.yieldOut, 38);
+    app.closeShotForm();
+  });
+
+  await test('openShotForm falls back to app defaults when best dial-in is missing', async () => {
+    const beanName = 'Prefill Default Bean ' + Date.now() + '-' + Math.floor(Math.random() * 1000);
+    app.openBeanForm(null);
+    app.beanForm.name = beanName;
+    app.beanForm.roaster = 'E2E Test Roaster';
+    app.saveBean();
+    const bean = app.beans.find(b => b.name === beanName);
+    assert(bean, 'Bean should exist');
+
+    // Add a last shot with different values; new form should still use app defaults.
+    app.openShotForm(bean.id);
+    app.shotForm.grindSize = 8;
+    app.shotForm.doseIn = 20;
+    app.shotForm.yieldOut = 40;
+    app.saveShot();
+
+    app.openShotForm(bean.id);
+    assertEqual(app.shotForm.grindSize, 5);
+    assertEqual(app.shotForm.doseIn, 18);
+    assertEqual(app.shotForm.yieldOut, 36);
+    app.closeShotForm();
+  });
+
+  await test('openShotForm uses per-field fallback for partial best dial-in', async () => {
+    const beanName = 'Prefill Partial Bean ' + Date.now() + '-' + Math.floor(Math.random() * 1000);
+    app.openBeanForm(null);
+    app.beanForm.name = beanName;
+    app.beanForm.roaster = 'E2E Test Roaster';
+    app.saveBean();
+    const bean = app.beans.find(b => b.name === beanName);
+    assert(bean, 'Bean should exist');
+
+    bean.optimalGrindSize = null;
+    bean.optimalDoseIn = 20;
+    bean.optimalYieldOut = null;
+    app.saveBeans();
+
+    app.openShotForm(bean.id);
+    assertEqual(app.shotForm.grindSize, 5);
+    assertEqual(app.shotForm.doseIn, 20);
+    assertEqual(app.shotForm.yieldOut, 36);
+    app.closeShotForm();
+  });
+
+  await test('extraction time default behavior remains based on last shot', async () => {
+    const beanName = 'Extraction Default Bean ' + Date.now() + '-' + Math.floor(Math.random() * 1000);
+    app.openBeanForm(null);
+    app.beanForm.name = beanName;
+    app.beanForm.roaster = 'E2E Test Roaster';
+    app.saveBean();
+    const bean = app.beans.find(b => b.name === beanName);
+    assert(bean, 'Bean should exist');
+
+    app.openShotForm(bean.id);
+    app.shotForm.extractionTime = 31;
+    app.saveShot();
+
+    app.openShotForm(bean.id);
+    assertEqual(app.shotForm.extractionTime, null);
+    assertEqual(app.getShotFormDefault('extractionTime'), 31);
+    app.closeShotForm();
+  });
+
+  await test('startEditingOptimal uses same baseline defaults as shot logging', async () => {
+    const beanName = 'Optimal Editor Baseline Bean ' + Date.now() + '-' + Math.floor(Math.random() * 1000);
+    app.openBeanForm(null);
+    app.beanForm.name = beanName;
+    app.beanForm.roaster = 'E2E Test Roaster';
+    app.saveBean();
+    const bean = app.beans.find(b => b.name === beanName);
+    assert(bean, 'Bean should exist');
+
+    app.selectBean(bean.id);
+    app.startEditingOptimal();
+    assertEqual(app.optimalForm.grindSize, 5);
+    assertEqual(app.optimalForm.doseIn, 18);
+    assertEqual(app.optimalForm.yieldOut, 36);
+
+    app.openShotForm(bean.id);
+    assertEqual(app.shotForm.grindSize, app.optimalForm.grindSize);
+    assertEqual(app.shotForm.doseIn, app.optimalForm.doseIn);
+    assertEqual(app.shotForm.yieldOut, app.optimalForm.yieldOut);
+    app.closeShotForm();
+  });
+
   await test('closeShotForm resets form state', async () => {
     const bean = app.beans.find(b => !b.isArchived);
     app.currentTab = 'today';
