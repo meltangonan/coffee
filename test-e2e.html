@@ -279,7 +279,7 @@ async function runTests() {
     assertEqual(app.editingShotId, null);
   });
 
-  await test('openShotForm pre-fills from best dial-in instead of last shot', async () => {
+  await test('openShotForm keeps numeric fields null and exposes best dial-in via defaults', async () => {
     const beanName = 'Prefill Optimal Bean ' + Date.now() + '-' + Math.floor(Math.random() * 1000);
     app.openBeanForm(null);
     app.beanForm.name = beanName;
@@ -291,6 +291,7 @@ async function runTests() {
     bean.optimalGrindSize = 4;
     bean.optimalDoseIn = 19;
     bean.optimalYieldOut = 38;
+    bean.optimalExtractionTime = 27;
     app.saveBeans();
 
     // Add a conflicting last shot to ensure optimal values win.
@@ -301,13 +302,17 @@ async function runTests() {
     app.saveShot();
 
     app.openShotForm(bean.id);
-    assertEqual(app.shotForm.grindSize, 4);
-    assertEqual(app.shotForm.doseIn, 19);
-    assertEqual(app.shotForm.yieldOut, 38);
+    assertEqual(app.shotForm.grindSize, null);
+    assertEqual(app.shotForm.doseIn, null);
+    assertEqual(app.shotForm.yieldOut, null);
+    assertEqual(app.getShotFormDefault('grindSize'), 4);
+    assertEqual(app.getShotFormDefault('doseIn'), 19);
+    assertEqual(app.getShotFormDefault('yieldOut'), 38);
+    assertEqual(app.getShotFormDefault('extractionTime'), 27);
     app.closeShotForm();
   });
 
-  await test('openShotForm falls back to app defaults when best dial-in is missing', async () => {
+  await test('openShotForm uses app defaults when best dial-in is missing', async () => {
     const beanName = 'Prefill Default Bean ' + Date.now() + '-' + Math.floor(Math.random() * 1000);
     app.openBeanForm(null);
     app.beanForm.name = beanName;
@@ -324,13 +329,16 @@ async function runTests() {
     app.saveShot();
 
     app.openShotForm(bean.id);
-    assertEqual(app.shotForm.grindSize, 5);
-    assertEqual(app.shotForm.doseIn, 18);
-    assertEqual(app.shotForm.yieldOut, 36);
+    assertEqual(app.shotForm.grindSize, null);
+    assertEqual(app.shotForm.doseIn, null);
+    assertEqual(app.shotForm.yieldOut, null);
+    assertEqual(app.getShotFormDefault('grindSize'), 5);
+    assertEqual(app.getShotFormDefault('doseIn'), 18);
+    assertEqual(app.getShotFormDefault('yieldOut'), 36);
     app.closeShotForm();
   });
 
-  await test('openShotForm uses per-field fallback for partial best dial-in', async () => {
+  await test('openShotForm uses per-field fallback defaults for partial best dial-in', async () => {
     const beanName = 'Prefill Partial Bean ' + Date.now() + '-' + Math.floor(Math.random() * 1000);
     app.openBeanForm(null);
     app.beanForm.name = beanName;
@@ -345,13 +353,16 @@ async function runTests() {
     app.saveBeans();
 
     app.openShotForm(bean.id);
-    assertEqual(app.shotForm.grindSize, 5);
-    assertEqual(app.shotForm.doseIn, 20);
-    assertEqual(app.shotForm.yieldOut, 36);
+    assertEqual(app.shotForm.grindSize, null);
+    assertEqual(app.shotForm.doseIn, null);
+    assertEqual(app.shotForm.yieldOut, null);
+    assertEqual(app.getShotFormDefault('grindSize'), 5);
+    assertEqual(app.getShotFormDefault('doseIn'), 20);
+    assertEqual(app.getShotFormDefault('yieldOut'), 36);
     app.closeShotForm();
   });
 
-  await test('extraction time default behavior remains based on last shot', async () => {
+  await test('extraction time default falls back to app default when best dial-in is missing', async () => {
     const beanName = 'Extraction Default Bean ' + Date.now() + '-' + Math.floor(Math.random() * 1000);
     app.openBeanForm(null);
     app.beanForm.name = beanName;
@@ -361,16 +372,56 @@ async function runTests() {
     assert(bean, 'Bean should exist');
 
     app.openShotForm(bean.id);
-    app.shotForm.extractionTime = 31;
-    app.saveShot();
-
-    app.openShotForm(bean.id);
     assertEqual(app.shotForm.extractionTime, null);
-    assertEqual(app.getShotFormDefault('extractionTime'), 31);
+    assertEqual(app.getShotFormDefault('extractionTime'), 25);
     app.closeShotForm();
   });
 
-  await test('startEditingOptimal uses same baseline defaults as shot logging', async () => {
+  await test('saveShot persists default numeric values when placeholders are untouched', async () => {
+    const beanName = 'Untouched Save Bean ' + Date.now() + '-' + Math.floor(Math.random() * 1000);
+    app.openBeanForm(null);
+    app.beanForm.name = beanName;
+    app.beanForm.roaster = 'E2E Test Roaster';
+    app.saveBean();
+    const bean = app.beans.find(b => b.name === beanName);
+    assert(bean, 'Bean should exist');
+
+    app.openShotForm(bean.id);
+    app.saveShot();
+    const savedShot = app.getLastShot(bean.id);
+    assert(savedShot, 'Shot should be saved');
+    assertEqual(savedShot.grindSize, 5);
+    assertEqual(savedShot.doseIn, 18);
+    assertEqual(savedShot.yieldOut, 36);
+    assertEqual(savedShot.extractionTime, 25);
+  });
+
+  await test('saveShot untouched uses bean dial-in defaults for all numeric fields', async () => {
+    const beanName = 'Untouched Save Prefill Bean ' + Date.now() + '-' + Math.floor(Math.random() * 1000);
+    app.openBeanForm(null);
+    app.beanForm.name = beanName;
+    app.beanForm.roaster = 'E2E Test Roaster';
+    app.saveBean();
+    const bean = app.beans.find(b => b.name === beanName);
+    assert(bean, 'Bean should exist');
+
+    bean.optimalGrindSize = 4;
+    bean.optimalDoseIn = 19;
+    bean.optimalYieldOut = 38;
+    bean.optimalExtractionTime = 30;
+    app.saveBeans();
+
+    app.openShotForm(bean.id);
+    app.saveShot();
+    const savedShot = app.getLastShot(bean.id);
+    assert(savedShot, 'Shot should be saved');
+    assertEqual(savedShot.grindSize, 4);
+    assertEqual(savedShot.doseIn, 19);
+    assertEqual(savedShot.yieldOut, 38);
+    assertEqual(savedShot.extractionTime, 30);
+  });
+
+  await test('startEditingOptimal keeps new-bean form values null until save', async () => {
     const beanName = 'Optimal Editor Baseline Bean ' + Date.now() + '-' + Math.floor(Math.random() * 1000);
     app.openBeanForm(null);
     app.beanForm.name = beanName;
@@ -381,15 +432,50 @@ async function runTests() {
 
     app.selectBean(bean.id);
     app.startEditingOptimal();
-    assertEqual(app.optimalForm.grindSize, 5);
-    assertEqual(app.optimalForm.doseIn, 18);
-    assertEqual(app.optimalForm.yieldOut, 36);
+    assertEqual(app.optimalForm.grindSize, null);
+    assertEqual(app.optimalForm.doseIn, null);
+    assertEqual(app.optimalForm.yieldOut, null);
+    assertEqual(app.optimalForm.extractionTime, null);
+  });
 
-    app.openShotForm(bean.id);
-    assertEqual(app.shotForm.grindSize, app.optimalForm.grindSize);
-    assertEqual(app.shotForm.doseIn, app.optimalForm.doseIn);
-    assertEqual(app.shotForm.yieldOut, app.optimalForm.yieldOut);
-    app.closeShotForm();
+  await test('saveOptimalSettings persists defaults when untouched', async () => {
+    const beanName = 'Optimal Save Default Bean ' + Date.now() + '-' + Math.floor(Math.random() * 1000);
+    app.openBeanForm(null);
+    app.beanForm.name = beanName;
+    app.beanForm.roaster = 'E2E Test Roaster';
+    app.saveBean();
+    const bean = app.beans.find(b => b.name === beanName);
+    assert(bean, 'Bean should exist');
+
+    app.selectBean(bean.id);
+    app.startEditingOptimal();
+    app.saveOptimalSettings();
+
+    const updated = app.getBeanById(bean.id);
+    assertEqual(updated.optimalGrindSize, 5);
+    assertEqual(updated.optimalDoseIn, 18);
+    assertEqual(updated.optimalYieldOut, 36);
+    assertEqual(updated.optimalExtractionTime, 25);
+  });
+
+  await test('cancelEditingOptimal does not persist defaults', async () => {
+    const beanName = 'Optimal Cancel Bean ' + Date.now() + '-' + Math.floor(Math.random() * 1000);
+    app.openBeanForm(null);
+    app.beanForm.name = beanName;
+    app.beanForm.roaster = 'E2E Test Roaster';
+    app.saveBean();
+    const bean = app.beans.find(b => b.name === beanName);
+    assert(bean, 'Bean should exist');
+
+    app.selectBean(bean.id);
+    app.startEditingOptimal();
+    app.cancelEditingOptimal();
+
+    const unchanged = app.getBeanById(bean.id);
+    assert(unchanged.optimalGrindSize == null, 'Grind should remain empty');
+    assert(unchanged.optimalDoseIn == null, 'Dose should remain empty');
+    assert(unchanged.optimalYieldOut == null, 'Yield should remain empty');
+    assert(unchanged.optimalExtractionTime == null, 'Extraction should remain empty');
   });
 
   await test('closeShotForm resets form state', async () => {

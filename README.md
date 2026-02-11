@@ -131,7 +131,7 @@ If you need to move data manually, you can copy the `coffee_beans` and `coffee_s
 
 * Tap a bean to see its full history and saved dial-in (including extraction time).
 * Archive beans instead of deleting them so you can reuse settings later.
-* When logging a shot from Today, the form preloads your saved best dial-in for that coffee (or falls back to 5 grind / 18g in / 36g out if not set).
+* When logging a shot, numeric fields show placeholder defaults from saved best dial-in (or app defaults 5 / 18g / 36g / 25s). Saving without touching those fields still logs those default values.
 * Backdate shots if you forgot to log them when pulling.
 * Shot cards show ratio (1:X.X) and notes inline so you can compare at a glance.
 * Treat saved dial-ins as references, not absolutes. Adjust as the coffee ages.

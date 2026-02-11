@@ -226,10 +226,16 @@ Calendar bar colors are defined in JS `BAR_COLORS` array. Spacing utilities (`.m
 
 ### When Editing Shot Form Logic
 - Use `getShotFormDefault(field)` to get initial values — it handles both new shots and edits
-- New shot prefill uses bean best dial-in for `grindSize`/`doseIn`/`yieldOut`; missing fields fall back to app defaults
-- New shot extraction time fallback still uses last shot first, then app default
+- For new shots, numeric form values start as `null` and render fallback values via stepper placeholders
+- New shot defaults for `grindSize`/`doseIn`/`yieldOut`/`extractionTime` use bean best dial-in, then app defaults
+- `saveShot()` resolves untouched `null` numeric fields to `getShotFormDefault(field)` so placeholder defaults are persisted
 - Shot form includes `shotDate` (defaults to today for new shots; existing shots use `shotDate || createdAt` for display/filtering)
 - Always call `closeShotForm()` to close — it handles cleanup for both tabs
+
+### When Editing Best Dial-In Settings
+- `startEditingOptimal()` keeps missing fields as `null` so placeholders show app defaults without mutating data
+- `saveOptimalSettings()` treats untouched `null` values as explicit defaults and persists app defaults
+- `cancelEditingOptimal()` exits edit mode without changing persisted optimal settings
 
 ### When Adding New Freshness-Related Logic
 - Use `FRESHNESS_RESTING_DAYS` and `FRESHNESS_OPTIMAL_DAYS` constants
