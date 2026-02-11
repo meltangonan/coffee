@@ -2042,6 +2042,7 @@ function app() {
     },
 
     selectBean(id) {
+      this.editingOptimalBeanId = null;
       this.selectedBeanId = id;
       this.beansView = 'detail';
       this.scrollContentToTop();
