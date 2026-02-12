@@ -71,10 +71,11 @@ function daysBetween(d1, d2) {
 
 function normalizeRating(r) {
   if (r == null) return null;
-  if (r === 'bad' || r === 'okay' || r === 'perfect') return r;
+  if (r === 'bad' || r === 'okay' || r === 'great' || r === 'perfect') return r;
   if (typeof r === 'number') {
     if (r <= 2) return 'bad';
     if (r === 3) return 'okay';
+    if (r === 4) return 'great';
     return 'perfect';
   }
   return null;
@@ -162,6 +163,10 @@ test('normalizeRating - string "okay" passes through', () => {
   assertEqual(normalizeRating('okay'), 'okay');
 });
 
+test('normalizeRating - string "great" passes through', () => {
+  assertEqual(normalizeRating('great'), 'great');
+});
+
 test('normalizeRating - string "perfect" passes through', () => {
   assertEqual(normalizeRating('perfect'), 'perfect');
 });
@@ -175,8 +180,11 @@ test('normalizeRating - number 3 becomes "okay"', () => {
   assertEqual(normalizeRating(3), 'okay');
 });
 
-test('normalizeRating - number 4-5 becomes "perfect"', () => {
-  assertEqual(normalizeRating(4), 'perfect');
+test('normalizeRating - number 4 becomes "great"', () => {
+  assertEqual(normalizeRating(4), 'great');
+});
+
+test('normalizeRating - number 5 becomes "perfect"', () => {
   assertEqual(normalizeRating(5), 'perfect');
 });
 

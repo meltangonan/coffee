@@ -570,6 +570,7 @@ async function runTests() {
   await test('shotQualityLabel capitalizes rating', async () => {
     assertEqual(app.shotQualityLabel('bad'), 'Bad');
     assertEqual(app.shotQualityLabel('okay'), 'Okay');
+    assertEqual(app.shotQualityLabel('great'), 'Great');
     assertEqual(app.shotQualityLabel('perfect'), 'Perfect');
     assertEqual(app.shotQualityLabel(null), null);
   });

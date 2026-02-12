@@ -112,7 +112,7 @@ Stored in localStorage under keys `coffee_beans` and `coffee_shots`.
   doseIn: number,          // grams, typically 14-22
   yieldOut: number|null,   // grams, typically 28-50
   extractionTime: number|null, // seconds, typically 20-35
-  rating: string|null,     // 'bad'|'okay'|'perfect'
+  rating: string|null,     // 'bad'|'okay'|'great'|'perfect'
   notes: string,
   shotDate: string,        // ISO date "YYYY-MM-DD" — when the shot was made (defaults to today; backfill from createdAt if missing)
   createdAt: string        // ISO timestamp — when the record was logged
@@ -178,7 +178,7 @@ Notes: Sweet with chocolate notes...        [Perfect]
 - Ratio calculated as `yieldOut / doseIn`, shown as `1:X.X`
 - Extraction time appended as `· Xs` (only if present)
 - Notes truncated with ellipsis, max 80 characters
-- Quality badge: Bad / Okay / Perfect
+- Quality badge: Bad / Okay / Great / Perfect
 
 **Bean Form — Two Contexts:**
 - **Beans tab** (`beansView = 'form'`): Inline form with "Fill from previous bean" showing all beans (current + archived)
