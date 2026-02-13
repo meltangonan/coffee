@@ -96,6 +96,8 @@ body {
 
 .content-area { flex: 1; position: relative; overflow-y: auto; overflow-x: hidden; padding: 20px 16px; padding-bottom: calc(var(--tab-total) + 24px); -webkit-overflow-scrolling: touch; }
 .tab-stage { position: relative; }
+.content-top-actions { position: absolute; top: 20px; right: 16px; z-index: 40; display: flex; justify-content: flex-end; pointer-events: none; }
+.backup-launch-btn { pointer-events: auto; min-height: 36px; padding: 8px 12px; font-size: 13px; }
 
 .tab-bar { position: fixed; bottom: 0; left: 0; right: 0; width: 100%; max-width: 600px; margin: 0 auto; height: var(--tab-total); padding-bottom: var(--safe-bottom); background: var(--espresso); display: flex; align-items: flex-start; justify-content: space-around; z-index: 100; box-shadow: 0 -2px 20px rgba(44,24,16,0.15); }
 .tab-btn { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; padding: 8px 16px; min-width: 64px; height: var(--tab-height); background: none; border: none; color: rgba(245,240,232,0.5); font-family: var(--font-body); font-size: 11px; font-weight: 500; letter-spacing: 0.3px; cursor: pointer; transition: color 0.2s ease; -webkit-tap-highlight-color: transparent; }
@@ -475,6 +477,39 @@ textarea.form-input { min-height: 80px; resize: vertical; line-height: 1.5; }
 .legend-item { display: flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 500; color: var(--text-secondary); }
 .legend-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
 
+/* Backup tab */
+.backup-description { color: var(--text-muted); font-size: 14px; line-height: 1.5; margin-bottom: 20px; }
+.backup-card { background: white; border-radius: var(--radius-lg); box-shadow: var(--shadow); padding: 18px; margin-bottom: 14px; }
+.backup-card-title { font-family: var(--font-heading); font-size: 21px; font-weight: 600; color: var(--espresso); margin-bottom: 6px; }
+.backup-subtle { font-size: 13px; color: var(--text-secondary); line-height: 1.5; margin-bottom: 12px; }
+.backup-status-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; margin-top: 14px; align-items: stretch; }
+.backup-status-item { background: var(--cream-dark); border-radius: var(--radius); padding: 10px 12px; min-height: 72px; display: flex; flex-direction: column; justify-content: center; }
+.backup-status-label { font-size: 11px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.6px; margin-bottom: 4px; }
+.backup-status-value { font-size: 13px; font-weight: 500; color: var(--text-primary); }
+.backup-actions { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 14px; align-items: stretch; }
+.backup-actions .btn { flex: 1 1 0; min-width: 160px; }
+.backup-help { margin-top: 10px; font-size: 12px; color: var(--text-muted); line-height: 1.45; }
+.backup-alert { border-radius: var(--radius); padding: 12px 14px; margin-top: 12px; font-size: 13px; line-height: 1.45; }
+.backup-alert.success { background: var(--freshness-optimal-bg); color: var(--freshness-optimal); }
+.backup-alert.error { background: var(--freshness-past-bg); color: var(--freshness-past); }
+.backup-alert.info { background: rgba(139,157,175,0.14); color: var(--freshness-resting); }
+.backup-import-input { display: none; }
+.backup-preview { margin-top: 14px; border: 1px solid rgba(44,24,16,0.08); border-radius: var(--radius); padding: 12px; background: #fffdf8; }
+.backup-preview-title { font-size: 13px; font-weight: 600; color: var(--text-primary); margin-bottom: 8px; }
+.backup-preview-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.backup-preview-kv { background: rgba(44,24,16,0.03); border-radius: var(--radius-sm); padding: 8px 10px; }
+.backup-preview-kv-label { font-size: 11px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; }
+.backup-preview-kv-value { font-size: 13px; color: var(--text-primary); font-weight: 500; margin-top: 2px; }
+.backup-preview-actions { display: flex; gap: 10px; margin-top: 12px; }
+.backup-howto-grid { display: grid; grid-template-columns: 1fr; gap: 10px; margin-top: 12px; }
+.backup-step { border: 1px solid rgba(44,24,16,0.08); border-radius: var(--radius); padding: 12px; background: #fffdf8; }
+.backup-step-head { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+.backup-step-num { width: 22px; height: 22px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; background: var(--amber); color: var(--espresso); font-size: 12px; font-weight: 700; }
+.backup-step-title { font-size: 13px; font-weight: 600; color: var(--text-primary); }
+.backup-step-copy { font-size: 13px; color: var(--text-secondary); line-height: 1.45; }
+.backup-steps-heading { font-size: 12px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.7px; margin-top: 12px; margin-bottom: 8px; }
+.backup-steps-heading:first-child { margin-top: 0; }
+
 /* Layout utilities */
 .form-actions { display: flex; gap: 10px; margin-top: 8px; }
 .form-actions .btn:first-child { flex: 1; }
@@ -490,6 +525,10 @@ textarea.form-input { min-height: 80px; resize: vertical; line-height: 1.5; }
 
 @media (max-width: 480px) {
   .delete-confirm-actions { flex-direction: column-reverse; }
+  .backup-status-grid,
+  .backup-preview-grid { grid-template-columns: 1fr; }
+  .backup-preview-actions,
+  .backup-actions { flex-direction: column; }
 }
 
 @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
@@ -497,6 +536,7 @@ textarea.form-input { min-height: 80px; resize: vertical; line-height: 1.5; }
 
 @media (min-width: 768px) {
   .content-area { padding: 28px 24px; padding-bottom: calc(var(--tab-total) + 32px); }
+  .content-top-actions { top: 28px; right: 24px; }
   .heading-xl { font-size: 34px; }
   .date-header .day-name { font-size: 38px; }
 }
@@ -511,6 +551,9 @@ textarea.form-input { min-height: 80px; resize: vertical; line-height: 1.5; }
        @touchmove="onTabSwipeMove($event)"
        @touchend="onTabSwipeEnd($event)"
        @touchcancel="resetTabSwipe()">
+    <div class="content-top-actions">
+      <button x-show="!showBackupPanel" class="btn btn-secondary-solid backup-launch-btn" @click="openBackupPanel()">Backup</button>
+    </div>
     <div class="tab-stage">
 
     <!-- ═══════════════════════════════════════
@@ -1100,6 +1143,7 @@ textarea.form-input { min-height: 80px; resize: vertical; line-height: 1.5; }
         <p class="calendar-note">Peak freshness window: ~7–21 days post-roast, when off-gassing has settled and flavors are at their best.</p>
       </div>
     </div>
+
     </div>
 
   </div>
@@ -1292,6 +1336,112 @@ textarea.form-input { min-height: 80px; resize: vertical; line-height: 1.5; }
       <div x-show="beanFormError" class="mb-12" style="color: var(--freshness-past); font-size: 13px;" x-text="beanFormError"></div>
       <div class="form-actions">
         <button class="btn btn-primary" style="flex: 1;" @click="saveBean()">Save</button>
+      </div>
+    </div>
+  </div>
+  </template>
+
+  <template x-if="showBackupPanel">
+  <div class="overlay" @click.self="closeBackupPanel()" @keydown.escape.window="closeBackupPanel()">
+    <div class="panel" @click.stop>
+      <div style="display: flex; align-items: center; gap: 12px;" class="mb-20">
+        <button class="back-btn" @click="closeBackupPanel()">&#8592;</button>
+        <h3 class="heading-lg">Backup & Restore</h3>
+      </div>
+      <p class="backup-description">Export a backup file, then import it anytime on this or another device.</p>
+
+      <div class="backup-card">
+        <div class="backup-card-title">Backup Status</div>
+        <p class="backup-subtle">Use Export once a week, and always before switching devices.</p>
+        <div class="backup-status-grid">
+          <div class="backup-status-item">
+            <div class="backup-status-label">Last Export</div>
+            <div class="backup-status-value" x-text="backupLastExportedAt ? formatDateTime(backupLastExportedAt) : 'Not yet exported'"></div>
+          </div>
+          <div class="backup-status-item">
+            <div class="backup-status-label">Last Import</div>
+            <div class="backup-status-value" x-text="backupLastImportedAt ? formatDateTime(backupLastImportedAt) : 'No import yet'"></div>
+          </div>
+        </div>
+        <div class="backup-actions">
+          <button class="btn btn-amber" @click="exportBackup()">Export Backup</button>
+          <button class="btn btn-secondary-solid" @click="triggerBackupImport()">Choose Backup File</button>
+          <input x-ref="backupImportInput" class="backup-import-input" type="file" accept="application/json,.json" @change="onBackupFileSelected($event)">
+        </div>
+        <p class="backup-help">Safe merge: existing entries stay unchanged, only new entries are added.</p>
+        <div x-show="backupNoticeMessage" class="backup-alert" :class="backupNoticeType" x-text="backupNoticeMessage"></div>
+
+        <div x-show="backupImportPreview" class="backup-preview">
+          <div class="backup-preview-title" x-text="'Ready to import from ' + backupImportPreview.fileName"></div>
+          <div class="backup-preview-grid">
+            <div class="backup-preview-kv">
+              <div class="backup-preview-kv-label">New Beans</div>
+              <div class="backup-preview-kv-value" x-text="backupImportPreview.newBeans"></div>
+            </div>
+            <div class="backup-preview-kv">
+              <div class="backup-preview-kv-label">New Shots</div>
+              <div class="backup-preview-kv-value" x-text="backupImportPreview.newShots"></div>
+            </div>
+            <div class="backup-preview-kv">
+              <div class="backup-preview-kv-label">Skipped Existing</div>
+              <div class="backup-preview-kv-value" x-text="backupImportPreview.skippedExisting"></div>
+            </div>
+            <div class="backup-preview-kv">
+              <div class="backup-preview-kv-label">Invalid/Skipped</div>
+              <div class="backup-preview-kv-value" x-text="backupImportPreview.invalidOrSkipped"></div>
+            </div>
+          </div>
+          <div class="backup-preview-actions">
+            <button class="btn btn-primary" @click="confirmBackupImport()">Import Backup</button>
+            <button class="btn btn-ghost" @click="clearBackupImportPreview()">Cancel</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="backup-card">
+        <div class="backup-card-title">Quick Steps</div>
+        <p class="backup-subtle">Follow these exact steps for backup and restore.</p>
+        <div class="backup-steps-heading">Back Up (2 steps)</div>
+        <div class="backup-howto-grid">
+          <div class="backup-step">
+            <div class="backup-step-head">
+              <span class="backup-step-num">1</span>
+              <span class="backup-step-title">Tap “Export Backup”</span>
+            </div>
+            <p class="backup-step-copy">A file like `coffee-journal-backup-YYYY-MM-DD.json` is added to your Downloads (or your browser’s download location on mobile).</p>
+          </div>
+          <div class="backup-step">
+            <div class="backup-step-head">
+              <span class="backup-step-num">2</span>
+              <span class="backup-step-title">Save the file</span>
+            </div>
+            <p class="backup-step-copy">Move it to iCloud/Google Drive/Dropbox (or email it to yourself).</p>
+          </div>
+        </div>
+        <div class="backup-steps-heading">Restore (3 steps)</div>
+        <div class="backup-howto-grid">
+          <div class="backup-step">
+            <div class="backup-step-head">
+              <span class="backup-step-num">1</span>
+              <span class="backup-step-title">Tap “Choose Backup File”</span>
+            </div>
+            <p class="backup-step-copy">Select your saved `.json` backup file.</p>
+          </div>
+          <div class="backup-step">
+            <div class="backup-step-head">
+              <span class="backup-step-num">2</span>
+              <span class="backup-step-title">Check the preview</span>
+            </div>
+            <p class="backup-step-copy">Confirm the “New Beans” and “New Shots” counts before importing.</p>
+          </div>
+          <div class="backup-step">
+            <div class="backup-step-head">
+              <span class="backup-step-num">3</span>
+              <span class="backup-step-title">Tap “Import Backup”</span>
+            </div>
+            <p class="backup-step-copy">Only new data is added. Existing entries are not overwritten.</p>
+          </div>
+        </div>
       </div>
     </div>
   </div>
@@ -1532,6 +1682,9 @@ function normalizeRating(r) {
 const TAB_ORDER = ['today', 'beans', 'calendar'];
 const FRESHNESS_SORT_ORDER = { optimal: 0, resting: 1, past: 2, unknown: 3 };
 const SHOT_DEFAULTS = { grindSize: 5, doseIn: 18, yieldOut: 36, extractionTime: 25 };
+const BACKUP_FORMAT_VERSION = 1;
+const BACKUP_LAST_EXPORTED_KEY = 'coffee_backup_last_exported_at';
+const BACKUP_LAST_IMPORTED_KEY = 'coffee_backup_last_imported_at';
 
 function app() {
   return {
@@ -1545,12 +1698,18 @@ function app() {
     showShotForm: false, shotFormBeanId: null, shotFormReturnTo: null, editingShotId: null,
     showBeanFormModal: false, beanFormContext: 'beans', beanFormError: '',
     showDeleteBeanDialog: false,
+    showBackupPanel: false,
     dailySelectedBeanId: '', dailyLastShot: null,
     _pendingDuplicateBean: null,
     editingOptimalBeanId: null,
     optimalForm: { grindSize: null, doseIn: null, yieldOut: null, extractionTime: null },
     beanForm: { name: '', roaster: '', roastDate: '', notes: '' },
     shotForm: { grindSize: null, doseIn: null, yieldOut: null, extractionTime: null, rating: null, notes: '', shotDate: '' },
+    backupLastExportedAt: '',
+    backupLastImportedAt: '',
+    backupNoticeType: '',
+    backupNoticeMessage: '',
+    backupImportPreview: null,
     calendarYear: new Date().getFullYear(), calendarMonth: new Date().getMonth(),
 
     init() {
@@ -1589,6 +1748,268 @@ function app() {
       } else {
         this.saveBeans();
         this.saveShots();
+      }
+      this.backupLastExportedAt = localStorage.getItem(BACKUP_LAST_EXPORTED_KEY) || '';
+      this.backupLastImportedAt = localStorage.getItem(BACKUP_LAST_IMPORTED_KEY) || '';
+    },
+
+    setBackupNotice(type, message) {
+      this.backupNoticeType = type;
+      this.backupNoticeMessage = message;
+    },
+
+    openBackupPanel() {
+      this.showBackupPanel = true;
+    },
+
+    closeBackupPanel() {
+      this.showBackupPanel = false;
+    },
+
+    normalizeIsoDateOnly(value) {
+      if (typeof value !== 'string' || !value.trim()) return '';
+      const trimmed = value.trim();
+      if (/^\d{4}-\d{2}-\d{2}$/.test(trimmed)) {
+        const parsedDate = new Date(trimmed + 'T00:00:00');
+        return (!isNaN(parsedDate.getTime()) && localDateStr(parsedDate) === trimmed) ? trimmed : '';
+      }
+      const parsed = new Date(trimmed);
+      if (isNaN(parsed.getTime())) return '';
+      return localDateStr(parsed);
+    },
+
+    normalizeIsoDateTime(value) {
+      if (typeof value !== 'string' || !value.trim()) return '';
+      const parsed = new Date(value.trim());
+      if (isNaN(parsed.getTime())) return '';
+      return parsed.toISOString();
+    },
+
+    normalizeImportedBeanRating(value) {
+      const parsed = Number(value);
+      if (!Number.isFinite(parsed)) return null;
+      return Math.max(1, Math.min(5, Math.round(parsed)));
+    },
+
+    normalizeImportedBean(rawBean) {
+      if (!rawBean || typeof rawBean !== 'object') return null;
+      const id = typeof rawBean.id === 'string' ? rawBean.id.trim() : '';
+      const name = typeof rawBean.name === 'string' ? rawBean.name.trim() : '';
+      const roaster = typeof rawBean.roaster === 'string' ? rawBean.roaster.trim() : '';
+      if (!id || !name || !roaster) return null;
+
+      return {
+        id,
+        name,
+        roaster,
+        roastDate: this.normalizeIsoDateOnly(rawBean.roastDate),
+        rating: this.normalizeImportedBeanRating(rawBean.rating),
+        notes: typeof rawBean.notes === 'string' ? rawBean.notes : '',
+        isArchived: !!rawBean.isArchived,
+        optimalGrindSize: this.toNullableOneDecimal(rawBean.optimalGrindSize),
+        optimalDoseIn: this.toNullableOneDecimal(rawBean.optimalDoseIn),
+        optimalYieldOut: this.toNullableOneDecimal(rawBean.optimalYieldOut),
+        optimalExtractionTime: this.toNullableOneDecimal(rawBean.optimalExtractionTime),
+        createdAt: this.normalizeIsoDateTime(rawBean.createdAt) || new Date().toISOString()
+      };
+    },
+
+    normalizeImportedShot(rawShot) {
+      if (!rawShot || typeof rawShot !== 'object') return null;
+      const id = typeof rawShot.id === 'string' ? rawShot.id.trim() : '';
+      const beanId = typeof rawShot.beanId === 'string' ? rawShot.beanId.trim() : '';
+      const grindSize = this.toNullableInt(rawShot.grindSize);
+      const doseIn = this.toNullableInt(rawShot.doseIn);
+      if (!id || !beanId || grindSize == null || doseIn == null) return null;
+
+      const createdAt = this.normalizeIsoDateTime(rawShot.createdAt) || new Date().toISOString();
+      return {
+        id,
+        beanId,
+        grindSize,
+        doseIn,
+        yieldOut: this.toNullableInt(rawShot.yieldOut),
+        extractionTime: this.toNullableInt(rawShot.extractionTime),
+        rating: normalizeRating(rawShot.rating),
+        notes: typeof rawShot.notes === 'string' ? rawShot.notes : '',
+        shotDate: this.normalizeIsoDateOnly(rawShot.shotDate) || createdAt.slice(0, 10),
+        createdAt
+      };
+    },
+
+    extractBackupPayload(parsed) {
+      if (!parsed || typeof parsed !== 'object') {
+        throw new Error('This file is not a valid backup object.');
+      }
+      const source = parsed.data && typeof parsed.data === 'object' ? parsed.data : parsed;
+      if (!Array.isArray(source.beans) || !Array.isArray(source.shots)) {
+        throw new Error('This backup file is missing beans or shots.');
+      }
+      return source;
+    },
+
+    prepareBackupImportPreview(jsonText, fileName) {
+      let parsed;
+      try {
+        parsed = JSON.parse(jsonText);
+      } catch (_error) {
+        throw new Error('Could not read this file. Please select a backup JSON file from this app.');
+      }
+
+      const payload = this.extractBackupPayload(parsed);
+      const importedBeans = [];
+      const importedShots = [];
+      let invalidBeans = 0;
+      let invalidShots = 0;
+      let duplicateBeansInFile = 0;
+      let duplicateShotsInFile = 0;
+      let orphanShots = 0;
+      let skippedExistingBeans = 0;
+      let skippedExistingShots = 0;
+
+      const existingBeanIds = new Set(this.beans.map(bean => bean.id));
+      const existingShotIds = new Set(this.shots.map(shot => shot.id));
+      const seenBeanIdsInFile = new Set();
+      const seenShotIdsInFile = new Set();
+
+      for (const rawBean of payload.beans) {
+        const bean = this.normalizeImportedBean(rawBean);
+        if (!bean) {
+          invalidBeans++;
+          continue;
+        }
+        if (seenBeanIdsInFile.has(bean.id)) {
+          duplicateBeansInFile++;
+          continue;
+        }
+        seenBeanIdsInFile.add(bean.id);
+        if (existingBeanIds.has(bean.id)) {
+          skippedExistingBeans++;
+          continue;
+        }
+        importedBeans.push(bean);
+      }
+
+      const allBeanIdsAfterMerge = new Set([...existingBeanIds, ...importedBeans.map(bean => bean.id)]);
+      for (const rawShot of payload.shots) {
+        const shot = this.normalizeImportedShot(rawShot);
+        if (!shot) {
+          invalidShots++;
+          continue;
+        }
+        if (seenShotIdsInFile.has(shot.id)) {
+          duplicateShotsInFile++;
+          continue;
+        }
+        seenShotIdsInFile.add(shot.id);
+        if (existingShotIds.has(shot.id)) {
+          skippedExistingShots++;
+          continue;
+        }
+        if (!allBeanIdsAfterMerge.has(shot.beanId)) {
+          orphanShots++;
+          continue;
+        }
+        importedShots.push(shot);
+      }
+
+      return {
+        fileName: fileName || 'backup.json',
+        newBeans: importedBeans.length,
+        newShots: importedShots.length,
+        skippedExisting: skippedExistingBeans + skippedExistingShots,
+        invalidOrSkipped: invalidBeans + invalidShots + duplicateBeansInFile + duplicateShotsInFile + orphanShots,
+        beansToImport: importedBeans,
+        shotsToImport: importedShots
+      };
+    },
+
+    triggerBackupImport() {
+      if (this.$refs.backupImportInput) {
+        this.$refs.backupImportInput.click();
+      }
+    },
+
+    clearBackupImportPreview() {
+      this.backupImportPreview = null;
+      if (this.$refs.backupImportInput) this.$refs.backupImportInput.value = '';
+      this.setBackupNotice('info', 'Import canceled. No data was changed.');
+    },
+
+    async onBackupFileSelected(event) {
+      const file = event?.target?.files?.[0];
+      this.backupImportPreview = null;
+      if (!file) return;
+
+      try {
+        const text = await file.text();
+        const preview = this.prepareBackupImportPreview(text, file.name);
+        this.backupImportPreview = preview;
+        if (preview.newBeans === 0 && preview.newShots === 0) {
+          this.setBackupNotice('info', 'Backup is valid, but there is nothing new to import.');
+        } else {
+          this.setBackupNotice('info', `Review and confirm import. This will add ${preview.newBeans} beans and ${preview.newShots} shots.`);
+        }
+      } catch (error) {
+        this.setBackupNotice('error', error?.message || 'Could not import this file.');
+      }
+    },
+
+    confirmBackupImport() {
+      const preview = this.backupImportPreview;
+      if (!preview) {
+        this.setBackupNotice('error', 'Select a backup file first.');
+        return;
+      }
+
+      if (preview.newBeans === 0 && preview.newShots === 0) {
+        this.setBackupNotice('info', 'Nothing new to import. Existing data is unchanged.');
+        this.backupImportPreview = null;
+        if (this.$refs.backupImportInput) this.$refs.backupImportInput.value = '';
+        return;
+      }
+
+      this.beans = this.beans.concat(preview.beansToImport);
+      this.shots = this.shots.concat(preview.shotsToImport);
+      this.saveBeans();
+      this.saveShots();
+
+      const now = new Date().toISOString();
+      this.backupLastImportedAt = now;
+      localStorage.setItem(BACKUP_LAST_IMPORTED_KEY, now);
+
+      this.backupImportPreview = null;
+      if (this.$refs.backupImportInput) this.$refs.backupImportInput.value = '';
+      this.setBackupNotice('success', `Import complete. Added ${preview.newBeans} beans and ${preview.newShots} shots. Existing entries were kept.`);
+    },
+
+    exportBackup() {
+      try {
+        const exportedAt = new Date().toISOString();
+        const payload = {
+          app: 'coffee-journal',
+          formatVersion: BACKUP_FORMAT_VERSION,
+          exportedAt,
+          data: {
+            beans: this.beans,
+            shots: this.shots
+          }
+        };
+        const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `coffee-journal-backup-${localDateStr()}.json`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+
+        this.backupLastExportedAt = exportedAt;
+        localStorage.setItem(BACKUP_LAST_EXPORTED_KEY, exportedAt);
+        this.setBackupNotice('success', 'Backup exported. Save this file somewhere safe.');
+      } catch (_error) {
+        this.setBackupNotice('error', 'Export failed. Please try again.');
       }
     },
 
@@ -1721,7 +2142,7 @@ function app() {
     onTabSwipeStart(event) {
       this.resetTabSwipe();
       if (!this.touchTabSwipeEnabled) return;
-      if (this.showShotForm || this.showBeanFormModal || this.showDeleteBeanDialog) return;
+      if (this.showShotForm || this.showBeanFormModal || this.showDeleteBeanDialog || this.showBackupPanel) return;
       if (!event.touches || event.touches.length !== 1) return;
       if (this.isTabSwipeBlockedTarget(event.target)) return;
 
@@ -2221,6 +2642,17 @@ function app() {
     formatDate(dateStr) {
       const d = /^\d{4}-\d{2}-\d{2}$/.test(dateStr) ? new Date(dateStr + 'T00:00:00') : new Date(dateStr);
       return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+    },
+    formatDateTime(dateStr) {
+      const d = new Date(dateStr);
+      if (isNaN(d.getTime())) return 'Unknown';
+      return d.toLocaleDateString('en-US', {
+        month: 'short',
+        day: 'numeric',
+        year: 'numeric',
+        hour: 'numeric',
+        minute: '2-digit'
+      });
     },
     formatRoastDate(dateStr) {
       if (!dateStr) return '';
