@@ -552,7 +552,7 @@ textarea.form-input { min-height: 80px; resize: vertical; line-height: 1.5; }
        @touchend="onTabSwipeEnd($event)"
        @touchcancel="resetTabSwipe()">
     <div class="content-top-actions">
-      <button x-show="!showBackupPanel" class="btn btn-secondary-solid backup-launch-btn" @click="openBackupPanel()">Backup</button>
+      <button x-show="currentTab === 'today' && !showBackupPanel" class="btn btn-secondary-solid backup-launch-btn" @click="openBackupPanel()">Backup</button>
     </div>
     <div class="tab-stage">
 
@@ -1352,7 +1352,6 @@ textarea.form-input { min-height: 80px; resize: vertical; line-height: 1.5; }
 
       <div class="backup-card">
         <div class="backup-card-title">Backup Status</div>
-        <p class="backup-subtle">Export on this device, then import on another to carry your coffee history with you.</p>
         <div class="backup-status-grid">
           <div class="backup-status-item">
             <div class="backup-status-label">Last Export</div>
@@ -1400,7 +1399,6 @@ textarea.form-input { min-height: 80px; resize: vertical; line-height: 1.5; }
 
       <div class="backup-card">
         <div class="backup-card-title">Quick Steps</div>
-        <p class="backup-subtle">Follow these exact steps for backup and restore.</p>
         <div class="backup-steps-heading">Back Up (2 steps)</div>
         <div class="backup-howto-grid">
           <div class="backup-step">
@@ -1408,14 +1406,14 @@ textarea.form-input { min-height: 80px; resize: vertical; line-height: 1.5; }
               <span class="backup-step-num">1</span>
               <span class="backup-step-title">Tap “Export Backup”</span>
             </div>
-            <p class="backup-step-copy">A file like `coffee-journal-backup-YYYY-MM-DD.json` is added to your Downloads (or your browser’s download location on mobile).</p>
+            <p class="backup-step-copy">A file like `coffee-journal-backup-YYYY-MM-DD.json` should download to your device.p>
           </div>
           <div class="backup-step">
             <div class="backup-step-head">
               <span class="backup-step-num">2</span>
               <span class="backup-step-title">Save the file</span>
             </div>
-            <p class="backup-step-copy">Move it to iCloud/Google Drive/Dropbox (or email it to yourself).</p>
+            <p class="backup-step-copy">Save the file to your preferred location (iCloud, Downloads folder).</p>
           </div>
         </div>
         <div class="backup-steps-heading">Restore (3 steps)</div>
@@ -1425,7 +1423,7 @@ textarea.form-input { min-height: 80px; resize: vertical; line-height: 1.5; }
               <span class="backup-step-num">1</span>
               <span class="backup-step-title">Tap “Choose Backup File”</span>
             </div>
-            <p class="backup-step-copy">Select your saved `.json` backup file.</p>
+            <p class="backup-step-copy">Navigate to where you saved the `.json` backup file and select it.</p>
           </div>
           <div class="backup-step">
             <div class="backup-step-head">
