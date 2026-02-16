@@ -474,8 +474,10 @@ textarea.form-input { min-height: 80px; resize: vertical; line-height: 1.5; }
 .calendar-legend { display: flex; flex-wrap: wrap; gap: 14px; margin-top: 18px; padding-top: 16px; border-top: 1px solid var(--cream-dark); }
 .calendar-empty-state { margin-top: 18px; padding-top: 16px !important; border-top: 1px solid var(--cream-dark); }
 .calendar-note { font-size: 12px; color: var(--text-muted); line-height: 1.45; margin-top: 18px; padding-top: 14px; border-top: 1px solid var(--cream-dark); }
-.legend-item { display: flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 500; color: var(--text-secondary); }
-.legend-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+.legend-item { display: flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 500; color: var(--text-secondary); cursor: pointer; transition: opacity 0.2s ease; -webkit-tap-highlight-color: transparent; user-select: none; border: 0; background: transparent; padding: 0; font-family: inherit; line-height: inherit; appearance: none; text-align: left; }
+.legend-item:focus-visible { outline: 2px solid var(--amber-dark); outline-offset: 3px; border-radius: var(--radius-sm); }
+.legend-item.dimmed { opacity: 0.3; }
+.legend-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; transition: background 0.2s ease; }
 
 /* Backup tab */
 .backup-description { color: var(--text-muted); font-size: 14px; line-height: 1.5; margin-bottom: 20px; }
@@ -1129,10 +1131,16 @@ textarea.form-input { min-height: 80px; resize: vertical; line-height: 1.5; }
         </div>
         <div x-show="calendarBars.length > 0" class="calendar-legend">
           <template x-for="bar in calendarBarsUnique" :key="bar.beanId">
-            <div class="legend-item">
+            <button
+              type="button"
+              class="legend-item"
+              :class="{ 'dimmed': calendarFilteredBeanIds.length > 0 && !calendarFilteredBeanIds.includes(bar.beanId) }"
+              :aria-pressed="calendarFilteredBeanIds.includes(bar.beanId)"
+              @click="toggleCalendarFilter(bar.beanId)"
+            >
               <div class="legend-dot" :style="'background:' + bar.color"></div>
               <span x-text="bar.beanName"></span>
-            </div>
+            </button>
           </template>
         </div>
         <div x-show="calendarBars.length === 0" class="empty-state calendar-empty-state" style="padding: 32px 0 8px;">
@@ -1708,7 +1716,7 @@ function app() {
     backupNoticeType: '',
     backupNoticeMessage: '',
     backupImportPreview: null,
-    calendarYear: new Date().getFullYear(), calendarMonth: new Date().getMonth(),
+    calendarYear: new Date().getFullYear(), calendarMonth: new Date().getMonth(), calendarFilteredBeanIds: [],
 
     init() {
       const savedBeans = localStorage.getItem('coffee_beans');
@@ -2126,7 +2134,7 @@ function app() {
 
     isTabSwipeBlockedTarget(target) {
       if (!target || typeof target.closest !== 'function') return false;
-      return !!target.closest('input, textarea, select, button, a, [contenteditable="true"], .today-shot-swipe, .bean-picker-dropdown, .custom-datepicker, .archive-picker, .fill-from-previous-picker, .panel');
+      return !!target.closest('input, textarea, select, button, a, [contenteditable="true"], .today-shot-swipe, .bean-picker-dropdown, .custom-datepicker, .archive-picker, .fill-from-previous-picker, .panel, .legend-item');
     },
 
     getAdjacentTabForOffset(offset) {
@@ -2688,6 +2696,15 @@ function app() {
       else { this.calendarMonth++; }
     },
 
+    toggleCalendarFilter(beanId) {
+      const idx = this.calendarFilteredBeanIds.indexOf(beanId);
+      if (idx === -1) {
+        this.calendarFilteredBeanIds.push(beanId);
+      } else {
+        this.calendarFilteredBeanIds.splice(idx, 1);
+      }
+    },
+
     get calendarWeeks() {
       const first = new Date(this.calendarYear, this.calendarMonth, 1);
       const daysInMonth = new Date(this.calendarYear, this.calendarMonth + 1, 0).getDate();
@@ -2747,7 +2764,11 @@ function app() {
       const firstDay = week.find(d => d !== null);
       const lastDay = [...week].reverse().find(d => d !== null);
       if (!firstDay || !lastDay) return [];
-      return this.calendarBars.filter(bar => bar.startDay <= lastDay && bar.endDay >= firstDay);
+      const filtered = this.calendarFilteredBeanIds;
+      return this.calendarBars.filter(bar =>
+        bar.startDay <= lastDay && bar.endDay >= firstDay &&
+        (filtered.length === 0 || filtered.includes(bar.beanId))
+      );
     },
 
     /** Style for a smooth full-height band spanning the bar's days in this week (no gaps between cells). */
