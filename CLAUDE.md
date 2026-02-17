@@ -63,6 +63,17 @@ brainstorms/        — Design docs and decision records
 const FRESHNESS_RESTING_DAYS = 7;   // Days 0-6: Resting
 const FRESHNESS_OPTIMAL_DAYS = 21;  // Days 7-21: At Peak
                                     // Days 22+: Past Peak
+
+// Espresso extraction standards (universal targets)
+const EXTRACTION_TIME_FAST = 22;           // Below: under-extracted
+const EXTRACTION_TIME_SLIGHTLY_FAST = 25;  // 22-24: slightly fast
+const EXTRACTION_TIME_STANDARD_MAX = 30;   // 25-30: standard range
+const EXTRACTION_TIME_SLIGHTLY_SLOW = 35;  // 31-35: slightly slow
+
+const BREW_RATIO_VERY_LOW = 1.5;           // Below: very low yield
+const BREW_RATIO_LOW = 1.8;               // 1.5-1.79: low yield
+const BREW_RATIO_STANDARD_MAX = 2.2;      // 1.8-2.2: standard range
+const BREW_RATIO_HIGH = 2.5;              // 2.21-2.5: high yield
 ```
 
 ### Key Functional Modules (all methods on the `app()` object)
@@ -73,7 +84,7 @@ const FRESHNESS_OPTIMAL_DAYS = 21;  // Days 7-21: At Peak
 - **Delete Confirmation**: `openDeleteBeanDialog`, `closeDeleteBeanDialog`, `confirmDeleteBean` — two-step confirmation via modal dialog before deleting a bean and its shots
 - **Shot Logging**: `saveShot`, `deleteShot`, `openShotForm`, `openShotFormForEdit`, `closeShotForm`, `getShotFormDefault`, `getShotsForBean`, `getLastShot`; shot form includes optional `shotDate` (date picker) for backdating
 - **Daily Tracking**: `onDailyBeanSelect`, `openShotFormFromDaily`, `openShotFormFromBean`
-- **Helpers**: `getBeanById`, `getBeanOccurrence` (occurrence count for beans with same name+roaster), `shotQualityLabel`, `shotQualityClass`, `normalizeRating` (converts legacy numeric ratings to string labels)
+- **Helpers**: `getBeanById`, `getBeanOccurrence` (occurrence count for beans with same name+roaster), `shotQualityLabel`, `shotQualityClass`, `normalizeRating` (converts legacy numeric ratings to string labels), `getShotAssessment` (returns `{ status, label }` — evaluates shot against espresso standards for extraction time and brew ratio)
 - **Optimal Settings**: `startEditingOptimal`, `saveOptimalSettings`, `cancelEditingOptimal`
 - **Freshness**: `getFreshness` — returns `{ status, label, detail }`
 - **Tab Navigation**: `activateTab` (switches tab, resets beans view to list, scrolls to top), `tabPaneStyle` (controls visibility and swipe animation transforms)
