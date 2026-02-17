@@ -119,31 +119,31 @@ function getShotAssessment(shot) {
   if (hasTime) {
     const t = extractionTime;
     if (t < EXTRACTION_TIME_FAST) {
-      parts.push('Under-extracted \u00B7 Try going finer');
+      parts.push('Under-extracted \u2192 go finer');
     } else if (t < EXTRACTION_TIME_SLIGHTLY_FAST) {
-      parts.push('Slightly under-extracted \u00B7 Try going slightly finer');
+      parts.push('Slightly under-extracted \u2192 go slightly finer');
     } else if (t > EXTRACTION_TIME_SLIGHTLY_SLOW) {
-      parts.push('Over-extracted \u00B7 Try going coarser');
+      parts.push('Over-extracted \u2192 go coarser');
     } else if (t > EXTRACTION_TIME_STANDARD_MAX) {
-      parts.push('Slightly over-extracted \u00B7 Try going slightly coarser');
+      parts.push('Slightly over-extracted \u2192 go slightly coarser');
     }
   }
   if (hasRatio) {
     const ratio = yieldOut / doseIn;
     if (ratio < BREW_RATIO_VERY_LOW) {
-      parts.push('Yield very low \u00B7 Try pulling a bit longer');
+      parts.push('Yield very low \u2192 pull longer');
     } else if (ratio < BREW_RATIO_LOW) {
-      parts.push('Yield a bit low \u00B7 Try pulling a bit longer');
+      parts.push('Yield slightly low \u2192 pull slightly longer');
     } else if (ratio > BREW_RATIO_HIGH) {
-      parts.push('Yield very high \u00B7 Try cutting closer to 1:2');
+      parts.push('Yield very high \u2192 cut sooner');
     } else if (ratio > BREW_RATIO_STANDARD_MAX) {
-      parts.push('Yield a bit high \u00B7 Try cutting closer to 1:2');
+      parts.push('Yield slightly high \u2192 cut slightly sooner');
     }
   }
   if (parts.length === 0) {
     return { status: 'good', label: 'Well-extracted' };
   }
-  return { status: 'warning', label: parts.join(' \u00B7 ') };
+  return { status: 'warning', label: parts.join('\n') };
 }
 
 // ========================================
@@ -533,29 +533,29 @@ test('getShotAssessment - ratio 1.3 is very low', () => {
   const r = getShotAssessment({ doseIn: 18, yieldOut: 23.4 });
   assertEqual(r.status, 'warning');
   assert(r.label.includes('very low'), 'Expected "very low"');
-  assert(r.label.includes('pulling a bit longer'), 'Expected ratio recommendation');
+  assert(r.label.includes('pulling longer'), 'Expected ratio recommendation');
 });
 
 test('getShotAssessment - ratio 1.6 is a bit low', () => {
   const r = getShotAssessment({ doseIn: 18, yieldOut: 28.8 });
   assertEqual(r.status, 'warning');
-  assert(r.label.includes('bit low'), 'Expected "bit low"');
-  assert(r.label.includes('pulling a bit longer'), 'Expected ratio recommendation');
+  assert(r.label.includes('slightly low'), 'Expected "slightly low"');
+  assert(r.label.includes('pulling longer'), 'Expected ratio recommendation');
 });
 
 // Ratio only — high
 test('getShotAssessment - ratio 2.3 is a bit high', () => {
   const r = getShotAssessment({ doseIn: 18, yieldOut: 41.4 });
   assertEqual(r.status, 'warning');
-  assert(r.label.includes('bit high'), 'Expected "bit high"');
-  assert(r.label.includes('cutting closer to 1:2'), 'Expected ratio recommendation');
+  assert(r.label.includes('slightly high'), 'Expected "slightly high"');
+  assert(r.label.includes('cut'), 'Expected ratio recommendation');
 });
 
 test('getShotAssessment - ratio 2.8 is very high', () => {
   const r = getShotAssessment({ doseIn: 18, yieldOut: 50.4 });
   assertEqual(r.status, 'warning');
   assert(r.label.includes('very high'), 'Expected "very high"');
-  assert(r.label.includes('cutting closer to 1:2'), 'Expected ratio recommendation');
+  assert(r.label.includes('cut'), 'Expected ratio recommendation');
 });
 
 // Combined — both off
@@ -599,7 +599,7 @@ test('getShotAssessment - 27s with 1:2.0 is well-extracted', () => {
 test('getShotAssessment - ratio exactly 1.5 is a bit low', () => {
   const r = getShotAssessment({ doseIn: 20, yieldOut: 30 });
   assertEqual(r.status, 'warning');
-  assert(r.label.includes('bit low'), 'Ratio 1.5 should be "a bit low"');
+  assert(r.label.includes('slightly low'), 'Ratio 1.5 should be "slightly low"');
 });
 
 test('getShotAssessment - ratio exactly 1.8 is standard', () => {
@@ -615,7 +615,7 @@ test('getShotAssessment - ratio exactly 2.2 is standard', () => {
 test('getShotAssessment - ratio exactly 2.5 is a bit high', () => {
   const r = getShotAssessment({ doseIn: 20, yieldOut: 50 });
   assertEqual(r.status, 'warning');
-  assert(r.label.includes('bit high'), 'Ratio 2.5 should be "a bit high"');
+  assert(r.label.includes('slightly high'), 'Ratio 2.5 should be "slightly high"');
 });
 
 test('getShotAssessment - NaN extractionTime is ignored', () => {

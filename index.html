@@ -236,7 +236,7 @@ textarea.form-input { min-height: 80px; resize: vertical; line-height: 1.5; }
 .shot-quality-badge.okay { background: rgba(212,165,116,0.18); color: var(--amber-dark); }
 .shot-quality-badge.great { background: rgba(79,111,165,0.14); color: #3F5A86; }
 .shot-quality-badge.perfect { background: var(--freshness-optimal-bg); color: var(--freshness-optimal); }
-.shot-assessment { font-size: 12px; font-weight: 500; margin-top: 3px; }
+.shot-assessment { font-size: 12px; font-weight: 500; margin-top: 3px; white-space: pre-line; }
 .shot-assessment.good { color: var(--freshness-optimal); }
 .shot-assessment.warning { color: var(--freshness-past); }
 
@@ -2716,33 +2716,33 @@ function app() {
       if (hasTime) {
         const t = extractionTime;
         if (t < EXTRACTION_TIME_FAST) {
-          parts.push('Under-extracted \u00B7 Try going finer');
+          parts.push('Under-extracted \u2192 go finer');
         } else if (t < EXTRACTION_TIME_SLIGHTLY_FAST) {
-          parts.push('Slightly under-extracted \u00B7 Try going slightly finer');
+          parts.push('Slightly under-extracted \u2192 go slightly finer');
         } else if (t > EXTRACTION_TIME_SLIGHTLY_SLOW) {
-          parts.push('Over-extracted \u00B7 Try going coarser');
+          parts.push('Over-extracted \u2192 go coarser');
         } else if (t > EXTRACTION_TIME_STANDARD_MAX) {
-          parts.push('Slightly over-extracted \u00B7 Try going slightly coarser');
+          parts.push('Slightly over-extracted \u2192 go slightly coarser');
         }
       }
 
       if (hasRatio) {
         const ratio = yieldOut / doseIn;
         if (ratio < BREW_RATIO_VERY_LOW) {
-          parts.push('Yield very low \u00B7 Try pulling a bit longer');
+          parts.push('Yield very low \u2192 pull longer');
         } else if (ratio < BREW_RATIO_LOW) {
-          parts.push('Yield a bit low \u00B7 Try pulling a bit longer');
+          parts.push('Yield slightly low \u2192 pull slightly longer');
         } else if (ratio > BREW_RATIO_HIGH) {
-          parts.push('Yield very high \u00B7 Try cutting closer to 1:2');
+          parts.push('Yield very high \u2192 cut sooner');
         } else if (ratio > BREW_RATIO_STANDARD_MAX) {
-          parts.push('Yield a bit high \u00B7 Try cutting closer to 1:2');
+          parts.push('Yield slightly high \u2192 cut slightly sooner');
         }
       }
 
       if (parts.length === 0) {
         return { status: 'good', label: 'Well-extracted' };
       }
-      return { status: 'warning', label: parts.join(' \u00B7 ') };
+      return { status: 'warning', label: parts.join('\n') };
     },
 
     get calendarMonthLabel() {
