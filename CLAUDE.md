@@ -82,7 +82,7 @@ const BREW_RATIO_HIGH = 2.5;              // 2.21-2.5: high yield
 - **Bean Validation**: `normalizeBeanName` (trim + lowercase), `beanNameExists` (checks for duplicate names among active beans, used in Today picker flow)
 - **Bean Form Context**: `openBeanForm` (supports `context` option: `'beans'` for Beans tab, `'today-picker'` for modal from Today), `openAddBeanFromToday` (opens modal form from daily picker), `cancelBeanForm` (handles cleanup for both contexts), `showBeanFormModal` (boolean for overlay display), `_pendingDuplicateBean` (temporary state carrying optimal settings through the duplicate flow)
 - **Delete Confirmation**: `openDeleteBeanDialog`, `closeDeleteBeanDialog`, `confirmDeleteBean` — two-step confirmation via modal dialog before deleting a bean and its shots
-- **Shot Logging**: `saveShot`, `deleteShot`, `openShotForm`, `openShotFormForEdit`, `closeShotForm`, `getShotFormDefault`, `getShotsForBean`, `getLastShot`; shot form includes optional `shotDate` (date picker) for backdating
+- **Shot Logging**: `saveShot`, `deleteShot`, `openShotForm`, `openShotFormForEdit`, `closeShotForm`, `getShotFormDefault`, `getShotFormBestDialInComparison`, `getShotsForBean`, `getLastShot`; shot form includes optional `shotDate` (date picker) for backdating and `saveAsBestDialIn` checkbox to promote shot values to bean optimal settings
 - **Daily Tracking**: `onDailyBeanSelect`, `openShotFormFromDaily`, `openShotFormFromBean`
 - **Helpers**: `getBeanById`, `getBeanOccurrence` (occurrence count for beans with same name+roaster), `shotQualityLabel`, `shotQualityClass`, `normalizeRating` (converts legacy numeric ratings to string labels), `getShotAssessment` (returns `{ status, label }` — evaluates shot against espresso standards for extraction time and brew ratio)
 - **Optimal Settings**: `startEditingOptimal`, `saveOptimalSettings`, `cancelEditingOptimal`
@@ -288,6 +288,7 @@ Calendar bar colors are defined in JS `BAR_COLORS` array. Spacing utilities (`.m
 - `brainstorms/2026-02-06-today-add-bean-modal-brainstorm.md` — Add Bean modal from Today tab
 - `brainstorms/2026-02-06-cross-device-sync-code-brainstorm.md` — Cross-device sync (code approach)
 - `brainstorms/2026-02-06-cross-device-auth-brainstorm.md` — Cross-device auth considerations
+- `brainstorms/2026-02-20-save-shot-as-best-dial-in-brainstorm.md` — Save shot as best dial-in
 
 ## Testing
 

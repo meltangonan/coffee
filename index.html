@@ -545,6 +545,22 @@ textarea.form-input { min-height: 80px; resize: vertical; line-height: 1.5; }
   .heading-xl { font-size: 34px; }
   .date-header .day-name { font-size: 38px; }
 }
+
+/* Best dial-in checkbox + comparison panel */
+.best-dialin-toggle { display: flex; align-items: center; justify-content: center; gap: 8px; margin-top: 12px; cursor: pointer; }
+.best-dialin-toggle input[type="checkbox"] { accent-color: var(--amber); width: 16px; height: 16px; cursor: pointer; }
+.best-dialin-toggle span { font-size: 13px; color: var(--text-secondary); font-weight: 500; user-select: none; }
+.best-dialin-comparison { background: rgba(212,165,116,0.08); border: 1px solid rgba(212,165,116,0.2); border-radius: var(--radius-sm); padding: 12px; margin-top: 10px; }
+.best-dialin-comparison-title { font-size: 13px; font-weight: 600; color: var(--espresso); margin-bottom: 8px; }
+.best-dialin-comparison-table { width: 100%; font-size: 12px; border-collapse: collapse; }
+.best-dialin-comparison-table th { font-weight: 500; color: var(--text-secondary); text-align: left; padding: 3px 0; }
+.best-dialin-comparison-table th:nth-child(2),
+.best-dialin-comparison-table th:nth-child(3) { text-align: right; }
+.best-dialin-comparison-table td { padding: 3px 0; color: var(--espresso); }
+.best-dialin-comparison-table td:nth-child(2),
+.best-dialin-comparison-table td:nth-child(3) { text-align: right; }
+.best-dialin-comparison-table td:nth-child(3) { font-weight: 600; color: var(--amber-dark); }
+.best-dialin-same { font-size: 12px; color: var(--text-secondary); text-align: center; padding: 4px 0; }
 </style>
 </head>
 <body>
@@ -1259,6 +1275,31 @@ textarea.form-input { min-height: 80px; resize: vertical; line-height: 1.5; }
       <div class="form-actions">
         <button class="btn btn-primary" style="flex: 1;" @click="saveShot()">Save Shot</button>
       </div>
+      <label class="best-dialin-toggle">
+        <input type="checkbox" x-model="shotForm.saveAsBestDialIn" @change="if (shotForm.saveAsBestDialIn) $nextTick(() => $el.closest('.panel')?.querySelector('.best-dialin-comparison')?.scrollIntoView({ behavior: 'smooth', block: 'nearest' }))">
+        <span>Save as best dial-in</span>
+      </label>
+      <template x-if="shotForm.saveAsBestDialIn">
+        <div class="best-dialin-comparison fade-in" x-data="{ get comp() { return getShotFormBestDialInComparison() } }">
+          <template x-if="comp.allSame">
+            <div class="best-dialin-same">Same as current best dial-in</div>
+          </template>
+          <template x-if="!comp.allSame">
+            <div>
+              <div class="best-dialin-comparison-title">Update Best Dial-In</div>
+              <table class="best-dialin-comparison-table">
+                <thead><tr><th></th><th>Current</th><th>New</th></tr></thead>
+                <tbody>
+                  <tr><td>Grind</td><td x-text="comp.current.grindSize ?? '—'"></td><td x-text="comp.next.grindSize ?? '—'"></td></tr>
+                  <tr><td>Dose</td><td x-text="comp.current.doseIn != null ? comp.current.doseIn + 'g' : '—'"></td><td x-text="comp.next.doseIn != null ? comp.next.doseIn + 'g' : '—'"></td></tr>
+                  <tr><td>Yield</td><td x-text="comp.current.yieldOut != null ? comp.current.yieldOut + 'g' : '—'"></td><td x-text="comp.next.yieldOut != null ? comp.next.yieldOut + 'g' : '—'"></td></tr>
+                  <tr><td>Time</td><td x-text="comp.current.extractionTime != null ? comp.current.extractionTime + 's' : '—'"></td><td x-text="comp.next.extractionTime != null ? comp.next.extractionTime + 's' : '—'"></td></tr>
+                </tbody>
+              </table>
+            </div>
+          </template>
+        </div>
+      </template>
     </div>
   </div>
   </template>
@@ -1728,7 +1769,7 @@ function app() {
     editingOptimalBeanId: null,
     optimalForm: { grindSize: null, doseIn: null, yieldOut: null, extractionTime: null },
     beanForm: { name: '', roaster: '', roastDate: '', notes: '' },
-    shotForm: { grindSize: null, doseIn: null, yieldOut: null, extractionTime: null, rating: null, notes: '', shotDate: '' },
+    shotForm: { grindSize: null, doseIn: null, yieldOut: null, extractionTime: null, rating: null, notes: '', shotDate: '', saveAsBestDialIn: false },
     backupLastExportedAt: '',
     backupLastImportedAt: '',
     backupNoticeType: '',
@@ -2539,7 +2580,8 @@ function app() {
         doseIn: null,
         yieldOut: null,
         extractionTime: null,
-        rating: null, notes: '', shotDate: today
+        rating: null, notes: '', shotDate: today,
+        saveAsBestDialIn: false
       };
       this.showShotForm = true;
     },
@@ -2557,7 +2599,8 @@ function app() {
         extractionTime: shot.extractionTime ?? null,
         rating: normalizeRating(shot.rating),
         notes: shot.notes ?? '',
-        shotDate: shotDate
+        shotDate: shotDate,
+        saveAsBestDialIn: false
       };
       this.showShotForm = true;
     },
@@ -2610,6 +2653,32 @@ function app() {
       return SHOT_DEFAULTS[field];
     },
 
+    getShotFormBestDialInComparison() {
+      const bean = this.getBeanById(this.shotFormBeanId);
+      const current = {
+        grindSize: bean?.optimalGrindSize ?? null,
+        doseIn: bean?.optimalDoseIn ?? null,
+        yieldOut: bean?.optimalYieldOut ?? null,
+        extractionTime: bean?.optimalExtractionTime ?? null
+      };
+      const isEditing = !!this.editingShotId;
+      const resolveNext = (field) => {
+        const parsed = this.toNullableInt(this.shotForm[field]);
+        if (parsed != null || isEditing) return parsed;
+        return this.toNullableInt(this.getShotFormDefault(field));
+      };
+      const next = {
+        grindSize: resolveNext('grindSize'),
+        doseIn: resolveNext('doseIn'),
+        yieldOut: resolveNext('yieldOut'),
+        extractionTime: resolveNext('extractionTime')
+      };
+      const allSame = ['grindSize', 'doseIn', 'yieldOut', 'extractionTime'].every(
+        f => current[f] === next[f]
+      );
+      return { current, next, allSame };
+    },
+
     saveShot() {
       if (!this.shotFormBeanId) return;
       const isEditing = !!this.editingShotId;
@@ -2638,6 +2707,16 @@ function app() {
         });
       }
       this.saveShots();
+      if (this.shotForm.saveAsBestDialIn) {
+        const bean = this.getBeanById(this.shotFormBeanId);
+        if (bean) {
+          bean.optimalGrindSize = shotData.grindSize;
+          bean.optimalDoseIn = shotData.doseIn;
+          bean.optimalYieldOut = shotData.yieldOut;
+          bean.optimalExtractionTime = shotData.extractionTime;
+          this.saveBeans();
+        }
+      }
       this.showShotForm = false;
       if (this.shotFormReturnTo === 'today') {
         this.resetDailySelection();
