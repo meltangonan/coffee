@@ -1272,9 +1272,6 @@ textarea.form-input { min-height: 80px; resize: vertical; line-height: 1.5; }
         <label class="form-label">Notes</label>
         <textarea class="form-input" placeholder="How did it taste?" x-model="shotForm.notes" rows="2" style="resize:none;"></textarea>
       </div>
-      <div class="form-actions">
-        <button class="btn btn-primary" style="flex: 1;" @click="saveShot()">Save Shot</button>
-      </div>
       <label class="best-dialin-toggle">
         <input type="checkbox" x-model="shotForm.saveAsBestDialIn" @change="if (shotForm.saveAsBestDialIn) $nextTick(() => $el.closest('.panel')?.querySelector('.best-dialin-comparison')?.scrollIntoView({ behavior: 'smooth', block: 'nearest' }))">
         <span>Save as best dial-in</span>
@@ -1300,6 +1297,9 @@ textarea.form-input { min-height: 80px; resize: vertical; line-height: 1.5; }
           </template>
         </div>
       </template>
+      <div class="form-actions">
+        <button class="btn btn-primary" style="flex: 1;" @click="saveShot()">Save Shot</button>
+      </div>
     </div>
   </div>
   </template>
