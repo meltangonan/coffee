@@ -1885,7 +1885,9 @@ function app() {
       const beanId = typeof rawShot.beanId === 'string' ? rawShot.beanId.trim() : '';
       const grindSize = this.toNullableInt(rawShot.grindSize);
       const doseIn = this.toNullableInt(rawShot.doseIn);
-      if (!id || !beanId || grindSize == null || doseIn == null) return null;
+      const yieldOut = this.toNullableInt(rawShot.yieldOut);
+      const extractionTime = this.toNullableInt(rawShot.extractionTime);
+      if (!id || !beanId || grindSize == null || doseIn == null || yieldOut == null || extractionTime == null) return null;
 
       const createdAt = this.normalizeIsoDateTime(rawShot.createdAt) || new Date().toISOString();
       return {
@@ -1893,8 +1895,8 @@ function app() {
         beanId,
         grindSize,
         doseIn,
-        yieldOut: this.toNullableInt(rawShot.yieldOut),
-        extractionTime: this.toNullableInt(rawShot.extractionTime),
+        yieldOut,
+        extractionTime,
         rating: normalizeRating(rawShot.rating),
         notes: typeof rawShot.notes === 'string' ? rawShot.notes : '',
         shotDate: this.normalizeIsoDateOnly(rawShot.shotDate) || createdAt.slice(0, 10),
@@ -2786,42 +2788,38 @@ function app() {
       const extractionTime = Number(shot.extractionTime);
       const doseIn = Number(shot.doseIn);
       const yieldOut = Number(shot.yieldOut);
-      const hasTime = Number.isFinite(extractionTime);
-      const hasRatio = Number.isFinite(doseIn) && Number.isFinite(yieldOut) && doseIn > 0;
-      if (!hasTime && !hasRatio) return null;
+      const ratio = yieldOut / doseIn;
 
-      const parts = [];
-
-      if (hasTime) {
-        const t = extractionTime;
-        if (t < EXTRACTION_TIME_FAST) {
-          parts.push('Under-extracted \u2192 go finer');
-        } else if (t < EXTRACTION_TIME_SLIGHTLY_FAST) {
-          parts.push('Slightly under-extracted \u2192 go slightly finer');
-        } else if (t > EXTRACTION_TIME_SLIGHTLY_SLOW) {
-          parts.push('Over-extracted \u2192 go coarser');
-        } else if (t > EXTRACTION_TIME_STANDARD_MAX) {
-          parts.push('Slightly over-extracted \u2192 go slightly coarser');
-        }
+      // Choking: very low ratio AND low flow rate (water barely getting through)
+      if (ratio < BREW_RATIO_VERY_LOW && (yieldOut / extractionTime) < 1.0) {
+        return { status: 'warning', label: 'Choked/channeled \u2192 go coarser' };
       }
 
-      if (hasRatio) {
-        const ratio = yieldOut / doseIn;
-        if (ratio < BREW_RATIO_VERY_LOW) {
-          parts.push('Yield very low \u2192 pull longer');
-        } else if (ratio < BREW_RATIO_LOW) {
-          parts.push('Yield slightly low \u2192 pull slightly longer');
-        } else if (ratio > BREW_RATIO_HIGH) {
-          parts.push('Yield very high \u2192 cut sooner');
-        } else if (ratio > BREW_RATIO_STANDARD_MAX) {
-          parts.push('Yield slightly high \u2192 cut slightly sooner');
-        }
+      // Project time to target yield (1:2)
+      const t = (doseIn * 2 / yieldOut) * extractionTime;
+      const belowTarget = ratio < BREW_RATIO_LOW;
+      const aboveTarget = ratio > BREW_RATIO_STANDARD_MAX;
+      const pullLonger = belowTarget && t <= EXTRACTION_TIME_STANDARD_MAX;
+      const cutSooner = aboveTarget && t >= EXTRACTION_TIME_SLIGHTLY_FAST;
+
+      if (t < EXTRACTION_TIME_FAST) {
+        return { status: 'warning', label: 'Under-extracted \u2192 go finer' + (pullLonger ? '\nPull longer' : '') + (cutSooner ? '\nCut sooner' : '') };
+      } else if (t < EXTRACTION_TIME_SLIGHTLY_FAST) {
+        return { status: 'warning', label: 'Slightly under-extracted \u2192 go slightly finer' + (pullLonger ? '\nPull longer' : '') + (cutSooner ? '\nCut sooner' : '') };
+      } else if (t > EXTRACTION_TIME_SLIGHTLY_SLOW) {
+        return { status: 'warning', label: 'Over-extracted \u2192 go coarser' };
+      } else if (t > EXTRACTION_TIME_STANDARD_MAX) {
+        return { status: 'warning', label: 'Slightly over-extracted \u2192 go slightly coarser' };
       }
 
-      if (parts.length === 0) {
-        return { status: 'good', label: 'Well-extracted' };
+      // Projected time is in standard range
+      if (belowTarget) {
+        return { status: 'warning', label: 'Good flow \u2192 pull longer' };
       }
-      return { status: 'warning', label: parts.join('\n') };
+      if (aboveTarget) {
+        return { status: 'warning', label: 'Good flow \u2192 cut sooner' };
+      }
+      return { status: 'good', label: 'Well-extracted' };
     },
 
     get calendarMonthLabel() {

@@ -112,38 +112,33 @@ function getShotAssessment(shot) {
   const extractionTime = Number(shot.extractionTime);
   const doseIn = Number(shot.doseIn);
   const yieldOut = Number(shot.yieldOut);
-  const hasTime = Number.isFinite(extractionTime);
-  const hasRatio = Number.isFinite(doseIn) && Number.isFinite(yieldOut) && doseIn > 0;
-  if (!hasTime && !hasRatio) return null;
-  const parts = [];
-  if (hasTime) {
-    const t = extractionTime;
-    if (t < EXTRACTION_TIME_FAST) {
-      parts.push('Under-extracted \u2192 go finer');
-    } else if (t < EXTRACTION_TIME_SLIGHTLY_FAST) {
-      parts.push('Slightly under-extracted \u2192 go slightly finer');
-    } else if (t > EXTRACTION_TIME_SLIGHTLY_SLOW) {
-      parts.push('Over-extracted \u2192 go coarser');
-    } else if (t > EXTRACTION_TIME_STANDARD_MAX) {
-      parts.push('Slightly over-extracted \u2192 go slightly coarser');
-    }
+  const ratio = yieldOut / doseIn;
+  // Choking: very low ratio AND low flow rate
+  if (ratio < BREW_RATIO_VERY_LOW && (yieldOut / extractionTime) < 1.0) {
+    return { status: 'warning', label: 'Choked/channeled \u2192 go coarser' };
   }
-  if (hasRatio) {
-    const ratio = yieldOut / doseIn;
-    if (ratio < BREW_RATIO_VERY_LOW) {
-      parts.push('Yield very low \u2192 pull longer');
-    } else if (ratio < BREW_RATIO_LOW) {
-      parts.push('Yield slightly low \u2192 pull slightly longer');
-    } else if (ratio > BREW_RATIO_HIGH) {
-      parts.push('Yield very high \u2192 cut sooner');
-    } else if (ratio > BREW_RATIO_STANDARD_MAX) {
-      parts.push('Yield slightly high \u2192 cut slightly sooner');
-    }
+  // Project time to target yield (1:2)
+  const t = (doseIn * 2 / yieldOut) * extractionTime;
+  const belowTarget = ratio < BREW_RATIO_LOW;
+  const aboveTarget = ratio > BREW_RATIO_STANDARD_MAX;
+  const pullLonger = belowTarget && t <= EXTRACTION_TIME_STANDARD_MAX;
+  const cutSooner = aboveTarget && t >= EXTRACTION_TIME_SLIGHTLY_FAST;
+  if (t < EXTRACTION_TIME_FAST) {
+    return { status: 'warning', label: 'Under-extracted \u2192 go finer' + (pullLonger ? '\nPull longer' : '') + (cutSooner ? '\nCut sooner' : '') };
+  } else if (t < EXTRACTION_TIME_SLIGHTLY_FAST) {
+    return { status: 'warning', label: 'Slightly under-extracted \u2192 go slightly finer' + (pullLonger ? '\nPull longer' : '') + (cutSooner ? '\nCut sooner' : '') };
+  } else if (t > EXTRACTION_TIME_SLIGHTLY_SLOW) {
+    return { status: 'warning', label: 'Over-extracted \u2192 go coarser' };
+  } else if (t > EXTRACTION_TIME_STANDARD_MAX) {
+    return { status: 'warning', label: 'Slightly over-extracted \u2192 go slightly coarser' };
   }
-  if (parts.length === 0) {
-    return { status: 'good', label: 'Well-extracted' };
+  if (belowTarget) {
+    return { status: 'warning', label: 'Good flow \u2192 pull longer' };
   }
-  return { status: 'warning', label: parts.join('\n') };
+  if (aboveTarget) {
+    return { status: 'warning', label: 'Good flow \u2192 cut sooner' };
+  }
+  return { status: 'good', label: 'Well-extracted' };
 }
 
 // ========================================
@@ -181,12 +176,12 @@ test('isSameDay - different days returns false', () => {
 });
 
 test('addDays - adds positive days', () => {
-  const result = addDays('2026-01-15', 7);
+  const result = addDays('2026-01-15T00:00:00', 7);
   assertEqual(result.getDate(), 22);
 });
 
 test('addDays - handles month rollover', () => {
-  const result = addDays('2026-01-28', 7);
+  const result = addDays('2026-01-28T00:00:00', 7);
   assertEqual(result.getMonth(), 1); // February
   assertEqual(result.getDate(), 4);
 });
@@ -303,7 +298,7 @@ test('Shot references beanId', () => {
 test('Shot rating should be normalized', () => {
   const shot = { rating: 4 };
   const normalized = normalizeRating(shot.rating);
-  assertEqual(normalized, 'perfect');
+  assertEqual(normalized, 'great');
 });
 
 // --- LocalStorage Mock Tests ---
@@ -428,164 +423,211 @@ test('shotQualityLabel capitalizes first letter', () => {
 });
 
 // --- Shot Assessment Tests ---
+// All shots have doseIn, yieldOut, and extractionTime (all required, > 0).
+// Tests use 1:2 ratio (18g → 36g) to isolate time boundaries (projection = raw time).
 
-// Null/missing data
-test('getShotAssessment - null shot returns null', () => {
-  assertEqual(getShotAssessment(null), null);
-});
-
-test('getShotAssessment - no time and no ratio returns null', () => {
-  assertEqual(getShotAssessment({ grindSize: 5 }), null);
-});
-
-test('getShotAssessment - doseIn only (no yield) returns null', () => {
-  assertEqual(getShotAssessment({ doseIn: 18 }), null);
-});
-
-test('getShotAssessment - zero doseIn treated as no ratio', () => {
-  assertEqual(getShotAssessment({ doseIn: 0, yieldOut: 36 }), null);
-});
-
-// Extraction time — under-extracted
+// Time boundaries at 1:2 ratio
 test('getShotAssessment - 18s is under-extracted', () => {
-  const r = getShotAssessment({ extractionTime: 18 });
+  const r = getShotAssessment({ extractionTime: 18, doseIn: 18, yieldOut: 36 });
   assertEqual(r.status, 'warning');
   assert(r.label.includes('Under-extracted'), 'Expected "Under-extracted"');
   assert(r.label.includes('finer'), 'Expected "finer"');
 });
 
 test('getShotAssessment - 21s is under-extracted', () => {
-  const r = getShotAssessment({ extractionTime: 21 });
+  const r = getShotAssessment({ extractionTime: 21, doseIn: 18, yieldOut: 36 });
   assertEqual(r.status, 'warning');
   assert(r.label.includes('Under-extracted'), 'Expected "Under-extracted"');
 });
 
-// Extraction time — slightly under-extracted
 test('getShotAssessment - 22s is slightly under-extracted', () => {
-  const r = getShotAssessment({ extractionTime: 22 });
+  const r = getShotAssessment({ extractionTime: 22, doseIn: 18, yieldOut: 36 });
   assertEqual(r.status, 'warning');
   assert(r.label.includes('Slightly under'), 'Expected "Slightly under"');
   assert(r.label.includes('slightly finer'), 'Expected "slightly finer"');
 });
 
 test('getShotAssessment - 24s is slightly under-extracted', () => {
-  const r = getShotAssessment({ extractionTime: 24 });
+  const r = getShotAssessment({ extractionTime: 24, doseIn: 18, yieldOut: 36 });
   assertEqual(r.status, 'warning');
   assert(r.label.includes('Slightly under'), 'Expected "Slightly under"');
 });
 
-// Extraction time — standard range
 test('getShotAssessment - 25s is well-extracted', () => {
-  const r = getShotAssessment({ extractionTime: 25 });
+  const r = getShotAssessment({ extractionTime: 25, doseIn: 18, yieldOut: 36 });
   assertEqual(r.status, 'good');
   assertEqual(r.label, 'Well-extracted');
 });
 
 test('getShotAssessment - 27s is well-extracted', () => {
-  const r = getShotAssessment({ extractionTime: 27 });
+  const r = getShotAssessment({ extractionTime: 27, doseIn: 18, yieldOut: 36 });
   assertEqual(r.status, 'good');
   assertEqual(r.label, 'Well-extracted');
 });
 
 test('getShotAssessment - 30s is well-extracted', () => {
-  const r = getShotAssessment({ extractionTime: 30 });
+  const r = getShotAssessment({ extractionTime: 30, doseIn: 18, yieldOut: 36 });
   assertEqual(r.status, 'good');
   assertEqual(r.label, 'Well-extracted');
 });
 
-// Extraction time — slightly over-extracted
 test('getShotAssessment - 31s is slightly over-extracted', () => {
-  const r = getShotAssessment({ extractionTime: 31 });
+  const r = getShotAssessment({ extractionTime: 31, doseIn: 18, yieldOut: 36 });
   assertEqual(r.status, 'warning');
   assert(r.label.includes('Slightly over'), 'Expected "Slightly over"');
   assert(r.label.includes('slightly coarser'), 'Expected "slightly coarser"');
 });
 
 test('getShotAssessment - 35s is slightly over-extracted', () => {
-  const r = getShotAssessment({ extractionTime: 35 });
+  const r = getShotAssessment({ extractionTime: 35, doseIn: 18, yieldOut: 36 });
   assertEqual(r.status, 'warning');
   assert(r.label.includes('Slightly over'), 'Expected "Slightly over"');
 });
 
-// Extraction time — over-extracted
 test('getShotAssessment - 36s is over-extracted', () => {
-  const r = getShotAssessment({ extractionTime: 36 });
+  const r = getShotAssessment({ extractionTime: 36, doseIn: 18, yieldOut: 36 });
   assertEqual(r.status, 'warning');
   assert(r.label.includes('Over-extracted'), 'Expected "Over-extracted"');
   assert(r.label.includes('coarser'), 'Expected "coarser"');
 });
 
 test('getShotAssessment - 45s is over-extracted', () => {
-  const r = getShotAssessment({ extractionTime: 45 });
+  const r = getShotAssessment({ extractionTime: 45, doseIn: 18, yieldOut: 36 });
   assertEqual(r.status, 'warning');
   assert(r.label.includes('Over-extracted'), 'Expected "Over-extracted"');
 });
 
-// Ratio only — standard
-test('getShotAssessment - ratio 2.0 is well-extracted', () => {
-  const r = getShotAssessment({ doseIn: 18, yieldOut: 36 });
+// Choking: very low ratio + low flow rate
+test('getShotAssessment - 8g in 30s is choked (0.27 g/s)', () => {
+  const r = getShotAssessment({ extractionTime: 30, doseIn: 18, yieldOut: 8 });
+  assertEqual(r.status, 'warning');
+  assert(r.label.includes('Choked'), 'Low ratio + low flow = choked');
+  assert(!r.label.includes('longer'), 'Should NOT say pull longer');
+});
+
+test('getShotAssessment - 20g in 35s is choked (0.57 g/s)', () => {
+  const r = getShotAssessment({ extractionTime: 35, doseIn: 18, yieldOut: 20 });
+  assertEqual(r.status, 'warning');
+  assert(r.label.includes('Choked'), 'Low ratio + low flow = choked');
+});
+
+// NOT choking: very low ratio but HIGH flow rate (just stopped early)
+test('getShotAssessment - 21g in 3s is NOT choked (7 g/s), under-extracted', () => {
+  // ratio 1.17, flow 7 g/s → not choking, projected 36g at 5.1s
+  const r = getShotAssessment({ extractionTime: 3, doseIn: 18, yieldOut: 21 });
+  assertEqual(r.status, 'warning');
+  assert(!r.label.includes('Choked'), 'High flow rate should NOT be choked');
+  assert(r.label.includes('Under-extracted'), 'Expected under-extracted');
+  assert(r.label.includes('finer'), 'Expected go finer');
+});
+
+test('getShotAssessment - 20g in 18s is NOT choked (1.11 g/s), uses projection', () => {
+  // ratio 1.11, flow 1.11 g/s (above 1.0) → not choking, projected 36g at 32.4s
+  const r = getShotAssessment({ extractionTime: 18, doseIn: 18, yieldOut: 20 });
+  assertEqual(r.status, 'warning');
+  assert(!r.label.includes('Choked'), 'Flow >= 1.0 should not be choked');
+});
+
+// Projected time — user stopped early, flow rate is fine
+test('getShotAssessment - 30g in 21s projects to ~25s, good flow pull longer', () => {
+  // 30g/21s, target 36g → projected 25.2s (standard range)
+  const r = getShotAssessment({ extractionTime: 21, doseIn: 18, yieldOut: 30 });
+  assertEqual(r.status, 'warning');
+  assert(r.label.includes('Good flow'), 'Expected good flow');
+  assert(r.label.includes('pull longer') || r.label.includes('Pull longer'), 'Expected pull longer');
+  assert(!r.label.includes('finer'), 'Should NOT say go finer');
+});
+
+test('getShotAssessment - 30g in 20s projects to 24s, slightly under + pull longer', () => {
+  // 30g/20s, target 36g → projected 24s (slightly fast)
+  const r = getShotAssessment({ extractionTime: 20, doseIn: 18, yieldOut: 30 });
+  assertEqual(r.status, 'warning');
+  assert(r.label.includes('Slightly under'), 'Expected slightly under-extracted');
+  assert(r.label.includes('finer'), 'Expected finer');
+  assert(r.label.includes('Pull longer'), 'Expected pull longer too');
+});
+
+test('getShotAssessment - 30g in 30s projects to ~36s, over-extracted no pull longer', () => {
+  // 30g/30s, target 36g → projected 36s (over standard)
+  const r = getShotAssessment({ extractionTime: 30, doseIn: 18, yieldOut: 30 });
+  assertEqual(r.status, 'warning');
+  assert(r.label.includes('Over-extracted'), 'Expected over-extracted');
+  assert(r.label.includes('coarser'), 'Expected coarser');
+  assert(!r.label.includes('longer'), 'Should NOT say pull longer when over-extracted');
+});
+
+test('getShotAssessment - 28g in 10s projects to ~13s, under-extracted', () => {
+  // 28g/10s, ratio 1.56 (above 1.5), target 36g → projected ~13s (fast)
+  const r = getShotAssessment({ extractionTime: 10, doseIn: 18, yieldOut: 28 });
+  assertEqual(r.status, 'warning');
+  assert(r.label.includes('Under-extracted'), 'Expected under-extracted');
+  assert(r.label.includes('finer'), 'Expected finer');
+});
+
+// At target — projection equals raw time (target/actual = 1)
+test('getShotAssessment - 36g in 18s (at target), under-extracted', () => {
+  const r = getShotAssessment({ extractionTime: 18, doseIn: 18, yieldOut: 36 });
+  assertEqual(r.status, 'warning');
+  assert(r.label.includes('Under-extracted'), 'Expected under-extracted');
+  assert(r.label.includes('finer'), 'Expected finer');
+});
+
+// Above target — projected time = (target/actual) * time
+test('getShotAssessment - 40g in 40s above target, projected 36s, over-extracted', () => {
+  // 40g/40s, target 36g → projected (36/40)*40 = 36s (> 35, over-extracted)
+  const r = getShotAssessment({ extractionTime: 40, doseIn: 18, yieldOut: 40 });
+  assertEqual(r.status, 'warning');
+  assert(r.label.includes('Over-extracted'), 'Expected over-extracted');
+  assert(r.label.includes('coarser'), 'Expected coarser');
+});
+
+test('getShotAssessment - 46g in 25s above target, projected ~19.6s, under-extracted', () => {
+  // 46g/25s, target 36g → projected (36/46)*25 ≈ 19.6s (fast, under-extracted)
+  const r = getShotAssessment({ extractionTime: 25, doseIn: 18, yieldOut: 46 });
+  assertEqual(r.status, 'warning');
+  assert(r.label.includes('Under-extracted'), 'Expected under-extracted');
+  assert(r.label.includes('finer'), 'Expected finer');
+  assert(!r.label.includes('Cut sooner'), 'No cut sooner when projected time is fast');
+});
+
+test('getShotAssessment - 40g in 30s above target, projected 27s, good flow cut sooner', () => {
+  // 40g/30s, target 36g → projected (36/40)*30 = 27s (standard, above target → cut sooner)
+  const r = getShotAssessment({ extractionTime: 30, doseIn: 18, yieldOut: 40 });
+  assertEqual(r.status, 'warning');
+  assert(r.label.includes('Good flow'), 'Expected good flow');
+  assert(r.label.includes('cut sooner') || r.label.includes('Cut sooner'), 'Expected cut sooner');
+});
+
+test('getShotAssessment - 40g in 25s above target, projected 22.5s, slightly under', () => {
+  // 40g/25s, target 36g → projected (36/40)*25 = 22.5s (slightly fast)
+  const r = getShotAssessment({ extractionTime: 25, doseIn: 18, yieldOut: 40 });
+  assertEqual(r.status, 'warning');
+  assert(r.label.includes('Slightly under'), 'Expected slightly under-extracted');
+  assert(r.label.includes('finer'), 'Expected finer');
+});
+
+// Near-target yield — no pull longer / cut sooner within standard ratio range
+test('getShotAssessment - 34g in 15s, ratio 1.89 in standard range, no pull longer', () => {
+  // 34g/15s, ratio 1.89 (within 1.8-2.2), projected (36/34)*15 = 15.9s (fast)
+  const r = getShotAssessment({ extractionTime: 15, doseIn: 18, yieldOut: 34 });
+  assertEqual(r.status, 'warning');
+  assert(r.label.includes('Under-extracted'), 'Expected under-extracted');
+  assert(r.label.includes('finer'), 'Expected finer');
+  assert(!r.label.includes('Pull longer'), 'Ratio 1.89 is close enough to target — no pull longer');
+});
+
+test('getShotAssessment - 34g in 27s, ratio 1.89 in standard range, well-extracted', () => {
+  // 34g/27s, ratio 1.89, projected (36/34)*27 = 28.6s (standard range, ratio in range → well-extracted)
+  const r = getShotAssessment({ extractionTime: 27, doseIn: 18, yieldOut: 34 });
   assertEqual(r.status, 'good');
   assertEqual(r.label, 'Well-extracted');
 });
 
-// Ratio only — low
-test('getShotAssessment - ratio 1.3 is very low', () => {
-  const r = getShotAssessment({ doseIn: 18, yieldOut: 23.4 });
-  assertEqual(r.status, 'warning');
-  assert(r.label.includes('very low'), 'Expected "very low"');
-  assert(r.label.includes('pulling longer'), 'Expected ratio recommendation');
-});
-
-test('getShotAssessment - ratio 1.6 is a bit low', () => {
-  const r = getShotAssessment({ doseIn: 18, yieldOut: 28.8 });
-  assertEqual(r.status, 'warning');
-  assert(r.label.includes('slightly low'), 'Expected "slightly low"');
-  assert(r.label.includes('pulling longer'), 'Expected ratio recommendation');
-});
-
-// Ratio only — high
-test('getShotAssessment - ratio 2.3 is a bit high', () => {
-  const r = getShotAssessment({ doseIn: 18, yieldOut: 41.4 });
-  assertEqual(r.status, 'warning');
-  assert(r.label.includes('slightly high'), 'Expected "slightly high"');
-  assert(r.label.includes('cut'), 'Expected ratio recommendation');
-});
-
-test('getShotAssessment - ratio 2.8 is very high', () => {
-  const r = getShotAssessment({ doseIn: 18, yieldOut: 50.4 });
-  assertEqual(r.status, 'warning');
-  assert(r.label.includes('very high'), 'Expected "very high"');
-  assert(r.label.includes('cut'), 'Expected ratio recommendation');
-});
-
-// Combined — both off
-test('getShotAssessment - fast time + low ratio shows both', () => {
-  const r = getShotAssessment({ extractionTime: 18, doseIn: 18, yieldOut: 27 });
-  assertEqual(r.status, 'warning');
-  assert(r.label.includes('finer'), 'Expected grind rec');
-  assert(r.label.includes('low'), 'Expected yield note');
-});
-
-test('getShotAssessment - slow time + high ratio shows both', () => {
-  const r = getShotAssessment({ extractionTime: 40, doseIn: 18, yieldOut: 50 });
-  assertEqual(r.status, 'warning');
-  assert(r.label.includes('coarser'), 'Expected grind rec');
-  assert(r.label.includes('high'), 'Expected yield note');
-});
-
-// Combined — one off, one in range
-test('getShotAssessment - standard time + low ratio shows only ratio', () => {
-  const r = getShotAssessment({ extractionTime: 27, doseIn: 18, yieldOut: 28 });
-  assertEqual(r.status, 'warning');
-  assert(r.label.includes('low'), 'Expected yield note');
-  assert(!r.label.includes('finer'), 'Should not have grind rec');
-});
-
-test('getShotAssessment - fast time + standard ratio shows only time', () => {
-  const r = getShotAssessment({ extractionTime: 18, doseIn: 18, yieldOut: 36 });
-  assertEqual(r.status, 'warning');
-  assert(r.label.includes('finer'), 'Expected grind rec');
-  assert(!r.label.includes('Yield'), 'Should not have yield note');
+test('getShotAssessment - 38g in 27s, ratio 2.11 in standard range, well-extracted', () => {
+  // 38g/27s, ratio 2.11, projected (36/38)*27 = 25.6s (standard range, ratio in range → well-extracted)
+  const r = getShotAssessment({ extractionTime: 27, doseIn: 18, yieldOut: 38 });
+  assertEqual(r.status, 'good');
+  assertEqual(r.label, 'Well-extracted');
 });
 
 // Perfect shot with both signals
@@ -593,46 +635,6 @@ test('getShotAssessment - 27s with 1:2.0 is well-extracted', () => {
   const r = getShotAssessment({ extractionTime: 27, doseIn: 18, yieldOut: 36 });
   assertEqual(r.status, 'good');
   assertEqual(r.label, 'Well-extracted');
-});
-
-// Boundary values for ratio
-test('getShotAssessment - ratio exactly 1.5 is a bit low', () => {
-  const r = getShotAssessment({ doseIn: 20, yieldOut: 30 });
-  assertEqual(r.status, 'warning');
-  assert(r.label.includes('slightly low'), 'Ratio 1.5 should be "slightly low"');
-});
-
-test('getShotAssessment - ratio exactly 1.8 is standard', () => {
-  const r = getShotAssessment({ doseIn: 20, yieldOut: 36 });
-  assertEqual(r.status, 'good');
-});
-
-test('getShotAssessment - ratio exactly 2.2 is standard', () => {
-  const r = getShotAssessment({ doseIn: 20, yieldOut: 44 });
-  assertEqual(r.status, 'good');
-});
-
-test('getShotAssessment - ratio exactly 2.5 is a bit high', () => {
-  const r = getShotAssessment({ doseIn: 20, yieldOut: 50 });
-  assertEqual(r.status, 'warning');
-  assert(r.label.includes('slightly high'), 'Ratio 2.5 should be "slightly high"');
-});
-
-test('getShotAssessment - NaN extractionTime is ignored', () => {
-  assertEqual(getShotAssessment({ extractionTime: NaN }), null);
-});
-
-test('getShotAssessment - Infinity extractionTime is ignored', () => {
-  assertEqual(getShotAssessment({ extractionTime: Infinity }), null);
-});
-
-test('getShotAssessment - non-finite ratio inputs are ignored', () => {
-  assertEqual(getShotAssessment({ doseIn: Infinity, yieldOut: 36 }), null);
-  assertEqual(getShotAssessment({ doseIn: 18, yieldOut: NaN }), null);
-});
-
-test('getShotAssessment - non-numeric extractionTime is ignored when ratio missing', () => {
-  assertEqual(getShotAssessment({ extractionTime: 'not-a-number' }), null);
 });
 
 // --- Bean Occurrence Counter Tests ---

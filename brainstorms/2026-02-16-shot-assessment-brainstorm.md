@@ -23,7 +23,7 @@ A lightweight, per-shot assessment line that appears on every logged shot card. 
 - **Display**: Always shown on every shot. Good shots get acknowledgment ("Well-extracted"), problem shots get a directional recommendation.
 - **Tone**: Minimal label style — e.g., `Under-extracted · Try going finer`
 - **Styling**: Color-coded — green for well-extracted, amber/warm for needs adjustment.
-- **Missing data**: Show nothing if there isn't enough data (no time AND no ratio). If only time is missing, assess ratio alone. If only ratio is missing (no yield), assess time alone.
+- **All fields required**: Every shot has grindSize, doseIn, yieldOut, and extractionTime (all > 0). No null/missing data cases.
 - **Logic is numbers-driven**: Based on extraction time and ratio, not the subjective user rating.
 - **Dose is excluded**: Dose is a fixed starting point, not a dialing-in variable. The engine never recommends dose changes.
 - **Recommendations are directional**: "Try going finer" not "Try grind 4." Avoids false precision.
@@ -35,6 +35,18 @@ A lightweight, per-shot assessment line that appears on every logged shot card. 
 1. **Extraction time** (primary) — diagnostic for grind correctness
 2. **Brew ratio** (secondary) — validates yield against 1:2 standard target
 3. **Best dial-in data** (enhancement, future consideration) — personal context when available
+
+### Projected Time (Universal Flow Rate Correction)
+
+Actual extraction time doesn't reflect grind correctness when yield differs from target. The engine always computes **projected time** = (target yield / actual yield) × actual time, and assesses *that* instead of the raw time.
+
+- **Below target yield**: Projected time is longer (user stopped early, projects forward)
+- **Above target yield**: Projected time is shorter (user overran, projects backward)
+- **At target yield (1:2)**: Projected time equals raw time
+- **No yield data**: Use raw time (no projection possible)
+
+When projected time lands in standard range but user stopped early: "Good flow → pull longer"
+When projected time lands in standard range but user overran target: "Good flow → cut sooner"
 
 ### Universal Espresso Standards (sources below)
 
@@ -58,53 +70,72 @@ A lightweight, per-shot assessment line that appears on every logged shot card. 
 
 ### Recommendation Matrix
 
-| Time | Ratio | Assessment | Recommendation |
-|------|-------|-----------|----------------|
-| Fast | Standard | Under-extracted | Try going finer |
-| Slightly fast | Standard | Slightly under-extracted | Try going slightly finer |
-| Standard | Standard | Well-extracted | *(none)* |
-| Slightly slow | Standard | Slightly over-extracted | Try going slightly coarser |
-| Slow | Standard | Over-extracted | Try going coarser |
-| Standard | Low (<1:1.8) | Yield below standard | Try pulling a bit longer |
-| Standard | High (>2.2) | Yield past standard | Try cutting closer to 1:2 |
-| Fast | High | Under-extracted | Try going finer · Cut closer to 1:2 |
-| Slow | Low | Over-extracted | Try going coarser · Pull a bit longer |
-| — | Standard | *(time missing)* | Ratio looks good |
-| Standard | — | *(ratio missing)* | Time in range |
+| Projected time | Yield vs target | Assessment | Recommendation |
+|----------------|-----------------|-----------|----------------|
+| *n/a* | Very low (<1:1.5) + flow < 1 g/s | **Choked/channeled** | **Go coarser** (overrides everything) |
+| Fast | Below | Under-extracted | Go finer + Pull longer |
+| Slightly fast | Below | Slightly under-extracted | Go slightly finer + Pull longer |
+| Standard | Below | Good flow | Pull longer |
+| Slightly slow | Below | Slightly over-extracted | Go slightly coarser |
+| Slow | Below | Over-extracted | Go coarser |
+| Fast | Above | Under-extracted | Go finer |
+| Slightly fast | Above | Slightly under-extracted | Go slightly finer |
+| Standard | Above | Good flow | Cut sooner |
+| Slightly slow | Above | Slightly over-extracted | Go slightly coarser |
+| Slow | Above | Over-extracted | Go coarser |
+| Standard | At target | Well-extracted | *(none)* |
 | — | — | *(both missing)* | *(show nothing)* |
+
+**Key rules:**
+- **Choking override:** Very low ratio (< 1:1.5) AND low flow rate (< 1.0 g/s) means the puck was choking. Fix is always "go coarser" regardless of time. Very low ratio with high flow rate (e.g. 21g in 3s) is NOT choking — it's a fast shot that was stopped early.
+- **Universal projection:** The engine always projects time to target yield (1:2 ratio) using `(targetYield / actualYield) × actualTime`. This corrects for both early stops and overruns.
+- **"Pull longer":** Only appended when yield is below target AND projected time is not over-extracted (no point pulling longer into over-extraction).
+- **"Cut sooner":** Only appended when yield is above target AND projected time is not under-extracted (the grind issue is the primary fix when flow is fast).
+- **No independent yield recommendations:** Yield is a consequence of grind + time. "Pull longer" and "Cut sooner" are yield-target reminders, not standalone recommendations — they only appear alongside grind advice or when projected time is in the standard range.
 
 ### Display Examples
 
-**Well-extracted shot:**
+**Well-extracted shot (36g in 27s):**
 ```
 Ethiopian Yirgacheffe
-Grind 5 · 18g → 36g (1:2.0) · 27s
-                                              [Great]
-✓ Well-extracted                              (green)
+Grind 5 · 18g → 36g (1:2.0) · 27s           [Great]
+Well-extracted                                (green)
 ```
 
-**Fast extraction:**
+**Fast extraction (36g in 20s):**
 ```
 Ethiopian Yirgacheffe
-Grind 6 · 18g → 36g (1:2.0) · 20s
-                                              [Okay]
-Under-extracted · Try going finer             (amber)
+Grind 6 · 18g → 36g (1:2.0) · 20s           [Okay]
+Under-extracted → go finer                    (amber)
 ```
 
-**Time fine, ratio off:**
+**Stopped early, grind slightly off (30g in 20s, projected 24s):**
 ```
 Ethiopian Yirgacheffe
-Grind 5 · 18g → 45g (1:2.5) · 28s
-                                              [Okay]
-Yield past standard · Try cutting closer to 1:2  (amber)
+Grind 6 · 18g → 30g (1:1.7) · 20s           [Okay]
+Slightly under-extracted → go slightly finer  (amber)
+Pull longer
 ```
 
-**Both off:**
+**Stopped early, good flow (30g in 21s, projected 25.2s):**
 ```
 Ethiopian Yirgacheffe
-Grind 8 · 18g → 45g (1:2.5) · 19s
-                                              [Bad]
-Under-extracted · Try going finer · Cut closer to 1:2  (amber)
+Grind 5 · 18g → 30g (1:1.7) · 21s           [Okay]
+Good flow → pull longer                       (amber)
+```
+
+**Overran target, good flow (40g in 30s, projected 27s):**
+```
+Ethiopian Yirgacheffe
+Grind 5 · 18g → 40g (1:2.2) · 30s           [Okay]
+Good flow → cut sooner                        (amber)
+```
+
+**Choked (8g in 30s, flow 0.27 g/s):**
+```
+Ethiopian Yirgacheffe
+Grind 3 · 18g → 8g (1:0.4) · 30s            [Bad]
+Choked/channeled → go coarser                 (amber)
 ```
 
 ## Sources
