@@ -105,13 +105,14 @@ const EXTRACTION_TIME_SLIGHTLY_SLOW = 35;
 const BREW_RATIO_VERY_LOW = 1.5;
 const BREW_RATIO_LOW = 1.8;
 const BREW_RATIO_STANDARD_MAX = 2.2;
-const BREW_RATIO_HIGH = 2.5;
 
 function getShotAssessment(shot) {
   if (!shot) return null;
   const extractionTime = Number(shot.extractionTime);
   const doseIn = Number(shot.doseIn);
   const yieldOut = Number(shot.yieldOut);
+  if (!Number.isFinite(extractionTime) || !Number.isFinite(doseIn) || !Number.isFinite(yieldOut)
+    || extractionTime <= 0 || doseIn <= 0 || yieldOut <= 0) return null;
   const ratio = yieldOut / doseIn;
   // Choking: very low ratio AND low flow rate
   if (ratio < BREW_RATIO_VERY_LOW && (yieldOut / extractionTime) < 1.0) {
@@ -425,6 +426,24 @@ test('shotQualityLabel capitalizes first letter', () => {
 // --- Shot Assessment Tests ---
 // All shots have doseIn, yieldOut, and extractionTime (all required, > 0).
 // Tests use 1:2 ratio (18g → 36g) to isolate time boundaries (projection = raw time).
+
+test('getShotAssessment - null shot returns null', () => {
+  assertEqual(getShotAssessment(null), null);
+});
+
+test('getShotAssessment - missing extractionTime returns null', () => {
+  assertEqual(getShotAssessment({ doseIn: 18, yieldOut: 36 }), null);
+});
+
+test('getShotAssessment - non-numeric values return null', () => {
+  assertEqual(getShotAssessment({ extractionTime: 25, doseIn: 'bad', yieldOut: 36 }), null);
+});
+
+test('getShotAssessment - non-positive values return null', () => {
+  assertEqual(getShotAssessment({ extractionTime: 0, doseIn: 18, yieldOut: 36 }), null);
+  assertEqual(getShotAssessment({ extractionTime: 25, doseIn: -1, yieldOut: 36 }), null);
+  assertEqual(getShotAssessment({ extractionTime: 25, doseIn: 18, yieldOut: 0 }), null);
+});
 
 // Time boundaries at 1:2 ratio
 test('getShotAssessment - 18s is under-extracted', () => {

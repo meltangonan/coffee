@@ -497,6 +497,12 @@ async function runTests() {
     app.closeShotForm();
   });
 
+  await test('getShotAssessment returns null for invalid numeric inputs', async () => {
+    assertEqual(app.getShotAssessment({ doseIn: 18, yieldOut: 36, extractionTime: null }), null);
+    assertEqual(app.getShotAssessment({ doseIn: 'bad', yieldOut: 36, extractionTime: 25 }), null);
+    assertEqual(app.getShotAssessment({ doseIn: 18, yieldOut: 0, extractionTime: 25 }), null);
+  });
+
   await test('saveShot creates new shot', async () => {
     const bean = app.beans.find(b => !b.isArchived);
     const initialCount = app.shots.length;
@@ -509,6 +515,68 @@ async function runTests() {
     assertEqual(app.shots.length, initialCount + 1);
     const newShot = app.shots.find(s => s.grindSize === 7 && s.doseIn === 18);
     assert(newShot, 'New shot should exist');
+  });
+
+  await test('saveShot edit keeps numeric fields valid when cleared', async () => {
+    const bean = app.beans.find(b => !b.isArchived);
+    app.openShotForm(bean.id);
+    app.shotForm.grindSize = 9;
+    app.shotForm.doseIn = 20;
+    app.shotForm.yieldOut = 40;
+    app.shotForm.extractionTime = 28;
+    app.saveShot();
+    const savedShot = app.getLastShot(bean.id);
+    assert(savedShot, 'Shot should exist after save');
+
+    app.openShotFormForEdit(savedShot);
+    app.shotForm.yieldOut = null;
+    app.shotForm.extractionTime = null;
+    app.saveShot();
+
+    const updatedShot = app.shots.find(s => s.id === savedShot.id);
+    assert(updatedShot, 'Updated shot should exist');
+    assertEqual(updatedShot.yieldOut, 40);
+    assertEqual(updatedShot.extractionTime, 28);
+  });
+
+  await test('normalizeImportedShot backfills missing legacy yield/time', async () => {
+    const bean = app.beans.find(b => !b.isArchived);
+    const normalized = app.normalizeImportedShot({
+      id: appWindow.crypto.randomUUID(),
+      beanId: bean.id,
+      grindSize: 6,
+      doseIn: 18,
+      yieldOut: null,
+      extractionTime: '',
+      createdAt: '2026-01-15T08:00:00.000Z'
+    });
+    assert(normalized, 'Legacy shot should be normalized');
+    assertEqual(normalized.yieldOut, 36);
+    assertEqual(normalized.extractionTime, 25);
+  });
+
+  await test('normalizeImportedShot rejects explicit invalid yield/time', async () => {
+    const bean = app.beans.find(b => !b.isArchived);
+    const invalidYield = app.normalizeImportedShot({
+      id: appWindow.crypto.randomUUID(),
+      beanId: bean.id,
+      grindSize: 6,
+      doseIn: 18,
+      yieldOut: 'bad',
+      extractionTime: 25,
+      createdAt: '2026-01-15T08:00:00.000Z'
+    });
+    const invalidExtraction = app.normalizeImportedShot({
+      id: appWindow.crypto.randomUUID(),
+      beanId: bean.id,
+      grindSize: 6,
+      doseIn: 18,
+      yieldOut: 36,
+      extractionTime: 0,
+      createdAt: '2026-01-15T08:00:00.000Z'
+    });
+    assertEqual(invalidYield, null);
+    assertEqual(invalidExtraction, null);
   });
 
   await test('deleteShot removes shot', async () => {

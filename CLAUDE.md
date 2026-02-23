@@ -140,7 +140,7 @@ Stored in localStorage under keys `coffee_beans` and `coffee_shots`.
 
 **Invariants:**
 - A bean always has `name` and `roaster` (enforced in `saveBean`)
-- A shot always has a valid `beanId`, `grindSize`, `doseIn`, `yieldOut`, and `extractionTime` (all > 0, enforced in `saveShot` via defaults and in `normalizeImportedShot` via null rejection)
+- A shot always has a valid `beanId`, `grindSize`, `doseIn`, `yieldOut`, and `extractionTime` (all > 0, enforced in `saveShot` via defaults and in `normalizeImportedShot` via validation/backfill)
 - Archived beans don't appear in `currentBeans` or the daily picker
 - Archiving a bean closes any open shot form referencing it
 - Shot form defaults respect edited values when editing (via `getShotFormDefault`)
@@ -269,7 +269,7 @@ Calendar bar colors are defined in JS `BAR_COLORS` array. Spacing utilities (`.m
 
 ### When Adding Extraction Time / New Shot Fields
 - Shot form defaults: grindSize=5, doseIn=18, yieldOut=36, extractionTime=25
-- All four numeric shot fields (grindSize, doseIn, yieldOut, extractionTime) are required and always > 0 — new shots resolve null form values to defaults, imports reject null values
+- All four numeric shot fields (grindSize, doseIn, yieldOut, extractionTime) are required and always > 0 — new/edit shot saves resolve empty values to valid numbers, and imports backfill legacy missing values while rejecting explicit invalid numeric inputs
 - `init()` runs migrations on load to backfill new fields on existing data (e.g. `optimalExtractionTime` seeded from first shot)
 
 ### When Modifying Tab Navigation

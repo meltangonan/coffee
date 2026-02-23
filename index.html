@@ -1709,11 +1709,9 @@ const EXTRACTION_TIME_STANDARD_MAX = 30;   // 25-30: standard range
 const EXTRACTION_TIME_SLIGHTLY_SLOW = 35;  // 31-35: slightly slow
                                            // Above 35: over-extracted
 
-const BREW_RATIO_VERY_LOW = 1.5;           // Below: very low yield
+const BREW_RATIO_VERY_LOW = 1.5;          // Below: very low yield
 const BREW_RATIO_LOW = 1.8;               // 1.5-1.79: low yield
 const BREW_RATIO_STANDARD_MAX = 2.2;      // 1.8-2.2: standard range
-const BREW_RATIO_HIGH = 2.5;              // 2.21-2.5: high yield
-                                           // Above 2.5: very high yield
 
 function hexToRgba(hex, alpha) {
   const m = hex.match(/^#?([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})$/i);
@@ -1801,13 +1799,21 @@ function app() {
           }
         });
 
-        // Migrate: convert legacy numeric ratings to string labels
+        // Migrate: convert legacy numeric ratings and normalize shot numeric fields
         let shotsDirty = false;
         this.shots.forEach(s => {
           if (typeof s.rating === 'number') {
             s.rating = normalizeRating(s.rating);
             shotsDirty = true;
           }
+          ['grindSize', 'doseIn', 'yieldOut', 'extractionTime'].forEach(field => {
+            const parsed = this.toNullableInt(s[field]);
+            const normalized = parsed != null && parsed > 0 ? parsed : SHOT_DEFAULTS[field];
+            if (s[field] !== normalized) {
+              s[field] = normalized;
+              shotsDirty = true;
+            }
+          });
         });
         if (shotsDirty) this.saveShots();
       } else {
@@ -1885,9 +1891,18 @@ function app() {
       const beanId = typeof rawShot.beanId === 'string' ? rawShot.beanId.trim() : '';
       const grindSize = this.toNullableInt(rawShot.grindSize);
       const doseIn = this.toNullableInt(rawShot.doseIn);
-      const yieldOut = this.toNullableInt(rawShot.yieldOut);
-      const extractionTime = this.toNullableInt(rawShot.extractionTime);
-      if (!id || !beanId || grindSize == null || doseIn == null || yieldOut == null || extractionTime == null) return null;
+      const parsedYieldOut = this.toNullableInt(rawShot.yieldOut);
+      const parsedExtractionTime = this.toNullableInt(rawShot.extractionTime);
+      if (!id || !beanId || grindSize == null || grindSize <= 0 || doseIn == null || doseIn <= 0) return null;
+
+      const hasYieldOutInput = rawShot.yieldOut != null && !(typeof rawShot.yieldOut === 'string' && rawShot.yieldOut.trim() === '');
+      const hasExtractionTimeInput = rawShot.extractionTime != null && !(typeof rawShot.extractionTime === 'string' && rawShot.extractionTime.trim() === '');
+      if ((hasYieldOutInput && (parsedYieldOut == null || parsedYieldOut <= 0))
+        || (hasExtractionTimeInput && (parsedExtractionTime == null || parsedExtractionTime <= 0))) return null;
+
+      // Legacy backups may have missing yield/time; backfill app defaults instead of dropping the shot.
+      const yieldOut = parsedYieldOut ?? SHOT_DEFAULTS.yieldOut;
+      const extractionTime = parsedExtractionTime ?? SHOT_DEFAULTS.extractionTime;
 
       const createdAt = this.normalizeIsoDateTime(rawShot.createdAt) || new Date().toISOString();
       return {
@@ -2132,7 +2147,11 @@ function app() {
     },
 
     toNullableInt(value) {
-      return value != null && value !== '' ? Math.round(Number(value)) : null;
+      if (value == null) return null;
+      if (typeof value === 'string' && value.trim() === '') return null;
+      const parsed = Number(value);
+      if (!Number.isFinite(parsed)) return null;
+      return Math.round(parsed);
     },
 
     toNullableOneDecimal(value) {
@@ -2684,10 +2703,15 @@ function app() {
     saveShot() {
       if (!this.shotFormBeanId) return;
       const isEditing = !!this.editingShotId;
+      const editingShot = isEditing ? this.shots.find(s => s.id === this.editingShotId) : null;
       const resolveShotValue = (field) => {
         const parsed = this.toNullableInt(this.shotForm[field]);
-        if (parsed != null || isEditing) return parsed;
-        return this.toNullableInt(this.getShotFormDefault(field));
+        if (parsed != null && parsed > 0) return parsed;
+        const existing = this.toNullableInt(editingShot?.[field]);
+        if (existing != null && existing > 0) return existing;
+        const fallback = this.toNullableInt(this.getShotFormDefault(field));
+        if (fallback != null && fallback > 0) return fallback;
+        return SHOT_DEFAULTS[field];
       };
       const shotData = {
         grindSize: resolveShotValue('grindSize'),
@@ -2788,6 +2812,8 @@ function app() {
       const extractionTime = Number(shot.extractionTime);
       const doseIn = Number(shot.doseIn);
       const yieldOut = Number(shot.yieldOut);
+      if (!Number.isFinite(extractionTime) || !Number.isFinite(doseIn) || !Number.isFinite(yieldOut)
+        || extractionTime <= 0 || doseIn <= 0 || yieldOut <= 0) return null;
       const ratio = yieldOut / doseIn;
 
       // Choking: very low ratio AND low flow rate (water barely getting through)
