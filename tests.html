@@ -104,7 +104,9 @@ const EXTRACTION_TIME_STANDARD_MAX = 30;
 const EXTRACTION_TIME_SLIGHTLY_SLOW = 35;
 const BREW_RATIO_VERY_LOW = 1.5;
 const BREW_RATIO_LOW = 1.8;
-const BREW_RATIO_STANDARD_MAX = 2.2;
+const BREW_RATIO_NEAR_TARGET_LOW = 1.9;
+const BREW_RATIO_NEAR_TARGET_HIGH = 2.1;
+const FLOW_RATE_CHOKE_MAX = 1.0;
 
 function getShotAssessment(shot) {
   if (!shot) return null;
@@ -114,16 +116,19 @@ function getShotAssessment(shot) {
   if (!Number.isFinite(extractionTime) || !Number.isFinite(doseIn) || !Number.isFinite(yieldOut)
     || extractionTime <= 0 || doseIn <= 0 || yieldOut <= 0) return null;
   const ratio = yieldOut / doseIn;
+  const flowRate = yieldOut / extractionTime;
   // Choking: very low ratio AND low flow rate
-  if (ratio < BREW_RATIO_VERY_LOW && (yieldOut / extractionTime) < 1.0) {
+  if (ratio < BREW_RATIO_VERY_LOW && flowRate < FLOW_RATE_CHOKE_MAX) {
     return { status: 'warning', label: 'Choked/channeled \u2192 go coarser' };
   }
-  // Project time to target yield (1:2)
-  const t = (doseIn * 2 / yieldOut) * extractionTime;
+  // Asymmetric basis: under-yield shots use projection; near/over-target use actual time.
+  const projectedTime = (doseIn * 2 / yieldOut) * extractionTime;
+  const useProjectedTime = ratio < BREW_RATIO_NEAR_TARGET_LOW;
+  const t = useProjectedTime ? projectedTime : extractionTime;
   const belowTarget = ratio < BREW_RATIO_LOW;
-  const aboveTarget = ratio > BREW_RATIO_STANDARD_MAX;
+  const overNearTarget = ratio > BREW_RATIO_NEAR_TARGET_HIGH;
   const pullLonger = belowTarget && t <= EXTRACTION_TIME_STANDARD_MAX;
-  const cutSooner = aboveTarget && t >= EXTRACTION_TIME_SLIGHTLY_FAST;
+  const cutSooner = overNearTarget && t >= EXTRACTION_TIME_SLIGHTLY_FAST;
   if (t < EXTRACTION_TIME_FAST) {
     return { status: 'warning', label: 'Under-extracted \u2192 go finer' + (pullLonger ? '\nPull longer' : '') + (cutSooner ? '\nCut sooner' : '') };
   } else if (t < EXTRACTION_TIME_SLIGHTLY_FAST) {
@@ -136,7 +141,7 @@ function getShotAssessment(shot) {
   if (belowTarget) {
     return { status: 'warning', label: 'Good flow \u2192 pull longer' };
   }
-  if (aboveTarget) {
+  if (cutSooner) {
     return { status: 'warning', label: 'Good flow \u2192 cut sooner' };
   }
   return { status: 'good', label: 'Well-extracted' };
@@ -591,43 +596,73 @@ test('getShotAssessment - 36g in 18s (at target), under-extracted', () => {
   assert(r.label.includes('finer'), 'Expected finer');
 });
 
-// Above target — projected time = (target/actual) * time
-test('getShotAssessment - 40g in 40s above target, projected 36s, over-extracted', () => {
-  // 40g/40s, target 36g → projected (36/40)*40 = 36s (> 35, over-extracted)
+// Above target uses actual time (no back-projection)
+test('getShotAssessment - 40g in 40s above target, actual-time over-extracted', () => {
   const r = getShotAssessment({ extractionTime: 40, doseIn: 18, yieldOut: 40 });
   assertEqual(r.status, 'warning');
   assert(r.label.includes('Over-extracted'), 'Expected over-extracted');
   assert(r.label.includes('coarser'), 'Expected coarser');
 });
 
-test('getShotAssessment - 46g in 25s above target, projected ~19.6s, under-extracted', () => {
-  // 46g/25s, target 36g → projected (36/46)*25 ≈ 19.6s (fast, under-extracted)
+test('getShotAssessment - 46g in 25s above target, good flow cut sooner', () => {
   const r = getShotAssessment({ extractionTime: 25, doseIn: 18, yieldOut: 46 });
   assertEqual(r.status, 'warning');
-  assert(r.label.includes('Under-extracted'), 'Expected under-extracted');
-  assert(r.label.includes('finer'), 'Expected finer');
-  assert(!r.label.includes('Cut sooner'), 'No cut sooner when projected time is fast');
+  assert(r.label.includes('Good flow'), 'Expected good flow');
+  assert(r.label.includes('cut sooner') || r.label.includes('Cut sooner'), 'Expected cut sooner');
 });
 
-test('getShotAssessment - 40g in 30s above target, projected 27s, good flow cut sooner', () => {
-  // 40g/30s, target 36g → projected (36/40)*30 = 27s (standard, above target → cut sooner)
+test('getShotAssessment - 40g in 30s above target, good flow cut sooner', () => {
   const r = getShotAssessment({ extractionTime: 30, doseIn: 18, yieldOut: 40 });
   assertEqual(r.status, 'warning');
   assert(r.label.includes('Good flow'), 'Expected good flow');
   assert(r.label.includes('cut sooner') || r.label.includes('Cut sooner'), 'Expected cut sooner');
 });
 
-test('getShotAssessment - 40g in 25s above target, projected 22.5s, slightly under', () => {
-  // 40g/25s, target 36g → projected (36/40)*25 = 22.5s (slightly fast)
+test('getShotAssessment - 40g in 25s above target, good flow cut sooner', () => {
   const r = getShotAssessment({ extractionTime: 25, doseIn: 18, yieldOut: 40 });
   assertEqual(r.status, 'warning');
-  assert(r.label.includes('Slightly under'), 'Expected slightly under-extracted');
-  assert(r.label.includes('finer'), 'Expected finer');
+  assert(r.label.includes('Good flow'), 'Expected good flow');
+  assert(r.label.includes('cut sooner') || r.label.includes('Cut sooner'), 'Expected cut sooner');
 });
 
-// Near-target yield — no pull longer / cut sooner within standard ratio range
+test('getShotAssessment - 39g in 30s above target, good flow cut sooner', () => {
+  const r = getShotAssessment({ extractionTime: 30, doseIn: 18, yieldOut: 39 });
+  assertEqual(r.status, 'warning');
+  assert(r.label.includes('Good flow'), 'Expected good flow');
+  assert(r.label.includes('cut sooner') || r.label.includes('Cut sooner'), 'Expected cut sooner');
+});
+
+// Asymmetric gate: ratio < 1.9 uses projection, ratio >= 1.9 uses actual time
+test('getShotAssessment - ratio 2.06 (37g/18g) with 25s is well-extracted (near-target uses actual time)', () => {
+  const r = getShotAssessment({ extractionTime: 25, doseIn: 18, yieldOut: 37 });
+  assertEqual(r.status, 'good');
+  assertEqual(r.label, 'Well-extracted');
+});
+
+test('getShotAssessment - ratio 1.9 boundary uses actual time (not projected)', () => {
+  // If projected, this would be slightly over-extracted: (20/19)*30 = 31.6s
+  const r = getShotAssessment({ extractionTime: 30, doseIn: 10, yieldOut: 19 });
+  assertEqual(r.status, 'good');
+  assertEqual(r.label, 'Well-extracted');
+});
+
+test('getShotAssessment - ratio 2.1 boundary uses actual time (not projected)', () => {
+  // If projected, this would be slightly under-extracted: (20/21)*25 = 23.8s
+  const r = getShotAssessment({ extractionTime: 25, doseIn: 10, yieldOut: 21 });
+  assertEqual(r.status, 'good');
+  assertEqual(r.label, 'Well-extracted');
+});
+
+test('getShotAssessment - ratio 2.2 uses actual time and recommends cut sooner', () => {
+  const r = getShotAssessment({ extractionTime: 25, doseIn: 10, yieldOut: 22 });
+  assertEqual(r.status, 'warning');
+  assert(r.label.includes('Good flow'), 'Expected good flow');
+  assert(r.label.includes('cut sooner') || r.label.includes('Cut sooner'), 'Expected cut sooner');
+});
+
+// Standard-ratio but outside near-target gate
 test('getShotAssessment - 34g in 15s, ratio 1.89 in standard range, no pull longer', () => {
-  // 34g/15s, ratio 1.89 (within 1.8-2.2), projected (36/34)*15 = 15.9s (fast)
+  // 34g/15s, ratio 1.89 (within 1.8-2.1), projected (36/34)*15 = 15.9s (fast)
   const r = getShotAssessment({ extractionTime: 15, doseIn: 18, yieldOut: 34 });
   assertEqual(r.status, 'warning');
   assert(r.label.includes('Under-extracted'), 'Expected under-extracted');
@@ -642,11 +677,12 @@ test('getShotAssessment - 34g in 27s, ratio 1.89 in standard range, well-extract
   assertEqual(r.label, 'Well-extracted');
 });
 
-test('getShotAssessment - 38g in 27s, ratio 2.11 in standard range, well-extracted', () => {
-  // 38g/27s, ratio 2.11, projected (36/38)*27 = 25.6s (standard range, ratio in range → well-extracted)
+test('getShotAssessment - 38g in 27s, ratio 2.11 above near-target, cut sooner', () => {
+  // Above near-target gate with standard-time flow -> cut sooner.
   const r = getShotAssessment({ extractionTime: 27, doseIn: 18, yieldOut: 38 });
-  assertEqual(r.status, 'good');
-  assertEqual(r.label, 'Well-extracted');
+  assertEqual(r.status, 'warning');
+  assert(r.label.includes('Good flow'), 'Expected good flow');
+  assert(r.label.includes('cut sooner') || r.label.includes('Cut sooner'), 'Expected cut sooner');
 });
 
 // Perfect shot with both signals

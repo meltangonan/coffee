@@ -695,7 +695,7 @@ textarea.form-input { min-height: 80px; resize: vertical; line-height: 1.5; }
                         <span x-show="shot.doseIn"><span x-show="shot.grindSize"> &middot; </span><span x-text="shot.doseIn + 'g'"></span></span>
                         <span x-show="shot.yieldOut"> &#8594; <span x-text="shot.yieldOut + 'g'"></span></span>
                         <span x-show="shot.doseIn && shot.yieldOut"> (<span x-text="'1:' + (shot.yieldOut / shot.doseIn).toFixed(1)"></span>)</span>
-                        <span x-show="shot.extractionTime"><span x-show="shot.grindSize || shot.doseIn || shot.yieldOut"> &middot; </span><span x-text="shot.extractionTime + 's'"></span></span>
+                        <span x-show="shot.extractionTime"><span x-show="shot.grindSize || shot.doseIn || shot.yieldOut"> &middot; </span><span x-text="shot.extractionTime + 's'"></span><span x-show="getShotFlowRateLabel(shot)"> (<span x-text="getShotFlowRateLabel(shot)"></span>)</span></span>
                       </div>
                       <div x-show="shot.notes" class="text-muted" style="margin-top:2px; font-style:italic; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" x-text="shot.notes"></div>
                       <div x-show="getShotAssessment(shot)" class="shot-assessment" :class="getShotAssessment(shot)?.status" x-text="getShotAssessment(shot)?.label"></div>
@@ -952,7 +952,7 @@ textarea.form-input { min-height: 80px; resize: vertical; line-height: 1.5; }
                       <span x-show="shot.doseIn"><span x-show="shot.grindSize"> &middot; </span><span x-text="shot.doseIn + 'g'"></span></span>
                       <span x-show="shot.yieldOut"> &#8594; <span x-text="shot.yieldOut + 'g'"></span></span>
                       <span x-show="shot.doseIn && shot.yieldOut"> (<span x-text="'1:' + (shot.yieldOut / shot.doseIn).toFixed(1)"></span>)</span>
-                      <span x-show="shot.extractionTime"><span x-show="shot.grindSize || shot.doseIn || shot.yieldOut"> &middot; </span><span x-text="shot.extractionTime + 's'"></span></span>
+                      <span x-show="shot.extractionTime"><span x-show="shot.grindSize || shot.doseIn || shot.yieldOut"> &middot; </span><span x-text="shot.extractionTime + 's'"></span><span x-show="getShotFlowRateLabel(shot)"> (<span x-text="getShotFlowRateLabel(shot)"></span>)</span></span>
                     </div>
                     <div class="shot-date" x-text="formatDate(shot.shotDate || shot.createdAt)"></div>
                     <div x-show="shot.notes" class="text-muted" style="margin-top:2px; font-style:italic; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" x-text="shot.notes"></div>
@@ -1711,7 +1711,9 @@ const EXTRACTION_TIME_SLIGHTLY_SLOW = 35;  // 31-35: slightly slow
 
 const BREW_RATIO_VERY_LOW = 1.5;          // Below: very low yield
 const BREW_RATIO_LOW = 1.8;               // 1.5-1.79: low yield
-const BREW_RATIO_STANDARD_MAX = 2.2;      // 1.8-2.2: standard range
+const BREW_RATIO_NEAR_TARGET_LOW = 1.9;   // Below this: assess by projection
+const BREW_RATIO_NEAR_TARGET_HIGH = 2.1;  // Above this: cut-sooner yield guidance
+const FLOW_RATE_CHOKE_MAX = 1.0;          // Below + very low ratio: choking
 
 function hexToRgba(hex, alpha) {
   const m = hex.match(/^#?([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})$/i);
@@ -2806,6 +2808,18 @@ function app() {
     shotQualityClass(r) {
       return normalizeRating(r) || '';
     },
+    getShotFlowRate(shot) {
+      if (!shot) return null;
+      const extractionTime = Number(shot.extractionTime);
+      const yieldOut = Number(shot.yieldOut);
+      if (!Number.isFinite(extractionTime) || !Number.isFinite(yieldOut) || extractionTime <= 0 || yieldOut <= 0) return null;
+      return yieldOut / extractionTime;
+    },
+    getShotFlowRateLabel(shot) {
+      const flowRate = this.getShotFlowRate(shot);
+      if (!Number.isFinite(flowRate)) return null;
+      return flowRate.toFixed(1) + ' g/s';
+    },
 
     getShotAssessment(shot) {
       if (!shot) return null;
@@ -2815,18 +2829,21 @@ function app() {
       if (!Number.isFinite(extractionTime) || !Number.isFinite(doseIn) || !Number.isFinite(yieldOut)
         || extractionTime <= 0 || doseIn <= 0 || yieldOut <= 0) return null;
       const ratio = yieldOut / doseIn;
+      const flowRate = this.getShotFlowRate(shot);
 
       // Choking: very low ratio AND low flow rate (water barely getting through)
-      if (ratio < BREW_RATIO_VERY_LOW && (yieldOut / extractionTime) < 1.0) {
+      if (ratio < BREW_RATIO_VERY_LOW && flowRate < FLOW_RATE_CHOKE_MAX) {
         return { status: 'warning', label: 'Choked/channeled \u2192 go coarser' };
       }
 
-      // Project time to target yield (1:2)
-      const t = (doseIn * 2 / yieldOut) * extractionTime;
+      // Asymmetric basis: under-yield shots use projection; near/over-target use actual time.
+      const projectedTime = (doseIn * 2 / yieldOut) * extractionTime;
+      const useProjectedTime = ratio < BREW_RATIO_NEAR_TARGET_LOW;
+      const t = useProjectedTime ? projectedTime : extractionTime;
       const belowTarget = ratio < BREW_RATIO_LOW;
-      const aboveTarget = ratio > BREW_RATIO_STANDARD_MAX;
+      const overNearTarget = ratio > BREW_RATIO_NEAR_TARGET_HIGH;
       const pullLonger = belowTarget && t <= EXTRACTION_TIME_STANDARD_MAX;
-      const cutSooner = aboveTarget && t >= EXTRACTION_TIME_SLIGHTLY_FAST;
+      const cutSooner = overNearTarget && t >= EXTRACTION_TIME_SLIGHTLY_FAST;
 
       if (t < EXTRACTION_TIME_FAST) {
         return { status: 'warning', label: 'Under-extracted \u2192 go finer' + (pullLonger ? '\nPull longer' : '') + (cutSooner ? '\nCut sooner' : '') };
@@ -2838,11 +2855,11 @@ function app() {
         return { status: 'warning', label: 'Slightly over-extracted \u2192 go slightly coarser' };
       }
 
-      // Projected time is in standard range
+      // Assessment time is in standard range
       if (belowTarget) {
         return { status: 'warning', label: 'Good flow \u2192 pull longer' };
       }
-      if (aboveTarget) {
+      if (cutSooner) {
         return { status: 'warning', label: 'Good flow \u2192 cut sooner' };
       }
       return { status: 'good', label: 'Well-extracted' };

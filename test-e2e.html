@@ -503,6 +503,15 @@ async function runTests() {
     assertEqual(app.getShotAssessment({ doseIn: 18, yieldOut: 0, extractionTime: 25 }), null);
   });
 
+  await test('getShotFlowRateLabel formats one decimal place', async () => {
+    assertEqual(app.getShotFlowRateLabel({ yieldOut: 36, extractionTime: 25 }), '1.4 g/s');
+  });
+
+  await test('getShotFlowRateLabel returns null for invalid inputs', async () => {
+    assertEqual(app.getShotFlowRateLabel({ yieldOut: 36, extractionTime: 0 }), null);
+    assertEqual(app.getShotFlowRateLabel({ yieldOut: null, extractionTime: 25 }), null);
+  });
+
   await test('saveShot creates new shot', async () => {
     const bean = app.beans.find(b => !b.isArchived);
     const initialCount = app.shots.length;
