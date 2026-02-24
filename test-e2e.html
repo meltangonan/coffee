@@ -503,6 +503,27 @@ async function runTests() {
     assertEqual(app.getShotAssessment({ doseIn: 18, yieldOut: 0, extractionTime: 25 }), null);
   });
 
+  await test('getShotAssessment keeps mild overrun in near-target gate as well-extracted', async () => {
+    const r = app.getShotAssessment({ doseIn: 18, yieldOut: 40, extractionTime: 25 });
+    assertEqual(r.status, 'good');
+    assertEqual(r.label, 'Well-extracted');
+  });
+
+  await test('getShotAssessment over 2.2 with fast flow recommends finer + cut sooner', async () => {
+    const r = app.getShotAssessment({ doseIn: 18, yieldOut: 46, extractionTime: 25 });
+    assertEqual(r.status, 'warning');
+    assert(r.label.includes('Fast flow'), 'Expected fast flow messaging');
+    assert(r.label.includes('go finer'), 'Expected go finer');
+    assert(r.label.includes('Cut sooner') || r.label.includes('cut sooner'), 'Expected cut sooner');
+  });
+
+  await test('getShotAssessment above 2.2 and slightly slow appends cut sooner', async () => {
+    const r = app.getShotAssessment({ doseIn: 18, yieldOut: 43, extractionTime: 32 });
+    assertEqual(r.status, 'warning');
+    assert(r.label.includes('Slightly over-extracted'), 'Expected slightly over-extracted');
+    assert(r.label.includes('Cut sooner') || r.label.includes('cut sooner'), 'Expected cut sooner');
+  });
+
   await test('getShotFlowRateLabel formats one decimal place', async () => {
     assertEqual(app.getShotFlowRateLabel({ yieldOut: 36, extractionTime: 25 }), '1.4 g/s');
   });

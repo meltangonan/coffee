@@ -236,7 +236,7 @@ textarea.form-input { min-height: 80px; resize: vertical; line-height: 1.5; }
 .shot-quality-badge.okay { background: rgba(212,165,116,0.18); color: var(--amber-dark); }
 .shot-quality-badge.great { background: rgba(79,111,165,0.14); color: #3F5A86; }
 .shot-quality-badge.perfect { background: var(--freshness-optimal-bg); color: var(--freshness-optimal); }
-.shot-assessment { font-size: 12px; font-weight: 500; margin-top: 3px; white-space: pre-line; }
+.shot-assessment { font-size: 12px; font-weight: 500; margin-top: 3px; white-space: normal; }
 .shot-assessment.good { color: var(--freshness-optimal); }
 .shot-assessment.warning { color: var(--freshness-past); }
 
@@ -698,7 +698,7 @@ textarea.form-input { min-height: 80px; resize: vertical; line-height: 1.5; }
                         <span x-show="shot.extractionTime"><span x-show="shot.grindSize || shot.doseIn || shot.yieldOut"> &middot; </span><span x-text="shot.extractionTime + 's'"></span><span x-show="getShotFlowRateLabel(shot)"> (<span x-text="getShotFlowRateLabel(shot)"></span>)</span></span>
                       </div>
                       <div x-show="shot.notes" class="text-muted" style="margin-top:2px; font-style:italic; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" x-text="shot.notes"></div>
-                      <div x-show="getShotAssessment(shot)" class="shot-assessment" :class="getShotAssessment(shot)?.status" x-text="getShotAssessment(shot)?.label"></div>
+                      <div x-show="getShotAssessment(shot)" class="shot-assessment" :class="getShotAssessment(shot)?.status" x-text="formatAssessmentLabel(getShotAssessment(shot)?.label)"></div>
                     </div>
                     <div class="today-shot-meta">
                       <span x-show="shotQualityLabel(shot.rating)" class="shot-quality-badge" :class="shotQualityClass(shot.rating)" x-text="shotQualityLabel(shot.rating)"></span>
@@ -956,7 +956,7 @@ textarea.form-input { min-height: 80px; resize: vertical; line-height: 1.5; }
                     </div>
                     <div class="shot-date" x-text="formatDate(shot.shotDate || shot.createdAt)"></div>
                     <div x-show="shot.notes" class="text-muted" style="margin-top:2px; font-style:italic; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" x-text="shot.notes"></div>
-                    <div x-show="getShotAssessment(shot)" class="shot-assessment" :class="getShotAssessment(shot)?.status" x-text="getShotAssessment(shot)?.label"></div>
+                    <div x-show="getShotAssessment(shot)" class="shot-assessment" :class="getShotAssessment(shot)?.status" x-text="formatAssessmentLabel(getShotAssessment(shot)?.label)"></div>
                   </div>
                   <div class="shot-meta">
                     <span x-show="shotQualityLabel(shot.rating)" class="shot-quality-badge" :class="shotQualityClass(shot.rating)" x-text="shotQualityLabel(shot.rating)"></span>
@@ -1712,8 +1712,10 @@ const EXTRACTION_TIME_SLIGHTLY_SLOW = 35;  // 31-35: slightly slow
 const BREW_RATIO_VERY_LOW = 1.5;          // Below: very low yield
 const BREW_RATIO_LOW = 1.8;               // 1.5-1.79: low yield
 const BREW_RATIO_NEAR_TARGET_LOW = 1.9;   // Below this: assess by projection
-const BREW_RATIO_NEAR_TARGET_HIGH = 2.1;  // Above this: cut-sooner yield guidance
+const BREW_RATIO_NEAR_TARGET_HIGH = 2.2;  // Above this: cut-sooner yield guidance
 const FLOW_RATE_CHOKE_MAX = 1.0;          // Below + very low ratio: choking
+const FLOW_RATE_FAST_SLIGHT = 1.6;        // Over-target and at/above: slightly fast flow
+const FLOW_RATE_FAST = 1.8;               // Over-target and at/above: fast flow
 
 function hexToRgba(hex, alpha) {
   const m = hex.match(/^#?([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})$/i);
@@ -2808,6 +2810,10 @@ function app() {
     shotQualityClass(r) {
       return normalizeRating(r) || '';
     },
+    formatAssessmentLabel(label) {
+      if (!label) return '';
+      return String(label).replace(/\s*\n+\s*/g, ' / ');
+    },
     getShotFlowRate(shot) {
       if (!shot) return null;
       const extractionTime = Number(shot.extractionTime);
@@ -2850,9 +2856,9 @@ function app() {
       } else if (t < EXTRACTION_TIME_SLIGHTLY_FAST) {
         return { status: 'warning', label: 'Slightly under-extracted \u2192 go slightly finer' + (pullLonger ? '\nPull longer' : '') + (cutSooner ? '\nCut sooner' : '') };
       } else if (t > EXTRACTION_TIME_SLIGHTLY_SLOW) {
-        return { status: 'warning', label: 'Over-extracted \u2192 go coarser' };
+        return { status: 'warning', label: 'Over-extracted \u2192 go coarser' + (overNearTarget ? '\nCut sooner' : '') };
       } else if (t > EXTRACTION_TIME_STANDARD_MAX) {
-        return { status: 'warning', label: 'Slightly over-extracted \u2192 go slightly coarser' };
+        return { status: 'warning', label: 'Slightly over-extracted \u2192 go slightly coarser' + (overNearTarget ? '\nCut sooner' : '') };
       }
 
       // Assessment time is in standard range
@@ -2860,6 +2866,12 @@ function app() {
         return { status: 'warning', label: 'Good flow \u2192 pull longer' };
       }
       if (cutSooner) {
+        if (flowRate >= FLOW_RATE_FAST) {
+          return { status: 'warning', label: 'Fast flow + over target \u2192 go finer\nCut sooner' };
+        }
+        if (flowRate >= FLOW_RATE_FAST_SLIGHT) {
+          return { status: 'warning', label: 'Fast flow + over target \u2192 go slightly finer\nCut sooner' };
+        }
         return { status: 'warning', label: 'Good flow \u2192 cut sooner' };
       }
       return { status: 'good', label: 'Well-extracted' };
