@@ -620,16 +620,17 @@ test('getShotAssessment - 46g in 25s above target, fast flow go finer + cut soon
   assert(r.label.includes('cut sooner') || r.label.includes('Cut sooner'), 'Expected cut sooner');
 });
 
-test('getShotAssessment - 40g in 30s ratio 2.22 now in near-target gate, well-extracted', () => {
+test('getShotAssessment - 40g in 30s ratio above near-target gate, cut sooner', () => {
   const r = getShotAssessment({ extractionTime: 30, doseIn: 18, yieldOut: 40 });
-  assertEqual(r.status, 'good');
-  assertEqual(r.label, 'Well-extracted');
+  assertEqual(r.status, 'warning');
+  assert(r.label.includes('cut sooner') || r.label.includes('Cut sooner'), 'Expected cut sooner');
 });
 
-test('getShotAssessment - 40g in 25s ratio 2.22 now in near-target gate, well-extracted', () => {
+test('getShotAssessment - 40g in 25s ratio above near-target gate, go slightly finer + cut sooner', () => {
   const r = getShotAssessment({ extractionTime: 25, doseIn: 18, yieldOut: 40 });
-  assertEqual(r.status, 'good');
-  assertEqual(r.label, 'Well-extracted');
+  assertEqual(r.status, 'warning');
+  assert(r.label.includes('go slightly finer'), 'Expected slightly finer guidance');
+  assert(r.label.includes('cut sooner') || r.label.includes('Cut sooner'), 'Expected cut sooner');
 });
 
 test('getShotAssessment - 45g in 25s above target at 1.8 g/s, go finer + cut sooner', () => {

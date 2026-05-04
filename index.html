@@ -875,7 +875,7 @@ textarea.form-input { min-height: 80px; resize: vertical; line-height: 1.5; }
             </div>
             <div x-show="selectedBean?.optimalDoseIn && selectedBean?.optimalYieldOut" style="margin-top:10px;">
               <span class="recipe-stat-label">Ratio</span>
-              <span class="recipe-stat-value" style="font-size:16px; margin-left: 6px;" x-text="'1:' + (selectedBean.optimalYieldOut / selectedBean.optimalDoseIn).toFixed(1)"></span>
+              <span class="recipe-stat-value" style="font-size:16px; margin-left: 6px;" x-text="selectedBean?.optimalDoseIn && selectedBean?.optimalYieldOut ? '1:' + (selectedBean.optimalYieldOut / selectedBean.optimalDoseIn).toFixed(1) : ''"></span>
             </div>
             <button x-show="!selectedBean?.isArchived" type="button" class="btn btn-ghost recipe-card-edit" @click="startEditingOptimal()">Edit</button>
           </div>
@@ -1460,7 +1460,7 @@ textarea.form-input { min-height: 80px; resize: vertical; line-height: 1.5; }
               <span class="backup-step-num">1</span>
               <span class="backup-step-title">Tap “Export Backup”</span>
             </div>
-            <p class="backup-step-copy">A file like `coffee-journal-backup-YYYY-MM-DD.json` should download to your device.p>
+            <p class="backup-step-copy">A file like `coffee-journal-backup-YYYY-MM-DD.json` should download to your device.</p>
           </div>
           <div class="backup-step">
             <div class="backup-step-head">

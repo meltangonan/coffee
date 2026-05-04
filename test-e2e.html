@@ -100,6 +100,61 @@ function resetApp() {
   appWindow.location.reload();
 }
 
+function localDateStr(d = new Date()) {
+  return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+}
+
+function seedTestFixture() {
+  const now = new Date().toISOString();
+  const today = localDateStr();
+  app.beans = [
+    {
+      id: 'e2e-active-bean',
+      name: 'E2E Active Bean',
+      roaster: 'E2E Roaster',
+      roastDate: today,
+      rating: 4,
+      notes: 'Active test bean',
+      isArchived: false,
+      optimalGrindSize: 6,
+      optimalDoseIn: 18,
+      optimalYieldOut: 36,
+      optimalExtractionTime: 25,
+      createdAt: now
+    },
+    {
+      id: 'e2e-archived-bean',
+      name: 'E2E Archived Bean',
+      roaster: 'E2E Roaster',
+      roastDate: today,
+      rating: 3,
+      notes: 'Archived test bean',
+      isArchived: true,
+      optimalGrindSize: 7,
+      optimalDoseIn: 18,
+      optimalYieldOut: 36,
+      optimalExtractionTime: 27,
+      createdAt: now
+    }
+  ];
+  app.shots = [
+    {
+      id: 'e2e-shot-1',
+      beanId: 'e2e-active-bean',
+      grindSize: 6,
+      doseIn: 18,
+      yieldOut: 36,
+      extractionTime: 25,
+      rating: 'great',
+      notes: 'Fixture shot',
+      shotDate: today,
+      createdAt: now
+    }
+  ];
+  app.saveBeans();
+  app.saveShots();
+}
+
 async function runTests() {
   const frame = document.getElementById('app-frame');
   frame.style.display = 'block';
@@ -111,12 +166,13 @@ async function runTests() {
   });
 
   await waitForAlpine();
+  seedTestFixture();
 
   // ========================================
   // TESTS
   // ========================================
 
-  await test('App initializes with seed data', async () => {
+  await test('App test fixture initializes with data', async () => {
     assert(app.beans.length > 0, 'Should have beans');
     assert(app.shots.length > 0, 'Should have shots');
   });
@@ -124,7 +180,7 @@ async function runTests() {
   await test('currentBeans filters out archived beans', async () => {
     const archived = app.beans.filter(b => b.isArchived);
     const current = app.currentBeans;
-    assert(archived.length > 0, 'Should have archived beans in seed data');
+    assert(archived.length > 0, 'Should have archived beans in test fixture');
     current.forEach(b => {
       assert(!b.isArchived, 'Current beans should not be archived');
     });
@@ -503,10 +559,11 @@ async function runTests() {
     assertEqual(app.getShotAssessment({ doseIn: 18, yieldOut: 0, extractionTime: 25 }), null);
   });
 
-  await test('getShotAssessment keeps mild overrun in near-target gate as well-extracted', async () => {
+  await test('getShotAssessment treats 40g/18g as above near-target gate', async () => {
     const r = app.getShotAssessment({ doseIn: 18, yieldOut: 40, extractionTime: 25 });
-    assertEqual(r.status, 'good');
-    assertEqual(r.label, 'Well-extracted');
+    assertEqual(r.status, 'warning');
+    assert(r.label.includes('go slightly finer'), 'Expected slightly finer guidance');
+    assert(r.label.includes('Cut sooner') || r.label.includes('cut sooner'), 'Expected cut sooner');
   });
 
   await test('getShotAssessment over 2.2 with fast flow recommends finer + cut sooner', async () => {
@@ -555,7 +612,7 @@ async function runTests() {
     app.shotForm.yieldOut = 40;
     app.shotForm.extractionTime = 28;
     app.saveShot();
-    const savedShot = app.getLastShot(bean.id);
+    const savedShot = app.shots[app.shots.length - 1];
     assert(savedShot, 'Shot should exist after save');
 
     app.openShotFormForEdit(savedShot);
