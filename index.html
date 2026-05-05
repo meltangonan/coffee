@@ -232,13 +232,39 @@ textarea.form-input { min-height: 80px; resize: vertical; line-height: 1.5; }
 .shot-quality-btn.great.active { border-color: #4F6FA5; background: rgba(79,111,165,0.14); color: #3F5A86; }
 .shot-quality-btn.perfect.active { border-color: var(--freshness-optimal); background: var(--freshness-optimal-bg); color: var(--freshness-optimal); }
 .shot-quality-badge { display: inline-block; padding: 4px 10px; border-radius: 20px; font-size: 12px; font-weight: 500; }
+.shot-quality-badge.corner { position: absolute; top: 14px; right: 16px; z-index: 2; }
 .shot-quality-badge.bad { background: var(--freshness-past-bg); color: var(--freshness-past); }
 .shot-quality-badge.okay { background: rgba(212,165,116,0.18); color: var(--amber-dark); }
 .shot-quality-badge.great { background: rgba(79,111,165,0.14); color: #3F5A86; }
 .shot-quality-badge.perfect { background: var(--freshness-optimal-bg); color: var(--freshness-optimal); }
-.shot-assessment { font-size: 12px; font-weight: 500; margin-top: 3px; white-space: normal; }
-.shot-assessment.good { color: var(--freshness-optimal); }
-.shot-assessment.warning { color: var(--freshness-past); }
+.shot-assessment-chips { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 6px; }
+.shot-assessment-chip { display: inline-flex; align-items: center; padding: 4px 8px; border-radius: 999px; font-size: 11px; font-weight: 600; line-height: 1.2; }
+.shot-assessment-chip.good { background: var(--freshness-optimal-bg); color: var(--freshness-optimal); }
+.shot-assessment-chip.warning { background: var(--freshness-past-bg); color: var(--freshness-past); }
+.shot-assessment-chip.secondary { background: rgba(212,165,116,0.16); color: var(--amber-dark); }
+
+.shot-visualizer { margin-top: 10px; }
+.shot-visualizer.form-preview { margin: -4px 0 18px; }
+.shot-visualizer-row { display: grid; grid-template-columns: 52px 1fr 52px; align-items: center; gap: 8px; }
+.shot-visualizer-row + .shot-visualizer-row { margin-top: 8px; }
+.shot-visualizer-label { font-size: 11px; font-weight: 700; letter-spacing: 0.5px; text-transform: uppercase; color: var(--text-muted); }
+.shot-visualizer-value { font-size: 12px; font-weight: 700; color: var(--espresso); text-align: right; white-space: nowrap; }
+.shot-visualizer-track { position: relative; height: 8px; border-radius: 999px; background: rgba(44,24,16,0.08); overflow: visible; }
+.shot-visualizer-target { position: absolute; top: 0; bottom: 0; border-radius: 999px; background: rgba(123,160,91,0.28); }
+.shot-visualizer-target.ratio { left: 38.889%; width: 22.222%; }
+.shot-visualizer-target.time { left: 37.5%; width: 12.5%; }
+.shot-visualizer-fill { height: 100%; width: 0; border-radius: 999px; background: var(--amber-dark); transition: width 0.2s ease; }
+.shot-visualizer-fill.good { background: var(--freshness-optimal); }
+.shot-visualizer-fill.warning { background: var(--freshness-past); }
+.shot-visualizer-point { position: absolute; top: 50%; left: 0; width: 12px; height: 12px; border: 2px solid #FFFCF7; border-radius: 50%; background: var(--amber-dark); box-shadow: 0 1px 4px rgba(44,24,16,0.24); transform: translate(-50%, -50%); transition: left 0.2s ease; }
+.shot-visualizer-point.good { background: var(--freshness-optimal); }
+.shot-visualizer-point.warning { background: var(--freshness-past); }
+.shot-visualizer.compact { padding: 0; margin-top: 8px; }
+.shot-visualizer.compact .shot-visualizer-row { grid-template-columns: 38px 1fr 44px; gap: 6px; }
+.shot-visualizer.compact .shot-visualizer-label { font-size: 10px; letter-spacing: 0.4px; }
+.shot-visualizer.compact .shot-visualizer-value { font-size: 11px; }
+.shot-visualizer.compact .shot-visualizer-track { height: 6px; }
+.shot-visualizer.compact .shot-visualizer-point { width: 10px; height: 10px; border-width: 2px; }
 
 /* Shot rating row: inline rating buttons + date picker */
 .shot-rating-row { display: flex; align-items: flex-start; gap: 12px; flex-wrap: wrap; }
@@ -404,12 +430,13 @@ textarea.form-input { min-height: 80px; resize: vertical; line-height: 1.5; }
 .recipe-card-edit-form .btn-cancel:hover { background: rgba(245,240,232,0.25); }
 
 
-.shot-row { display: flex; align-items: center; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid rgba(44,24,16,0.06); }
+.shot-row { position: relative; display: flex; align-items: center; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid rgba(44,24,16,0.06); }
 .shot-row:last-child { border-bottom: none; }
 .shot-info { display: flex; flex-direction: column; gap: 3px; min-width: 0; flex: 1; }
 .shot-settings { font-size: 14px; font-weight: 500; color: var(--text-primary); }
 .shot-date { font-size: 12px; color: var(--text-muted); }
-.shot-meta { display: flex; align-items: center; gap: 8px; }
+.shot-settings, .shot-date { padding-right: 76px; }
+.shot-meta { position: absolute; right: 6px; bottom: 10px; display: flex; align-items: center; justify-content: center; gap: 0; margin: 0; }
 .best-recipe-star { color: var(--amber); font-size: 16px; }
 
 .daily-bean-selector { margin-bottom: 20px; position: relative; }
@@ -443,13 +470,14 @@ textarea.form-input { min-height: 80px; resize: vertical; line-height: 1.5; }
 
 .btn.btn-action-small { flex: 0 0 auto; min-height: 44px; padding: 8px 14px; font-size: 14px; }
 
-.today-shot-item { display: flex; align-items: center; justify-content: space-between; padding: 14px 16px; background: white; border-radius: var(--radius); margin-bottom: 8px; box-shadow: var(--shadow-sm); }
-.today-shot-content { flex: 1; min-width: 0; cursor: pointer; }
+.today-shot-item { position: relative; display: block; padding: 16px; background: white; border-radius: var(--radius); margin-bottom: 8px; box-shadow: var(--shadow-sm); }
+.today-shot-content { min-width: 0; cursor: pointer; }
 .today-shot-bean { font-weight: 600; font-size: 14px; color: var(--espresso); }
+.today-shot-bean, .today-shot-details { padding-right: 76px; }
 .today-shot-details { font-size: 13px; color: var(--text-secondary); margin-top: 2px; }
-.today-shot-meta { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+.today-shot-meta { position: absolute; right: 6px; bottom: 10px; display: flex; align-items: center; justify-content: center; gap: 0; margin: 0; }
 .today-shot-delete-confirm { padding: 4px 10px; font-size: 12px; color: white; background: var(--freshness-past); border-radius: var(--radius-sm); font-weight: 500; }
-.today-shot-delete { padding: 4px 8px; font-size: 12px; color: var(--text-muted); }
+.today-shot-delete { width: 32px; height: 32px; min-height: 32px; padding: 0; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 18px; line-height: 1; color: var(--text-muted); }
 .today-shot-delete:hover { color: var(--freshness-past); }
 /* Swipe-to-delete wrapper (touch) */
 .today-shot-swipe { position: relative; overflow: hidden; border-radius: var(--radius); margin-bottom: 8px; }
@@ -688,6 +716,7 @@ textarea.form-input { min-height: 80px; resize: vertical; line-height: 1.5; }
                 <div class="today-shot-swipe-actions" @click="deleteShot(shot.id)" role="button" tabindex="0" @keydown.enter="deleteShot(shot.id)">Delete</div>
                 <div class="today-shot-swipe-content" :style="'transform: translateX(' + (reveal ? -72 : swipeX) + 'px)'">
                   <div class="today-shot-item" style="margin-bottom:0;">
+                    <span x-show="shotQualityLabel(shot.rating)" class="shot-quality-badge corner" :class="shotQualityClass(shot.rating)" x-text="shotQualityLabel(shot.rating)"></span>
                     <div class="today-shot-content" @click="openShotFormForEdit(shot)">
                       <div class="today-shot-bean" x-text="getBeanById(shot.beanId)?.name || 'Unknown'"></div>
                       <div class="today-shot-details">
@@ -697,13 +726,32 @@ textarea.form-input { min-height: 80px; resize: vertical; line-height: 1.5; }
                         <span x-show="shot.doseIn && shot.yieldOut"> (<span x-text="'1:' + (shot.yieldOut / shot.doseIn).toFixed(1)"></span>)</span>
                         <span x-show="shot.extractionTime"><span x-show="shot.grindSize || shot.doseIn || shot.yieldOut"> &middot; </span><span x-text="shot.extractionTime + 's'"></span><span x-show="getShotFlowRateLabel(shot)"> (<span x-text="getShotFlowRateLabel(shot)"></span>)</span></span>
                       </div>
+                      <div x-show="getShotMetrics(shot)" class="shot-visualizer compact">
+                        <div class="shot-visualizer-row">
+                          <span class="shot-visualizer-label">Ratio</span>
+                          <div class="shot-visualizer-track">
+                            <span class="shot-visualizer-target ratio"></span>
+                            <span class="shot-visualizer-fill" :class="getShotMetrics(shot)?.assessmentStatus" :style="'width: ' + (getShotMetrics(shot)?.ratioPct || 0) + '%'"></span>
+                            <span class="shot-visualizer-point" :class="getShotMetrics(shot)?.assessmentStatus" :style="'left: ' + (getShotMetrics(shot)?.ratioPct || 0) + '%'"></span>
+                          </div>
+                          <span class="shot-visualizer-value" x-text="getShotMetrics(shot)?.ratioLabel"></span>
+                        </div>
+                        <div class="shot-visualizer-row">
+                          <span class="shot-visualizer-label">Time</span>
+                          <div class="shot-visualizer-track">
+                            <span class="shot-visualizer-target time"></span>
+                            <span class="shot-visualizer-fill" :class="getShotMetrics(shot)?.assessmentStatus" :style="'width: ' + (getShotMetrics(shot)?.timePct || 0) + '%'"></span>
+                            <span class="shot-visualizer-point" :class="getShotMetrics(shot)?.assessmentStatus" :style="'left: ' + (getShotMetrics(shot)?.timePct || 0) + '%'"></span>
+                          </div>
+                          <span class="shot-visualizer-value" x-text="getShotMetrics(shot)?.timeLabel"></span>
+                        </div>
+                      </div>
                       <div x-show="shot.notes" class="text-muted" style="margin-top:2px; font-style:italic; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" x-text="shot.notes"></div>
-                      <div x-show="getShotAssessment(shot)" class="shot-assessment" :class="getShotAssessment(shot)?.status" x-text="formatAssessmentLabel(getShotAssessment(shot)?.label)"></div>
-                    </div>
-                    <div class="today-shot-meta">
-                      <span x-show="shotQualityLabel(shot.rating)" class="shot-quality-badge" :class="shotQualityClass(shot.rating)" x-text="shotQualityLabel(shot.rating)"></span>
-                      <button x-show="!confirmDelete" type="button" class="btn btn-ghost today-shot-delete" @click.stop="confirmDelete = true" title="Delete shot">&#10005;</button>
-                      <button x-show="confirmDelete" type="button" class="btn today-shot-delete-confirm" @click.stop="deleteShot(shot.id)" @click.away="confirmDelete = false" title="Confirm delete">Delete?</button>
+                      <div x-show="getShotAssessmentChips(shot).length" class="shot-assessment-chips">
+                        <template x-for="chip in getShotAssessmentChips(shot)" :key="chip.label">
+                          <span class="shot-assessment-chip" :class="chip.className" x-text="chip.label"></span>
+                        </template>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -946,6 +994,7 @@ textarea.form-input { min-height: 80px; resize: vertical; line-height: 1.5; }
               <div class="today-shot-swipe-actions" @click="deleteShot(shot.id)" role="button" tabindex="0" @keydown.enter="deleteShot(shot.id)">Delete</div>
               <div class="today-shot-swipe-content today-shot-content" :style="'transform: translateX(' + (reveal ? -72 : swipeX) + 'px)'" @click="if (!selectedBean?.isArchived) openShotFormForEdit(shot)">
                 <div class="shot-row bean-shot-swipe-row">
+                  <span x-show="shotQualityLabel(shot.rating)" class="shot-quality-badge corner" :class="shotQualityClass(shot.rating)" x-text="shotQualityLabel(shot.rating)"></span>
                   <div class="shot-info">
                     <div class="shot-settings">
                       <span x-show="shot.grindSize">Grind <span x-text="shot.grindSize"></span></span>
@@ -955,13 +1004,32 @@ textarea.form-input { min-height: 80px; resize: vertical; line-height: 1.5; }
                       <span x-show="shot.extractionTime"><span x-show="shot.grindSize || shot.doseIn || shot.yieldOut"> &middot; </span><span x-text="shot.extractionTime + 's'"></span><span x-show="getShotFlowRateLabel(shot)"> (<span x-text="getShotFlowRateLabel(shot)"></span>)</span></span>
                     </div>
                     <div class="shot-date" x-text="formatDate(shot.shotDate || shot.createdAt)"></div>
+                    <div x-show="getShotMetrics(shot)" class="shot-visualizer compact">
+                      <div class="shot-visualizer-row">
+                        <span class="shot-visualizer-label">Ratio</span>
+                        <div class="shot-visualizer-track">
+                          <span class="shot-visualizer-target ratio"></span>
+                          <span class="shot-visualizer-fill" :class="getShotMetrics(shot)?.assessmentStatus" :style="'width: ' + (getShotMetrics(shot)?.ratioPct || 0) + '%'"></span>
+                          <span class="shot-visualizer-point" :class="getShotMetrics(shot)?.assessmentStatus" :style="'left: ' + (getShotMetrics(shot)?.ratioPct || 0) + '%'"></span>
+                        </div>
+                        <span class="shot-visualizer-value" x-text="getShotMetrics(shot)?.ratioLabel"></span>
+                      </div>
+                      <div class="shot-visualizer-row">
+                        <span class="shot-visualizer-label">Time</span>
+                        <div class="shot-visualizer-track">
+                          <span class="shot-visualizer-target time"></span>
+                          <span class="shot-visualizer-fill" :class="getShotMetrics(shot)?.assessmentStatus" :style="'width: ' + (getShotMetrics(shot)?.timePct || 0) + '%'"></span>
+                          <span class="shot-visualizer-point" :class="getShotMetrics(shot)?.assessmentStatus" :style="'left: ' + (getShotMetrics(shot)?.timePct || 0) + '%'"></span>
+                        </div>
+                        <span class="shot-visualizer-value" x-text="getShotMetrics(shot)?.timeLabel"></span>
+                      </div>
+                    </div>
                     <div x-show="shot.notes" class="text-muted" style="margin-top:2px; font-style:italic; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" x-text="shot.notes"></div>
-                    <div x-show="getShotAssessment(shot)" class="shot-assessment" :class="getShotAssessment(shot)?.status" x-text="formatAssessmentLabel(getShotAssessment(shot)?.label)"></div>
-                  </div>
-                  <div class="shot-meta">
-                    <span x-show="shotQualityLabel(shot.rating)" class="shot-quality-badge" :class="shotQualityClass(shot.rating)" x-text="shotQualityLabel(shot.rating)"></span>
-                    <button x-show="!selectedBean?.isArchived && !confirmDelete" type="button" class="btn btn-ghost today-shot-delete" @click.stop="confirmDelete = true" title="Delete shot">&#10005;</button>
-                    <button x-show="!selectedBean?.isArchived && confirmDelete" type="button" class="btn today-shot-delete-confirm" @click.stop="deleteShot(shot.id)" @click.away="confirmDelete = false" title="Confirm delete">Delete?</button>
+                    <div x-show="getShotAssessmentChips(shot).length" class="shot-assessment-chips">
+                      <template x-for="chip in getShotAssessmentChips(shot)" :key="chip.label">
+                        <span class="shot-assessment-chip" :class="chip.className" x-text="chip.label"></span>
+                      </template>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -1219,6 +1287,31 @@ textarea.form-input { min-height: 80px; resize: vertical; line-height: 1.5; }
           <button type="button" class="stepper-btn" aria-label="Decrease" :disabled="stVal() !== null && stVal() <= stMin" @click="stDec()">−</button>
           <input type="number" inputmode="numeric" class="stepper-input" :min="stMin" :max="stMax" :placeholder="stPlaceholder()" :value="stVal() === null ? '' : stVal()" @input="stOnInput($event)" @focus="stOnFocus($event)">
           <button type="button" class="stepper-btn" aria-label="Increase" :disabled="stVal() !== null && stVal() >= stMax" @click="stInc()">+</button>
+        </div>
+      </div>
+      <div class="shot-visualizer form-preview" x-data="{ get shot() { return getShotFormPreviewShot() }, get metrics() { return getShotMetrics(this.shot) } }" x-show="metrics">
+        <div class="shot-visualizer-row">
+          <span class="shot-visualizer-label">Ratio</span>
+          <div class="shot-visualizer-track">
+            <span class="shot-visualizer-target ratio"></span>
+            <span class="shot-visualizer-fill" :class="metrics?.assessmentStatus" :style="'width: ' + (metrics?.ratioPct || 0) + '%'"></span>
+            <span class="shot-visualizer-point" :class="metrics?.assessmentStatus" :style="'left: ' + (metrics?.ratioPct || 0) + '%'"></span>
+          </div>
+          <span class="shot-visualizer-value" x-text="metrics?.ratioLabel"></span>
+        </div>
+        <div class="shot-visualizer-row">
+          <span class="shot-visualizer-label">Time</span>
+          <div class="shot-visualizer-track">
+            <span class="shot-visualizer-target time"></span>
+            <span class="shot-visualizer-fill" :class="metrics?.assessmentStatus" :style="'width: ' + (metrics?.timePct || 0) + '%'"></span>
+            <span class="shot-visualizer-point" :class="metrics?.assessmentStatus" :style="'left: ' + (metrics?.timePct || 0) + '%'"></span>
+          </div>
+          <span class="shot-visualizer-value" x-text="metrics?.timeLabel"></span>
+        </div>
+        <div x-show="getShotAssessmentChips(shot).length" class="shot-assessment-chips">
+          <template x-for="chip in getShotAssessmentChips(shot)" :key="chip.label">
+            <span class="shot-assessment-chip" :class="chip.className" x-text="chip.label"></span>
+          </template>
         </div>
       </div>
       <div class="form-group">
@@ -2814,6 +2907,18 @@ function app() {
       if (!label) return '';
       return String(label).replace(/\s*\n+\s*/g, ' / ');
     },
+    getShotAssessmentChips(shot) {
+      const assessment = this.getShotAssessment(shot);
+      if (!assessment?.label) return [];
+      return String(assessment.label)
+        .split(/\n+/)
+        .map(label => label.trim())
+        .filter(Boolean)
+        .map((label, index) => ({
+          label,
+          className: index === 0 ? assessment.status : 'secondary'
+        }));
+    },
     getShotFlowRate(shot) {
       if (!shot) return null;
       const extractionTime = Number(shot.extractionTime);
@@ -2825,6 +2930,39 @@ function app() {
       const flowRate = this.getShotFlowRate(shot);
       if (!Number.isFinite(flowRate)) return null;
       return flowRate.toFixed(1) + ' g/s';
+    },
+    getShotMetrics(shot) {
+      if (!shot) return null;
+      const doseIn = Number(shot.doseIn);
+      const yieldOut = Number(shot.yieldOut);
+      const extractionTime = Number(shot.extractionTime);
+      if (!Number.isFinite(doseIn) || !Number.isFinite(yieldOut) || !Number.isFinite(extractionTime)
+        || doseIn <= 0 || yieldOut <= 0 || extractionTime <= 0) return null;
+      const ratio = yieldOut / doseIn;
+      const assessmentStatus = this.getShotAssessment(shot)?.status || '';
+      const clamp = value => Math.max(0, Math.min(100, value));
+      return {
+        ratio,
+        extractionTime,
+        ratioLabel: '1:' + ratio.toFixed(1),
+        timeLabel: Math.round(extractionTime) + 's',
+        ratioPct: clamp(((ratio - 1.1) / 1.8) * 100),
+        timePct: clamp(((extractionTime - 10) / 40) * 100),
+        assessmentStatus
+      };
+    },
+    getShotFormPreviewShot() {
+      const resolveValue = (field) => {
+        const parsed = this.toNullableInt(this.shotForm[field]);
+        if (parsed != null && parsed > 0) return parsed;
+        const fallback = this.toNullableInt(this.getShotFormDefault(field));
+        return fallback != null && fallback > 0 ? fallback : SHOT_DEFAULTS[field];
+      };
+      return {
+        doseIn: resolveValue('doseIn'),
+        yieldOut: resolveValue('yieldOut'),
+        extractionTime: resolveValue('extractionTime')
+      };
     },
 
     getShotAssessment(shot) {
