@@ -71,6 +71,12 @@ test('shot visualizer and assessment chips render in daily log and shot form', a
   await page.locator('.bean-picker-trigger').click();
   await page.locator('.bean-picker-option').filter({ hasText: 'Ethiopia Guji' }).first().click();
 
+  const guidanceCard = page.locator('.daily-guidance-card');
+  await expect(guidanceCard).toContainText('Last shot');
+  await expect(guidanceCard).toContainText('Ethiopia Guji');
+  await expect(guidanceCard.locator('.shot-assessment-chip')).toContainText('Well-extracted');
+  await guidanceCard.getByRole('button', { name: 'Log Shot' }).click();
+
   const shotForm = page.locator('.panel');
   await expect(shotForm.getByRole('heading', { name: 'Log Shot' })).toBeVisible();
   await expect(shotForm.locator('.shot-visualizer-fill')).toHaveCount(2);

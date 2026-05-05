@@ -264,6 +264,16 @@ textarea.form-input { min-height: 80px; resize: vertical; line-height: 1.5; }
 .shot-visualizer.compact .shot-visualizer-track { height: 6px; }
 .shot-visualizer.compact .shot-visualizer-point { height: 9px; }
 
+.daily-guidance-card { background: white; border: 1px solid rgba(44,24,16,0.08); border-radius: var(--radius); padding: 16px; margin-bottom: 20px; box-shadow: var(--shadow-sm); }
+.daily-guidance-header { display: flex; flex-direction: column; gap: 10px; }
+.daily-guidance-header > div { width: 100%; min-width: 0; }
+.daily-guidance-label { font-size: 11px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; }
+.daily-guidance-title { font-family: var(--font-heading); font-size: 18px; color: var(--espresso); line-height: 1.25; margin-top: 2px; overflow-wrap: anywhere; }
+.daily-guidance-meta { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
+.daily-guidance-recipe { font-size: 14px; color: var(--text-secondary); line-height: 1.45; margin-top: 12px; }
+.daily-guidance-notes { color: var(--text-muted); font-size: 13px; font-style: italic; line-height: 1.45; margin-top: 6px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.daily-guidance-action { width: 100%; min-height: 38px; padding: 8px 14px; font-size: 14px; }
+
 /* Shot rating row: inline rating buttons + date picker */
 .shot-rating-row { display: flex; align-items: flex-start; gap: 12px; flex-wrap: wrap; }
 .shot-rating-row .shot-quality-options { flex: 1; min-width: 200px; }
@@ -701,6 +711,27 @@ textarea.form-input { min-height: 80px; resize: vertical; line-height: 1.5; }
               </div>
             </div>
           </div>
+
+          <!-- Selected Bean Guidance -->
+          <template x-if="dailySelectedBeanId && getBeanById(dailySelectedBeanId)">
+            <div class="daily-guidance-card fade-in" x-data="{ get guidance() { return getDailyGuidance(dailySelectedBeanId) } }">
+              <div class="daily-guidance-header">
+                <div>
+                  <div class="daily-guidance-label" x-text="guidance.label"></div>
+                  <div class="daily-guidance-title" x-text="getBeanById(dailySelectedBeanId)?.name"></div>
+                  <div x-show="guidance.date" class="daily-guidance-meta" x-text="formatDate(guidance.date)"></div>
+                </div>
+                <button type="button" class="btn btn-amber daily-guidance-action" @click="openShotFormFromDaily()">Log Shot</button>
+              </div>
+              <div class="daily-guidance-recipe" x-text="formatShotRecipe(guidance.recipe)"></div>
+              <div x-show="guidance.sourceShot && getShotAssessmentChips(guidance.sourceShot).length" class="shot-assessment-chips">
+                <template x-for="chip in getShotAssessmentChips(guidance.sourceShot)" :key="chip.label">
+                  <span class="shot-assessment-chip" :class="chip.className" x-text="chip.label"></span>
+                </template>
+              </div>
+              <div x-show="guidance.notes" class="daily-guidance-notes" x-text="guidance.notes"></div>
+            </div>
+          </template>
 
           <!-- Today's Shots Summary -->
           <div x-show="todayShots.length > 0" class="mt-24">
@@ -2234,7 +2265,7 @@ function app() {
     },
 
     beanHasOptimalSettings(bean) {
-      return bean.optimalGrindSize != null || bean.optimalDoseIn != null || bean.optimalYieldOut != null;
+      return bean?.optimalGrindSize != null || bean?.optimalDoseIn != null || bean?.optimalYieldOut != null || bean?.optimalExtractionTime != null;
     },
 
     beanSourceDateValue(bean) {
@@ -2408,16 +2439,57 @@ function app() {
 
     getBeanById(id) { return this.beans.find(b => b.id === id) || null; },
     getShotsForBean(id) {
-      return this.shots.filter(s => s.beanId === id).sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+      return this.shots
+        .map((shot, index) => ({ shot, index }))
+        .filter(({ shot }) => shot.beanId === id)
+        .sort((a, b) => (new Date(b.shot.createdAt) - new Date(a.shot.createdAt)) || (b.index - a.index))
+        .map(({ shot }) => shot);
     },
     getLastShot(beanId) { const ss = this.getShotsForBean(beanId); return ss.length > 0 ? ss[0] : null; },
-    getShotDialInDefaults(beanId) {
+    getBeanReferenceDefaults(beanId) {
       const bean = this.getBeanById(beanId);
       return {
         grindSize: bean?.optimalGrindSize ?? SHOT_DEFAULTS.grindSize,
         doseIn: bean?.optimalDoseIn ?? SHOT_DEFAULTS.doseIn,
         yieldOut: bean?.optimalYieldOut ?? SHOT_DEFAULTS.yieldOut,
         extractionTime: bean?.optimalExtractionTime ?? SHOT_DEFAULTS.extractionTime
+      };
+    },
+    getShotDialInDefaults(beanId) {
+      const reference = this.getBeanReferenceDefaults(beanId);
+      const lastShot = this.getLastShot(beanId);
+      if (!lastShot) return reference;
+      return {
+        grindSize: lastShot.grindSize ?? reference.grindSize,
+        doseIn: lastShot.doseIn ?? reference.doseIn,
+        yieldOut: lastShot.yieldOut ?? reference.yieldOut,
+        extractionTime: lastShot.extractionTime ?? reference.extractionTime
+      };
+    },
+    getDailyGuidance(beanId) {
+      const bean = this.getBeanById(beanId);
+      if (!bean) return null;
+      const lastShot = this.getLastShot(beanId);
+      if (lastShot) {
+        return {
+          type: 'last-shot',
+          label: 'Last shot',
+          recipe: this.getShotDialInDefaults(beanId),
+          sourceShot: lastShot,
+          assessment: this.getShotAssessment(lastShot),
+          notes: lastShot.notes || '',
+          date: lastShot.shotDate || lastShot.createdAt || ''
+        };
+      }
+      const hasReference = this.beanHasOptimalSettings(bean);
+      return {
+        type: hasReference ? 'best-dial-in' : 'app-defaults',
+        label: hasReference ? 'Best dial-in' : 'App defaults',
+        recipe: this.getBeanReferenceDefaults(beanId),
+        sourceShot: null,
+        assessment: null,
+        notes: '',
+        date: ''
       };
     },
 
@@ -2744,7 +2816,10 @@ function app() {
     },
     cancelEditingOptimal() { this.editingOptimalBeanId = null; },
 
-    openShotFormFromDaily() { this.openShotForm(this.dailySelectedBeanId); },
+    openShotFormFromDaily() {
+      if (!this.dailySelectedBeanId) return;
+      this.openShotForm(this.dailySelectedBeanId);
+    },
     openShotFormFromBean() { this.openShotForm(this.selectedBeanId); },
 
     closeShotForm() {
@@ -2757,7 +2832,7 @@ function app() {
 
     /** Get default value for shot form field:
      * editing => edited values
-     * new shot numeric fields => bean best dial-in with app-default fallback */
+     * new shot numeric fields => last shot, then bean best dial-in, then app defaults */
     getShotFormDefault(field) {
       // When editing, use the shotForm values that were populated in openShotFormForEdit
       if (this.editingShotId && this.shotForm[field] != null) {
@@ -2847,13 +2922,17 @@ function app() {
     deleteShot(id) {
       this.shots = this.shots.filter(s => s.id !== id);
       this.saveShots();
+      if (this.dailySelectedBeanId) {
+        this.dailyLastShot = this.getLastShot(this.dailySelectedBeanId);
+      }
     },
 
     onDailyBeanSelect() {
-      if (!this.dailySelectedBeanId) return;
-      const lastShot = this.getLastShot(this.dailySelectedBeanId);
-      this.dailyLastShot = lastShot;
-      this.openShotFormFromDaily();
+      if (!this.dailySelectedBeanId) {
+        this.dailyLastShot = null;
+        return;
+      }
+      this.dailyLastShot = this.getLastShot(this.dailySelectedBeanId);
     },
 
     get todayFormatted() {
@@ -2877,6 +2956,34 @@ function app() {
         hour: 'numeric',
         minute: '2-digit'
       });
+    },
+    formatShotRecipe(recipe) {
+      if (!recipe) return '';
+      const formatNumber = (value) => {
+        const n = Number(value);
+        if (!Number.isFinite(n)) return '';
+        return Number.isInteger(n) ? String(n) : n.toFixed(1).replace(/\.0$/, '');
+      };
+      const parts = [];
+      if (recipe.grindSize != null) {
+        parts.push('Grind ' + formatNumber(recipe.grindSize));
+      }
+      if (recipe.doseIn != null && recipe.yieldOut != null) {
+        const doseIn = Number(recipe.doseIn);
+        const yieldOut = Number(recipe.yieldOut);
+        const ratio = Number.isFinite(doseIn) && doseIn > 0 && Number.isFinite(yieldOut)
+          ? ' (1:' + (yieldOut / doseIn).toFixed(1) + ')'
+          : '';
+        parts.push(formatNumber(recipe.doseIn) + 'g -> ' + formatNumber(recipe.yieldOut) + 'g' + ratio);
+      } else if (recipe.doseIn != null) {
+        parts.push(formatNumber(recipe.doseIn) + 'g in');
+      } else if (recipe.yieldOut != null) {
+        parts.push(formatNumber(recipe.yieldOut) + 'g out');
+      }
+      if (recipe.extractionTime != null) {
+        parts.push(formatNumber(recipe.extractionTime) + 's');
+      }
+      return parts.join(' \u00b7 ');
     },
     formatRoastDate(dateStr) {
       if (!dateStr) return '';
