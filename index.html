@@ -256,15 +256,13 @@ textarea.form-input { min-height: 80px; resize: vertical; line-height: 1.5; }
 .shot-visualizer-fill { height: 100%; width: 0; border-radius: 999px; background: var(--amber-dark); transition: width 0.2s ease; }
 .shot-visualizer-fill.good { background: var(--freshness-optimal); }
 .shot-visualizer-fill.warning { background: var(--freshness-past); }
-.shot-visualizer-point { position: absolute; top: 50%; left: 0; width: 12px; height: 12px; border: 2px solid #FFFCF7; border-radius: 50%; background: var(--amber-dark); box-shadow: 0 1px 4px rgba(44,24,16,0.24); transform: translate(-50%, -50%); transition: left 0.2s ease; }
-.shot-visualizer-point.good { background: var(--freshness-optimal); }
-.shot-visualizer-point.warning { background: var(--freshness-past); }
+.shot-visualizer-point { position: absolute; top: 50%; left: 0; width: 2px; height: 14px; border-radius: 999px; background: var(--espresso); box-shadow: 0 0 0 1px rgba(255,252,247,0.9), 0 1px 3px rgba(44,24,16,0.22); transform: translate(-50%, -50%); transition: left 0.2s ease; }
 .shot-visualizer.compact { padding: 0; margin-top: 8px; }
 .shot-visualizer.compact .shot-visualizer-row { grid-template-columns: 38px 1fr 44px; gap: 6px; }
 .shot-visualizer.compact .shot-visualizer-label { font-size: 10px; letter-spacing: 0.4px; }
 .shot-visualizer.compact .shot-visualizer-value { font-size: 11px; }
 .shot-visualizer.compact .shot-visualizer-track { height: 6px; }
-.shot-visualizer.compact .shot-visualizer-point { width: 10px; height: 10px; border-width: 2px; }
+.shot-visualizer.compact .shot-visualizer-point { height: 12px; }
 
 /* Shot rating row: inline rating buttons + date picker */
 .shot-rating-row { display: flex; align-items: flex-start; gap: 12px; flex-wrap: wrap; }
@@ -732,7 +730,7 @@ textarea.form-input { min-height: 80px; resize: vertical; line-height: 1.5; }
                           <div class="shot-visualizer-track">
                             <span class="shot-visualizer-target ratio"></span>
                             <span class="shot-visualizer-fill" :class="getShotMetrics(shot)?.assessmentStatus" :style="'width: ' + (getShotMetrics(shot)?.ratioPct || 0) + '%'"></span>
-                            <span class="shot-visualizer-point" :class="getShotMetrics(shot)?.assessmentStatus" :style="'left: ' + (getShotMetrics(shot)?.ratioPct || 0) + '%'"></span>
+                            <span class="shot-visualizer-point" :style="'left: ' + (getShotMetrics(shot)?.ratioPct || 0) + '%'"></span>
                           </div>
                           <span class="shot-visualizer-value" x-text="getShotMetrics(shot)?.ratioLabel"></span>
                         </div>
@@ -741,7 +739,7 @@ textarea.form-input { min-height: 80px; resize: vertical; line-height: 1.5; }
                           <div class="shot-visualizer-track">
                             <span class="shot-visualizer-target time"></span>
                             <span class="shot-visualizer-fill" :class="getShotMetrics(shot)?.assessmentStatus" :style="'width: ' + (getShotMetrics(shot)?.timePct || 0) + '%'"></span>
-                            <span class="shot-visualizer-point" :class="getShotMetrics(shot)?.assessmentStatus" :style="'left: ' + (getShotMetrics(shot)?.timePct || 0) + '%'"></span>
+                            <span class="shot-visualizer-point" :style="'left: ' + (getShotMetrics(shot)?.timePct || 0) + '%'"></span>
                           </div>
                           <span class="shot-visualizer-value" x-text="getShotMetrics(shot)?.timeLabel"></span>
                         </div>
@@ -1010,7 +1008,7 @@ textarea.form-input { min-height: 80px; resize: vertical; line-height: 1.5; }
                         <div class="shot-visualizer-track">
                           <span class="shot-visualizer-target ratio"></span>
                           <span class="shot-visualizer-fill" :class="getShotMetrics(shot)?.assessmentStatus" :style="'width: ' + (getShotMetrics(shot)?.ratioPct || 0) + '%'"></span>
-                          <span class="shot-visualizer-point" :class="getShotMetrics(shot)?.assessmentStatus" :style="'left: ' + (getShotMetrics(shot)?.ratioPct || 0) + '%'"></span>
+                          <span class="shot-visualizer-point" :style="'left: ' + (getShotMetrics(shot)?.ratioPct || 0) + '%'"></span>
                         </div>
                         <span class="shot-visualizer-value" x-text="getShotMetrics(shot)?.ratioLabel"></span>
                       </div>
@@ -1019,7 +1017,7 @@ textarea.form-input { min-height: 80px; resize: vertical; line-height: 1.5; }
                         <div class="shot-visualizer-track">
                           <span class="shot-visualizer-target time"></span>
                           <span class="shot-visualizer-fill" :class="getShotMetrics(shot)?.assessmentStatus" :style="'width: ' + (getShotMetrics(shot)?.timePct || 0) + '%'"></span>
-                          <span class="shot-visualizer-point" :class="getShotMetrics(shot)?.assessmentStatus" :style="'left: ' + (getShotMetrics(shot)?.timePct || 0) + '%'"></span>
+                          <span class="shot-visualizer-point" :style="'left: ' + (getShotMetrics(shot)?.timePct || 0) + '%'"></span>
                         </div>
                         <span class="shot-visualizer-value" x-text="getShotMetrics(shot)?.timeLabel"></span>
                       </div>
@@ -1295,7 +1293,7 @@ textarea.form-input { min-height: 80px; resize: vertical; line-height: 1.5; }
           <div class="shot-visualizer-track">
             <span class="shot-visualizer-target ratio"></span>
             <span class="shot-visualizer-fill" :class="metrics?.assessmentStatus" :style="'width: ' + (metrics?.ratioPct || 0) + '%'"></span>
-            <span class="shot-visualizer-point" :class="metrics?.assessmentStatus" :style="'left: ' + (metrics?.ratioPct || 0) + '%'"></span>
+            <span class="shot-visualizer-point" :style="'left: ' + (metrics?.ratioPct || 0) + '%'"></span>
           </div>
           <span class="shot-visualizer-value" x-text="metrics?.ratioLabel"></span>
         </div>
@@ -1304,7 +1302,7 @@ textarea.form-input { min-height: 80px; resize: vertical; line-height: 1.5; }
           <div class="shot-visualizer-track">
             <span class="shot-visualizer-target time"></span>
             <span class="shot-visualizer-fill" :class="metrics?.assessmentStatus" :style="'width: ' + (metrics?.timePct || 0) + '%'"></span>
-            <span class="shot-visualizer-point" :class="metrics?.assessmentStatus" :style="'left: ' + (metrics?.timePct || 0) + '%'"></span>
+            <span class="shot-visualizer-point" :style="'left: ' + (metrics?.timePct || 0) + '%'"></span>
           </div>
           <span class="shot-visualizer-value" x-text="metrics?.timeLabel"></span>
         </div>
