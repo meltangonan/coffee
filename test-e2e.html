@@ -193,6 +193,50 @@ async function runTests() {
     });
   });
 
+  await test('archivedBeans sorts by date added, newest first', async () => {
+    const testBeans = [
+      {
+        id: 'e2e-archived-added-old',
+        name: 'E2E Archived Added Old',
+        roaster: 'E2E Roaster',
+        roastDate: '2026-05-18',
+        rating: 3,
+        notes: '',
+        isArchived: true,
+        optimalGrindSize: 7,
+        optimalDoseIn: 18,
+        optimalYieldOut: 36,
+        optimalExtractionTime: 27,
+        createdAt: '2026-01-01T08:00:00.000Z'
+      },
+      {
+        id: 'e2e-archived-added-new',
+        name: 'E2E Archived Added New',
+        roaster: 'E2E Roaster',
+        roastDate: '2026-01-01',
+        rating: 3,
+        notes: '',
+        isArchived: true,
+        optimalGrindSize: 7,
+        optimalDoseIn: 18,
+        optimalYieldOut: 36,
+        optimalExtractionTime: 27,
+        createdAt: '2026-02-01T08:00:00.000Z'
+      }
+    ];
+
+    app.beans.push(...testBeans);
+    try {
+      const archivedIds = app.archivedBeans.map(b => b.id);
+      assert(
+        archivedIds.indexOf('e2e-archived-added-new') < archivedIds.indexOf('e2e-archived-added-old'),
+        'More recently added archived bean should appear first'
+      );
+    } finally {
+      app.beans = app.beans.filter(b => !testBeans.some(testBean => testBean.id === b.id));
+    }
+  });
+
   await test('getFreshness returns correct status for each stage', async () => {
     // Create test beans with different roast dates
     const today = new Date().toISOString().slice(0, 10);
