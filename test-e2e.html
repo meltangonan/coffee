@@ -321,6 +321,234 @@ async function runTests() {
     });
   });
 
+  await test('Stats shot counts render from seeded shots', async () => {
+    const originalShots = app.shots;
+    const today = localDateStr();
+    app.shots = [
+      { id: 'stats-today', beanId: 'e2e-active-bean', shotDate: today, createdAt: new Date().toISOString() },
+      { id: 'stats-old', beanId: 'e2e-active-bean', shotDate: '2000-01-01', createdAt: '2000-01-01T08:00:00.000Z' }
+    ];
+
+    try {
+      assertEqual(app.statsTotalShots, 2, 'Total shots should include all fixture shots');
+      assertEqual(app.statsShotsThisMonth, 1, 'This month should include the current-month fixture shot');
+      assertEqual(app.statsShotsThisWeek, 1, 'This week should include the current-week fixture shot');
+
+      app.activateTab('stats');
+      await wait(50);
+      const doc = appWindow.document;
+      assertEqual(doc.querySelector('[data-testid="stats-total-shots"]').textContent, '2');
+      assertEqual(doc.querySelector('[data-testid="stats-month-shots"]').textContent, '1');
+      assertEqual(doc.querySelector('[data-testid="stats-week-shots"]').textContent, '1');
+    } finally {
+      app.shots = originalShots;
+    }
+  });
+
+  await test('Stats most-pulled beans aggregate copied bags', async () => {
+    const originalBeans = app.beans;
+    const originalShots = app.shots;
+    app.beans = [
+      {
+        id: 'stats-new-bag',
+        name: 'Stats Blend',
+        roaster: 'E2E Roaster',
+        roastDate: '2026-05-01',
+        rating: null,
+        notes: '',
+        isArchived: false,
+        createdAt: '2026-05-01T08:00:00.000Z'
+      },
+      {
+        id: 'stats-old-bag',
+        name: ' stats blend ',
+        roaster: 'E2E Roaster',
+        roastDate: '2026-04-01',
+        rating: null,
+        notes: '',
+        isArchived: true,
+        createdAt: '2026-04-01T08:00:00.000Z'
+      }
+    ];
+    app.shots = [
+      { id: 'stats-shot-1', beanId: 'stats-old-bag', shotDate: localDateStr(), createdAt: new Date().toISOString() },
+      { id: 'stats-shot-2', beanId: 'stats-old-bag', shotDate: localDateStr(), createdAt: new Date().toISOString() },
+      { id: 'stats-shot-3', beanId: 'stats-new-bag', shotDate: localDateStr(), createdAt: new Date().toISOString() }
+    ];
+
+    try {
+      const topBeans = app.statsMostPulledBeans;
+      assertEqual(topBeans[0].key, 'stats blend|e2e roaster');
+      assertEqual(topBeans[0].shotCount, 3);
+      assertEqual(topBeans[0].bagCount, 2);
+      assert(!topBeans[0].isArchived, 'Mixed active/archived group should not be marked archived');
+
+      app.activateTab('stats');
+      await wait(50);
+      const cardText = appWindow.document.querySelector('[data-testid="stats-most-pulled-card"]').textContent;
+      assert(cardText.includes('Stats Blend'), 'Stats card should show grouped bean');
+      assert(cardText.includes('2 bags'), 'Stats card should show bag count');
+      assert(cardText.includes('3 shots'), 'Stats card should show aggregated shot count');
+    } finally {
+      app.beans = originalBeans;
+      app.shots = originalShots;
+    }
+  });
+
+  await test('Stats quality breakdown renders computed values', async () => {
+    const originalShots = app.shots;
+    app.shots = [
+      {
+        id: 'summary-shot-1',
+        beanId: 'e2e-active-bean',
+        grindSize: 5,
+        doseIn: 18,
+        yieldOut: 36,
+        extractionTime: 25,
+        rating: 'perfect',
+        shotDate: localDateStr(),
+        createdAt: new Date().toISOString()
+      },
+      {
+        id: 'summary-shot-2',
+        beanId: 'e2e-active-bean',
+        grindSize: 7,
+        doseIn: 20,
+        yieldOut: 30,
+        extractionTime: 35,
+        rating: 'bad',
+        shotDate: localDateStr(),
+        createdAt: new Date().toISOString()
+      },
+      {
+        id: 'summary-shot-3',
+        beanId: 'e2e-active-bean',
+        grindSize: 6,
+        doseIn: 18,
+        yieldOut: null,
+        extractionTime: null,
+        rating: null,
+        shotDate: localDateStr(),
+        createdAt: new Date().toISOString()
+      }
+    ];
+
+    try {
+      assertEqual(app.statsQualityBreakdown.ratedTotal, 2);
+      assertEqual(app.statsQualityBreakdown.items.find(item => item.rating === 'bad').percentage, 50);
+      assertEqual(app.statsQualityBreakdown.items.find(item => item.rating === 'perfect').percentage, 50);
+
+      app.activateTab('stats');
+      await wait(50);
+      const doc = appWindow.document;
+      assert(!doc.querySelector('[data-testid="stats-grind-card"]'), 'Aggregate grind card should not render');
+      assert(!doc.querySelector('[data-testid="stats-dial-in-card"]'), 'Aggregate dial-in card should not render');
+      assert(doc.querySelector('[data-testid="stats-quality-bad"]').textContent.includes('1 · 50%'));
+      assert(doc.querySelector('[data-testid="stats-quality-perfect"]').textContent.includes('1 · 50%'));
+    } finally {
+      app.shots = originalShots;
+    }
+  });
+
+  await test('Bean detail trend charts render with two or more shots', async () => {
+    const originalShots = app.shots;
+    app.shots = [
+      {
+        id: 'trend-shot-2',
+        beanId: 'e2e-active-bean',
+        grindSize: 7,
+        doseIn: 18,
+        yieldOut: 45,
+        extractionTime: 31,
+        rating: null,
+        shotDate: '2026-01-02',
+        createdAt: '2026-01-02T08:00:00.000Z'
+      },
+      {
+        id: 'trend-shot-1',
+        beanId: 'e2e-active-bean',
+        grindSize: 5,
+        doseIn: 18,
+        yieldOut: 36,
+        extractionTime: 25,
+        rating: null,
+        shotDate: '2026-01-01',
+        createdAt: '2026-01-01T08:00:00.000Z'
+      }
+    ];
+
+    try {
+      assertEqual(app.getBeanTrendShotCount('e2e-active-bean'), 2);
+      assertEqual(app.getBeanShotTrend('e2e-active-bean', 'grind')[0].value, 5);
+
+      app.activateTab('beans');
+      app.selectBean('e2e-active-bean');
+      await wait(50);
+
+      const doc = appWindow.document;
+      const fallback = doc.querySelector('[data-testid="bean-trends-empty"]');
+      const charts = doc.querySelectorAll('.trend-chart');
+      assert(appWindow.getComputedStyle(fallback).display === 'none', 'Fallback should be hidden when chart data is available');
+      assertEqual(charts.length, 3);
+      assert(!doc.querySelector('[data-testid="bean-trend-grind"]').textContent.includes('Latest'), 'Trend cards should not show latest callouts');
+      assert(!doc.querySelector('[data-testid="bean-trend-grind"]').textContent.includes('Adjustment'), 'Trend cards should not show top-right meta labels');
+      assert(!doc.querySelector('[data-testid="bean-trends-section"]').textContent.includes('Shot-by-shot plots'), 'Trend section should not show description copy');
+      assert(doc.querySelector('[data-testid="bean-trend-grind"]').textContent.includes('1/1'));
+      assert(doc.querySelector('[data-testid="bean-trend-grind"]').textContent.includes('1/2'));
+      assert(!doc.querySelector('[data-testid="bean-trend-grind"]').textContent.includes('Shot 1'));
+      assert(doc.querySelector('[data-testid="bean-trend-ratio"]').textContent.includes('Ratio'));
+      assert(doc.querySelector('[data-testid="bean-trend-extractionTime"]').textContent.includes('Time'));
+      assert(doc.querySelector('[data-testid="bean-trend-grind"] .trend-chart-line').getAttribute('d').startsWith('M '));
+      assert(doc.querySelector('[data-testid="bean-trend-grind"] .trend-chart-gridline').getAttribute('d').includes('L 232'));
+      const grindCard = doc.querySelector('[data-testid="bean-trend-grind"]');
+      const trendSvgBox = grindCard.querySelector('.trend-chart-svg').getBoundingClientRect();
+      const trendPlotBox = grindCard.querySelector('.trend-plot').getBoundingClientRect();
+      assert(Math.abs(trendSvgBox.width - trendPlotBox.width) < 1, 'Trend SVG should fill the plot column width');
+      const firstLabelBox = grindCard.querySelector('.trend-axis-date-first').getBoundingClientRect();
+      const lastLabelBox = grindCard.querySelector('.trend-axis-date-last').getBoundingClientRect();
+      const firstPointX = trendSvgBox.left + trendSvgBox.width / 30;
+      const lastPointX = trendSvgBox.right - trendSvgBox.width / 30;
+      assert(Math.abs((firstLabelBox.left + firstLabelBox.width / 2) - firstPointX) < 2, 'First x-axis label should center under the first data point');
+      assert(Math.abs((lastLabelBox.left + lastLabelBox.width / 2) - lastPointX) < 2, 'Last x-axis label should center under the last data point');
+      assert(appWindow.getComputedStyle(doc.querySelector('[data-testid="bean-trend-ratio"] .trend-chart-band')).display !== 'none', 'Ratio chart should show a target band');
+      assert(appWindow.getComputedStyle(doc.querySelector('[data-testid="bean-trend-extractionTime"] .trend-chart-band')).display !== 'none', 'Extraction time chart should show a target band');
+    } finally {
+      app.shots = originalShots;
+    }
+  });
+
+  await test('Bean detail trend charts show fallback with fewer than two shots', async () => {
+    const originalShots = app.shots;
+    app.shots = [
+      {
+        id: 'trend-single-shot',
+        beanId: 'e2e-active-bean',
+        grindSize: 5,
+        doseIn: 18,
+        yieldOut: 36,
+        extractionTime: 25,
+        rating: null,
+        shotDate: '2026-01-01',
+        createdAt: '2026-01-01T08:00:00.000Z'
+      }
+    ];
+
+    try {
+      app.activateTab('beans');
+      app.selectBean('e2e-active-bean');
+      await wait(50);
+
+      const doc = appWindow.document;
+      const fallback = doc.querySelector('[data-testid="bean-trends-empty"]');
+      const chartGrid = doc.querySelector('.trend-chart-grid');
+      assert(appWindow.getComputedStyle(fallback).display !== 'none', 'Fallback should be visible with fewer than two shots');
+      assert(fallback.textContent.includes('Log a couple of shots to see trends'));
+      assert(appWindow.getComputedStyle(chartGrid).display === 'none', 'Chart grid should be hidden with fewer than two shots');
+    } finally {
+      app.shots = originalShots;
+    }
+  });
+
   await test('sortedBeans puts non-archived before archived', async () => {
     const sorted = app.sortedBeans;
     let foundArchived = false;

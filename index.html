@@ -308,6 +308,55 @@ textarea.form-input { min-height: 80px; resize: vertical; line-height: 1.5; }
 .empty-state-title { font-family: var(--font-heading); font-size: 20px; color: var(--text-secondary); margin-bottom: 8px; }
 .empty-state-text { color: var(--text-muted); font-size: 14px; margin-bottom: 20px; line-height: 1.5; }
 
+/* Stats tab */
+.stats-description { color: var(--text-muted); font-size: 14px; line-height: 1.5; margin-bottom: 20px; }
+.stats-grid { display: grid; gap: 12px; }
+.stats-card { background: white; border-radius: var(--radius); padding: 16px; box-shadow: var(--shadow-sm); border: 1px solid rgba(44,24,16,0.05); }
+.stats-card-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.7px; color: var(--text-muted); margin-bottom: 12px; }
+.stats-count-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+.stats-count-item { background: var(--cream-dark); border-radius: var(--radius-sm); padding: 12px 10px; text-align: center; }
+.stats-count-value { display: block; font-family: var(--font-heading); font-size: 28px; font-weight: 700; line-height: 1; color: var(--espresso); }
+.stats-count-label { display: block; margin-top: 6px; font-size: 11px; font-weight: 600; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.5px; }
+.stats-ranked-list { display: flex; flex-direction: column; gap: 10px; }
+.stats-ranked-item { display: grid; grid-template-columns: 26px 1fr auto; align-items: center; gap: 10px; }
+.stats-rank { width: 26px; height: 26px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; background: rgba(212,165,116,0.18); color: var(--amber-dark); font-size: 12px; font-weight: 700; }
+.stats-ranked-name { font-size: 14px; font-weight: 600; color: var(--text-primary); line-height: 1.25; }
+.stats-ranked-meta { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; margin-top: 2px; font-size: 12px; color: var(--text-muted); }
+.stats-ranked-count { font-size: 13px; font-weight: 700; color: var(--espresso); white-space: nowrap; }
+.stats-quality-list { display: flex; flex-direction: column; gap: 10px; }
+.stats-quality-row { display: grid; grid-template-columns: 76px 1fr 70px; align-items: center; gap: 10px; }
+.stats-quality-track { height: 8px; border-radius: 999px; background: rgba(44,24,16,0.08); overflow: hidden; }
+.stats-quality-fill { display: block; height: 100%; border-radius: inherit; background: var(--amber-dark); }
+.stats-quality-fill.bad { background: var(--freshness-past); }
+.stats-quality-fill.okay { background: var(--amber-dark); }
+.stats-quality-fill.great { background: #4F6FA5; }
+.stats-quality-fill.perfect { background: var(--freshness-optimal); }
+.stats-quality-count { font-size: 12px; font-weight: 700; color: var(--espresso); text-align: right; white-space: nowrap; }
+
+/* Bean trend charts */
+.bean-trends-header { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 10px; }
+.bean-trends-count { font-size: 12px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; white-space: nowrap; }
+.trend-empty-state { background: rgba(255,255,255,0.72); border: 1px dashed rgba(44,24,16,0.14); border-radius: var(--radius); padding: 16px; color: var(--text-muted); font-size: 14px; text-align: center; }
+.trend-chart-grid { display: grid; gap: 10px; }
+.trend-chart { background: white; border-radius: var(--radius); padding: 12px; box-shadow: var(--shadow-sm); border: 1px solid rgba(44,24,16,0.05); }
+.trend-chart-header { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; margin-bottom: 10px; }
+.trend-chart-title { font-size: 13px; font-weight: 700; color: var(--text-secondary); }
+.trend-chart-body { display: grid; grid-template-columns: 14px 42px minmax(0, 1fr); gap: 6px; align-items: stretch; }
+.trend-axis-title { display: flex; align-items: center; justify-content: center; color: var(--text-muted); font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.4px; writing-mode: vertical-rl; transform: rotate(180deg); }
+.trend-y-axis-values { display: flex; flex-direction: column; justify-content: space-between; min-height: 96px; color: var(--text-muted); font-size: 10px; font-weight: 600; text-align: right; }
+.trend-plot { min-width: 0; position: relative; padding-bottom: 18px; }
+/* Date labels are absolutely positioned at the exact viewBox fractions of the data points
+   (8/240 = 1/30 and 232/240 = 29/30), so they always sit directly under the markers. */
+.trend-axis-date { position: absolute; bottom: 0; transform: translateX(-50%); white-space: nowrap; color: var(--text-muted); font-size: 10px; font-weight: 700; letter-spacing: 0.2px; }
+.trend-axis-date-first { left: calc(100% / 30); }
+.trend-axis-date-last { left: calc(100% * 29 / 30); }
+.trend-chart-svg { display: block; width: 100%; height: 96px; overflow: visible; }
+.trend-chart-gridline { fill: none; stroke: rgba(44,24,16,0.09); stroke-width: 1; vector-effect: non-scaling-stroke; }
+.trend-chart-axis { fill: none; stroke: rgba(44,24,16,0.22); stroke-width: 1.2; stroke-linecap: round; stroke-linejoin: round; vector-effect: non-scaling-stroke; }
+.trend-chart-band { fill: rgba(212,165,116,0.16); }
+.trend-chart-line { fill: none; stroke: var(--amber-dark); stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; vector-effect: non-scaling-stroke; }
+.trend-chart-marks { fill: none; stroke: var(--espresso); stroke-width: 1.4; stroke-linecap: round; vector-effect: non-scaling-stroke; opacity: 0.72; }
+
 /* Today tab — no beans onboarding state */
 .today-no-beans-state { display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 60px 24px 48px; min-height: calc(100dvh - var(--tab-total) - var(--safe-top) - 80px); }
 .today-no-beans-icon { width: 96px; height: 96px; margin-bottom: 24px; opacity: 0.85; }
@@ -1003,6 +1052,51 @@ textarea.form-input { min-height: 80px; resize: vertical; line-height: 1.5; }
           <p class="text-secondary" style="font-style: italic;" x-text="selectedBean?.notes"></p>
         </div>
 
+        <!-- Bean Trends -->
+        <div class="bean-trends mb-20" data-testid="bean-trends-section">
+          <div class="bean-trends-header">
+            <h3 class="heading-md">Trends</h3>
+            <span class="bean-trends-count" x-text="getBeanTrendShotCount(selectedBeanId) + (getBeanTrendShotCount(selectedBeanId) === 1 ? ' shot' : ' shots')"></span>
+          </div>
+
+          <div x-show="!hasBeanTrendData(selectedBeanId)" class="trend-empty-state" data-testid="bean-trends-empty">
+            Log a couple of shots to see trends.
+          </div>
+
+          <div x-show="hasBeanTrendData(selectedBeanId)" class="trend-chart-grid">
+            <template x-for="chart in getBeanTrendCharts(selectedBeanId)" :key="chart.metric">
+              <section class="trend-chart" :data-testid="'bean-trend-' + chart.metric" :aria-label="chart.label + ' trend'">
+                <div class="trend-chart-header">
+                  <span class="trend-chart-title" x-text="chart.label"></span>
+                </div>
+                <div class="trend-chart-body">
+                  <div class="trend-axis-title" x-text="chart.yAxisLabel"></div>
+                  <div class="trend-y-axis-values">
+                    <template x-for="tick in chart.yTicks" :key="chart.metric + '-' + tick.label">
+                      <span x-text="tick.label"></span>
+                    </template>
+                  </div>
+                  <div class="trend-plot">
+                    <svg class="trend-chart-svg" :viewBox="chart.geometry.viewBox" preserveAspectRatio="none" aria-hidden="true">
+                      <path class="trend-chart-gridline" :d="chart.geometry.gridPath"></path>
+                      <path class="trend-chart-axis" :d="chart.geometry.axisPath"></path>
+                      <rect x-show="chart.geometry.targetBand" class="trend-chart-band"
+                            :x="chart.geometry.targetBand?.x || 0"
+                            :y="chart.geometry.targetBand?.y || 0"
+                            :width="chart.geometry.targetBand?.width || 0"
+                            :height="chart.geometry.targetBand?.height || 0"></rect>
+                      <path class="trend-chart-line" :d="chart.geometry.path"></path>
+                      <path class="trend-chart-marks" :d="chart.geometry.markPath"></path>
+                    </svg>
+                    <span class="trend-axis-date trend-axis-date-first" x-text="chart.firstDateLabel"></span>
+                    <span class="trend-axis-date trend-axis-date-last" x-text="chart.lastDateLabel"></span>
+                  </div>
+                </div>
+              </section>
+            </template>
+          </div>
+        </div>
+
         <!-- Shot History -->
         <div class="mb-20" x-data="{ showAllShots: false }">
           <div style="display: flex; align-items: center; justify-content: space-between;" class="mb-12">
@@ -1267,6 +1361,77 @@ textarea.form-input { min-height: 80px; resize: vertical; line-height: 1.5; }
           <div class="empty-state-text">No beans have their peak freshness window this month.</div>
         </div>
         <p class="calendar-note">Peak freshness window: ~7–21 days post-roast, when off-gassing has settled and flavors are at their best.</p>
+      </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════
+         STATS TAB
+         ═══════════════════════════════════════ -->
+    <div x-cloak class="tab-pane" :style="tabPaneStyle('stats')">
+      <h1 class="heading-xl mb-12">Brewing Stats</h1>
+      <p class="stats-description">Your shot log, summarized into the patterns that help you dial in faster.</p>
+
+      <div x-show="!statsHasData" class="empty-state">
+        <div class="empty-state-icon">&#128202;</div>
+        <div class="empty-state-title">No stats yet</div>
+        <div class="empty-state-text">Log a few shots to see your brewing patterns over time.</div>
+      </div>
+
+      <div x-show="statsHasData" class="stats-grid">
+        <section class="stats-card" aria-label="Shot counts">
+          <div class="stats-card-label">Shots logged</div>
+          <div class="stats-count-grid">
+            <div class="stats-count-item">
+              <span class="stats-count-value" data-testid="stats-total-shots" x-text="statsTotalShots"></span>
+              <span class="stats-count-label">All time</span>
+            </div>
+            <div class="stats-count-item">
+              <span class="stats-count-value" data-testid="stats-month-shots" x-text="statsShotsThisMonth"></span>
+              <span class="stats-count-label">Month</span>
+            </div>
+            <div class="stats-count-item">
+              <span class="stats-count-value" data-testid="stats-week-shots" x-text="statsShotsThisWeek"></span>
+              <span class="stats-count-label">Week</span>
+            </div>
+          </div>
+        </section>
+
+        <section class="stats-card" aria-label="Most pulled beans" data-testid="stats-most-pulled-card">
+          <div class="stats-card-label">Most pulled beans</div>
+          <div x-show="statsMostPulledBeans.length === 0" class="text-muted">No bean stats yet.</div>
+          <div x-show="statsMostPulledBeans.length > 0" class="stats-ranked-list">
+            <template x-for="(item, index) in statsMostPulledBeans" :key="item.key">
+              <div class="stats-ranked-item">
+                <span class="stats-rank" x-text="index + 1"></span>
+                <div>
+                  <div class="stats-ranked-name" x-text="item.name"></div>
+                  <div class="stats-ranked-meta">
+                    <span x-text="item.roaster"></span>
+                    <span x-show="item.bagCount > 1" x-text="item.bagCount + ' bags'"></span>
+                    <span x-show="item.isArchived" class="badge badge-archived">Archived</span>
+                  </div>
+                </div>
+                <div class="stats-ranked-count"><span x-text="item.shotCount"></span> shots</div>
+              </div>
+            </template>
+          </div>
+        </section>
+
+        <section class="stats-card" aria-label="Quality breakdown" data-testid="stats-quality-card">
+          <div class="stats-card-label">Quality breakdown</div>
+          <div x-show="statsQualityBreakdown.ratedTotal === 0" class="text-muted">No rated shots yet.</div>
+          <div x-show="statsQualityBreakdown.ratedTotal > 0" class="stats-quality-list">
+            <template x-for="item in statsQualityBreakdown.items" :key="item.rating">
+              <div class="stats-quality-row" :data-testid="'stats-quality-' + item.rating">
+                <span class="shot-quality-badge" :class="shotQualityClass(item.rating)" x-text="shotQualityLabel(item.rating)"></span>
+                <div class="stats-quality-track">
+                  <span class="stats-quality-fill" :class="item.rating" :style="'width: ' + item.percentage + '%'"></span>
+                </div>
+                <span class="stats-quality-count"><span x-text="item.count"></span> · <span x-text="item.percentage"></span>%</span>
+              </div>
+            </template>
+          </div>
+        </section>
       </div>
     </div>
 
@@ -1655,6 +1820,10 @@ textarea.form-input { min-height: 80px; resize: vertical; line-height: 1.5; }
       <span class="tab-icon">&#128197;</span>
       <span>Calendar</span>
     </button>
+    <button class="tab-btn" :class="{ 'active': currentTab === 'stats' }" @click="activateTab('stats')">
+      <span class="tab-icon">&#128202;</span>
+      <span>Stats</span>
+    </button>
   </nav>
 
 </div>
@@ -1824,6 +1993,16 @@ const BAR_COLORS = ['#C2714F','#8B9E7C','#C4A34D','#7B5B8D','#5B8E8E','#B87333',
 const FRESHNESS_RESTING_DAYS = 7;
 const FRESHNESS_OPTIMAL_DAYS = 21;
 
+// Stats feature thresholds
+const STATS_TOP_BEANS_LIMIT = 5;
+const BEAN_TREND_MIN_SHOTS = 2;
+const BEAN_TREND_CHART_WIDTH = 240;
+const BEAN_TREND_CHART_HEIGHT = 96;
+const BEAN_TREND_CHART_PADDING_X = 8;
+const BEAN_TREND_CHART_PADDING_Y = 10;
+const BEAN_TREND_VALUE_PADDING_RATIO = 0.12;
+const SHOT_QUALITY_ORDER = ['bad', 'okay', 'great', 'perfect'];
+
 // Espresso extraction standards (universal targets)
 const EXTRACTION_TIME_FAST = 22;           // Below: under-extracted
 const EXTRACTION_TIME_SLIGHTLY_FAST = 25;  // 22-24: slightly fast
@@ -1855,6 +2034,274 @@ function localDateStr(d) {
 function addDays(date, days) { const d = new Date(date); d.setDate(d.getDate() + days); return d; }
 function daysBetween(d1, d2) { return Math.floor((new Date(d2) - new Date(d1)) / 86400000); }
 
+function parseStatsDate(value) {
+  if (!value) return null;
+  if (value instanceof Date) {
+    return new Date(value.getFullYear(), value.getMonth(), value.getDate());
+  }
+  const text = String(value);
+  const datePart = text.slice(0, 10);
+  if (/^\d{4}-\d{2}-\d{2}$/.test(datePart)) {
+    const [year, month, day] = datePart.split('-').map(Number);
+    return new Date(year, month - 1, day);
+  }
+  const parsed = new Date(text);
+  if (isNaN(parsed.getTime())) return null;
+  return new Date(parsed.getFullYear(), parsed.getMonth(), parsed.getDate());
+}
+
+function getShotStatsDate(shot) {
+  return parseStatsDate(shot?.shotDate || shot?.createdAt);
+}
+
+function getWeekStart(date) {
+  const d = parseStatsDate(date) || parseStatsDate(new Date());
+  const day = d.getDay();
+  const diff = day === 0 ? -6 : 1 - day;
+  d.setDate(d.getDate() + diff);
+  return d;
+}
+
+function getMonthStart(date) {
+  const d = parseStatsDate(date) || parseStatsDate(new Date());
+  return new Date(d.getFullYear(), d.getMonth(), 1);
+}
+
+function computeShotCounts(shots, refDate = new Date()) {
+  const allShots = Array.isArray(shots) ? shots : [];
+  const weekStart = getWeekStart(refDate);
+  const weekEnd = addDays(weekStart, 7);
+  const monthStart = getMonthStart(refDate);
+  const monthEnd = new Date(monthStart.getFullYear(), monthStart.getMonth() + 1, 1);
+  let thisWeek = 0;
+  let thisMonth = 0;
+  for (const shot of allShots) {
+    const shotDate = getShotStatsDate(shot);
+    if (!shotDate) continue;
+    if (shotDate >= weekStart && shotDate < weekEnd) thisWeek++;
+    if (shotDate >= monthStart && shotDate < monthEnd) thisMonth++;
+  }
+  return { total: allShots.length, thisWeek, thisMonth };
+}
+
+function computeMostPulledBeans(shots, beans, limit = STATS_TOP_BEANS_LIMIT) {
+  const counts = new Map();
+  for (const shot of Array.isArray(shots) ? shots : []) {
+    if (!shot?.beanId) continue;
+    counts.set(shot.beanId, (counts.get(shot.beanId) || 0) + 1);
+  }
+
+  const groups = new Map();
+  for (const bean of Array.isArray(beans) ? beans : []) {
+    const name = (bean.name || 'Unknown bean').trim();
+    const roaster = (bean.roaster || '').trim();
+    const key = (name.toLowerCase() + '|' + roaster.toLowerCase()).trim() || bean.id;
+    const group = groups.get(key) || {
+      key,
+      name,
+      roaster,
+      isArchived: true,
+      shotCount: 0,
+      bagCount: 0,
+      newestCreatedAt: ''
+    };
+    const createdAt = bean.createdAt || '';
+    const shouldUseBeanLabel = group.bagCount === 0
+      || (group.isArchived && !bean.isArchived)
+      || (group.isArchived === !!bean.isArchived && new Date(createdAt || 0) > new Date(group.newestCreatedAt || 0));
+    if (shouldUseBeanLabel) {
+      group.name = name;
+      group.roaster = roaster;
+      group.newestCreatedAt = createdAt;
+    }
+    group.isArchived = group.isArchived && !!bean.isArchived;
+    group.shotCount += counts.get(bean.id) || 0;
+    group.bagCount++;
+    groups.set(key, group);
+  }
+
+  return Array.from(groups.values())
+    .filter(group => group.shotCount > 0)
+    .sort((a, b) =>
+      (b.shotCount - a.shotCount)
+      || a.name.localeCompare(b.name)
+      || a.roaster.localeCompare(b.roaster)
+      || a.key.localeCompare(b.key)
+    )
+    .slice(0, limit)
+    .map(({ newestCreatedAt, ...group }) => group);
+}
+
+function computeQualityBreakdown(shots) {
+  const counts = Object.fromEntries(SHOT_QUALITY_ORDER.map(rating => [rating, 0]));
+  let ratedTotal = 0;
+  for (const shot of Array.isArray(shots) ? shots : []) {
+    const rating = normalizeRating(shot?.rating);
+    if (!rating || !(rating in counts)) continue;
+    counts[rating]++;
+    ratedTotal++;
+  }
+  return {
+    ratedTotal,
+    items: SHOT_QUALITY_ORDER.map(rating => ({
+      rating,
+      count: counts[rating],
+      percentage: ratedTotal ? Math.round((counts[rating] / ratedTotal) * 100) : 0
+    }))
+  };
+}
+
+function getShotCreatedAtTime(shot) {
+  const parsed = new Date(shot?.createdAt || '');
+  return isNaN(parsed.getTime()) ? 0 : parsed.getTime();
+}
+
+function getTrendMetricValue(shot, metric) {
+  if (!shot) return null;
+  if (metric === 'grind') {
+    const grindSize = Number(shot.grindSize);
+    return Number.isFinite(grindSize) && grindSize > 0 ? grindSize : null;
+  }
+  if (metric === 'ratio') {
+    const doseIn = Number(shot.doseIn);
+    const yieldOut = Number(shot.yieldOut);
+    return Number.isFinite(doseIn) && Number.isFinite(yieldOut) && doseIn > 0 && yieldOut > 0
+      ? yieldOut / doseIn
+      : null;
+  }
+  if (metric === 'extractionTime') {
+    const extractionTime = Number(shot.extractionTime);
+    return Number.isFinite(extractionTime) && extractionTime > 0 ? extractionTime : null;
+  }
+  return null;
+}
+
+function getBeanShotTrend(shots, beanId, metric) {
+  if (!Array.isArray(shots) || !beanId) return [];
+  return shots
+    .map((shot, index) => {
+      const value = getTrendMetricValue(shot, metric);
+      if (shot?.beanId !== beanId || value == null) return null;
+      const shotDate = getShotStatsDate(shot);
+      return {
+        id: shot.id || String(index),
+        shotDate: shot?.shotDate || shot?.createdAt || '',
+        createdAt: shot?.createdAt || '',
+        value,
+        orderDate: shotDate ? shotDate.getTime() : getShotCreatedAtTime(shot),
+        orderCreatedAt: getShotCreatedAtTime(shot),
+        orderIndex: index
+      };
+    })
+    .filter(Boolean)
+    .sort((a, b) =>
+      (a.orderDate - b.orderDate)
+      || (a.orderCreatedAt - b.orderCreatedAt)
+      || (a.orderIndex - b.orderIndex)
+    )
+    .map(({ orderDate, orderCreatedAt, orderIndex, ...point }) => point);
+}
+
+function roundTrendCoord(value) {
+  return Math.round(value * 100) / 100;
+}
+
+function getTrendScaleY(value, scale) {
+  if (!scale || scale.max === scale.min) return BEAN_TREND_CHART_HEIGHT / 2;
+  const plotHeight = scale.height - (scale.paddingY * 2);
+  return scale.paddingY + ((scale.max - value) / (scale.max - scale.min)) * plotHeight;
+}
+
+function buildTrendTargetBand(scale, targetRange) {
+  if (!targetRange || !scale) return null;
+  const targetMin = Number(targetRange.min);
+  const targetMax = Number(targetRange.max);
+  if (!Number.isFinite(targetMin) || !Number.isFinite(targetMax)) return null;
+  const clampedMin = Math.max(scale.min, Math.min(scale.max, targetMin));
+  const clampedMax = Math.max(scale.min, Math.min(scale.max, targetMax));
+  const yTop = roundTrendCoord(getTrendScaleY(clampedMax, scale));
+  const yBottom = roundTrendCoord(getTrendScaleY(clampedMin, scale));
+  return {
+    x: scale.paddingX,
+    y: yTop,
+    width: scale.width - (scale.paddingX * 2),
+    height: Math.max(1, roundTrendCoord(yBottom - yTop))
+  };
+}
+
+function buildTrendPath(series, options = {}) {
+  const values = (Array.isArray(series) ? series : [])
+    .map(point => Number(point?.value))
+    .filter(value => Number.isFinite(value));
+  const width = BEAN_TREND_CHART_WIDTH;
+  const height = BEAN_TREND_CHART_HEIGHT;
+  const paddingX = BEAN_TREND_CHART_PADDING_X;
+  const paddingY = BEAN_TREND_CHART_PADDING_Y;
+
+  if (values.length === 0) {
+    return {
+      width,
+      height,
+      viewBox: `0 0 ${width} ${height}`,
+      path: '',
+      markPath: '',
+      gridPath: '',
+      axisPath: '',
+      points: [],
+      min: null,
+      max: null,
+      latest: null,
+      yTicks: [],
+      targetBand: null,
+      scale: null
+    };
+  }
+
+  const domainValues = values.concat((options.domainValues || []).map(Number).filter(value => Number.isFinite(value)));
+  const min = Math.min(...values);
+  const max = Math.max(...values);
+  const domainMin = Math.min(...domainValues);
+  const domainMax = Math.max(...domainValues);
+  const isFlat = domainMin === domainMax;
+  const range = domainMax - domainMin;
+  const paddedMin = isFlat ? domainMin : domainMin - (range * BEAN_TREND_VALUE_PADDING_RATIO);
+  const paddedMax = isFlat ? domainMax : domainMax + (range * BEAN_TREND_VALUE_PADDING_RATIO);
+  const scale = { width, height, paddingX, paddingY, min: paddedMin, max: paddedMax };
+  const plotWidth = width - (paddingX * 2);
+  const lastIndex = Math.max(values.length - 1, 1);
+
+  const points = values.map((value, index) => {
+    const x = values.length === 1 ? width / 2 : paddingX + ((index / lastIndex) * plotWidth);
+    const y = isFlat ? height / 2 : getTrendScaleY(value, scale);
+    return { x: roundTrendCoord(x), y: roundTrendCoord(y), value };
+  });
+
+  const path = points.map((point, index) => `${index === 0 ? 'M' : 'L'} ${point.x} ${point.y}`).join(' ');
+  const markPath = points.map(point => `M ${point.x - 2} ${point.y} L ${point.x + 2} ${point.y} M ${point.x} ${point.y - 2} L ${point.x} ${point.y + 2}`).join(' ');
+  const yTickValues = isFlat
+    ? [min]
+    : [domainMax, (domainMax + domainMin) / 2, domainMin];
+  const yTicks = yTickValues.map(value => ({ value, y: roundTrendCoord(getTrendScaleY(value, scale)) }));
+  const gridPath = yTicks.map(tick => `M ${paddingX} ${tick.y} L ${width - paddingX} ${tick.y}`).join(' ');
+  const axisPath = `M ${paddingX} ${paddingY} L ${paddingX} ${height - paddingY} L ${width - paddingX} ${height - paddingY}`;
+  return {
+    width,
+    height,
+    viewBox: `0 0 ${width} ${height}`,
+    path,
+    markPath,
+    gridPath,
+    axisPath,
+    points,
+    min,
+    max,
+    latest: values[values.length - 1],
+    yTicks,
+    targetBand: buildTrendTargetBand(scale, options.targetRange),
+    scale
+  };
+}
+
 /** Convert any legacy numeric rating (1-5) or valid string to 'bad'|'okay'|'great'|'perfect'|null */
 function normalizeRating(r) {
   if (r == null) return null;
@@ -1868,7 +2315,7 @@ function normalizeRating(r) {
   return null;
 }
 
-const TAB_ORDER = ['today', 'beans', 'calendar'];
+const TAB_ORDER = ['today', 'beans', 'calendar', 'stats'];
 const FRESHNESS_SORT_ORDER = { optimal: 0, resting: 1, past: 2, unknown: 3 };
 const SHOT_DEFAULTS = { grindSize: 5, doseIn: 18, yieldOut: 36, extractionTime: 25 };
 const BACKUP_FORMAT_VERSION = 1;
@@ -2446,6 +2893,67 @@ function app() {
         .map(({ shot }) => shot);
     },
     getLastShot(beanId) { const ss = this.getShotsForBean(beanId); return ss.length > 0 ? ss[0] : null; },
+    get statsShotCounts() { return computeShotCounts(this.shots); },
+    get statsTotalShots() { return this.statsShotCounts.total; },
+    get statsShotsThisWeek() { return this.statsShotCounts.thisWeek; },
+    get statsShotsThisMonth() { return this.statsShotCounts.thisMonth; },
+    get statsMostPulledBeans() { return computeMostPulledBeans(this.shots, this.beans, STATS_TOP_BEANS_LIMIT); },
+    get statsQualityBreakdown() { return computeQualityBreakdown(this.shots); },
+    get statsHasData() { return this.statsTotalShots > 0; },
+    getBeanShotTrend(beanId, metric) { return getBeanShotTrend(this.shots, beanId, metric); },
+    getBeanTrendChart(beanId, metric) { return buildTrendPath(this.getBeanShotTrend(beanId, metric)); },
+    getBeanTrendShotCount(beanId) {
+      return Array.isArray(this.shots) ? this.shots.filter(shot => shot.beanId === beanId).length : 0;
+    },
+    hasBeanTrendData(beanId) {
+      return this.getBeanTrendShotCount(beanId) >= BEAN_TREND_MIN_SHOTS;
+    },
+    formatBeanTrendValue(metric, value) {
+      if (!Number.isFinite(Number(value))) return '\u2014';
+      if (metric === 'ratio') return '1:' + Number(value).toFixed(1);
+      if (metric === 'extractionTime') return Math.round(Number(value)) + 's';
+      return Number.isInteger(Number(value)) ? String(Number(value)) : Number(value).toFixed(1);
+    },
+    formatBeanTrendDate(point) {
+      const date = parseStatsDate(point?.shotDate || point?.createdAt);
+      return date ? `${date.getMonth() + 1}/${date.getDate()}` : '';
+    },
+    getBeanTrendCharts(beanId) {
+      return [
+        {
+          metric: 'grind',
+          label: 'Grind',
+          yAxisLabel: 'grind'
+        },
+        {
+          metric: 'ratio',
+          label: 'Ratio',
+          yAxisLabel: 'ratio',
+          targetRange: { min: BREW_RATIO_NEAR_TARGET_LOW, max: BREW_RATIO_NEAR_TARGET_HIGH }
+        },
+        {
+          metric: 'extractionTime',
+          label: 'Time',
+          yAxisLabel: 'seconds',
+          targetRange: { min: EXTRACTION_TIME_SLIGHTLY_FAST, max: EXTRACTION_TIME_STANDARD_MAX }
+        }
+      ].map(config => {
+        const series = this.getBeanShotTrend(beanId, config.metric);
+        const domainValues = config.targetRange ? [config.targetRange.min, config.targetRange.max] : [];
+        const geometry = buildTrendPath(series, { domainValues, targetRange: config.targetRange });
+        return {
+          ...config,
+          series,
+          geometry,
+          firstDateLabel: this.formatBeanTrendDate(series[0]),
+          lastDateLabel: this.formatBeanTrendDate(series[series.length - 1]),
+          yTicks: geometry.yTicks.map(tick => ({
+            ...tick,
+            label: this.formatBeanTrendValue(config.metric, tick.value)
+          }))
+        };
+      });
+    },
     getBeanReferenceDefaults(beanId) {
       const bean = this.getBeanById(beanId);
       return {

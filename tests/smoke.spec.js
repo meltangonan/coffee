@@ -45,6 +45,9 @@ test('app shell loads without runtime errors', async ({ page }) => {
   await expect(tabBar.getByRole('button', { name: /Today/ })).toBeVisible();
   await expect(tabBar.getByRole('button', { name: /Coffee/ })).toBeVisible();
   await expect(tabBar.getByRole('button', { name: /Calendar/ })).toBeVisible();
+  await expect(tabBar.getByRole('button', { name: /Stats/ })).toBeVisible();
+  await tabBar.getByRole('button', { name: /Stats/ }).click();
+  await expect(page.getByText('No stats yet')).toBeVisible();
   expect(pageErrors).toEqual([]);
 });
 

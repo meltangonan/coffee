@@ -69,6 +69,282 @@ function daysBetween(d1, d2) {
   return Math.floor((new Date(d2) - new Date(d1)) / 86400000);
 }
 
+const STATS_TOP_BEANS_LIMIT = 5;
+const BEAN_TREND_CHART_WIDTH = 240;
+const BEAN_TREND_CHART_HEIGHT = 96;
+const BEAN_TREND_CHART_PADDING_X = 8;
+const BEAN_TREND_CHART_PADDING_Y = 10;
+const BEAN_TREND_VALUE_PADDING_RATIO = 0.12;
+const SHOT_QUALITY_ORDER = ['bad', 'okay', 'great', 'perfect'];
+
+function parseStatsDate(value) {
+  if (!value) return null;
+  if (value instanceof Date) {
+    return new Date(value.getFullYear(), value.getMonth(), value.getDate());
+  }
+  const text = String(value);
+  const datePart = text.slice(0, 10);
+  if (/^\d{4}-\d{2}-\d{2}$/.test(datePart)) {
+    const [year, month, day] = datePart.split('-').map(Number);
+    return new Date(year, month - 1, day);
+  }
+  const parsed = new Date(text);
+  if (isNaN(parsed.getTime())) return null;
+  return new Date(parsed.getFullYear(), parsed.getMonth(), parsed.getDate());
+}
+
+function getShotStatsDate(shot) {
+  return parseStatsDate(shot?.shotDate || shot?.createdAt);
+}
+
+function getWeekStart(date) {
+  const d = parseStatsDate(date) || parseStatsDate(new Date());
+  const day = d.getDay();
+  const diff = day === 0 ? -6 : 1 - day;
+  d.setDate(d.getDate() + diff);
+  return d;
+}
+
+function getMonthStart(date) {
+  const d = parseStatsDate(date) || parseStatsDate(new Date());
+  return new Date(d.getFullYear(), d.getMonth(), 1);
+}
+
+function computeShotCounts(shots, refDate = new Date()) {
+  const allShots = Array.isArray(shots) ? shots : [];
+  const weekStart = getWeekStart(refDate);
+  const weekEnd = addDays(weekStart, 7);
+  const monthStart = getMonthStart(refDate);
+  const monthEnd = new Date(monthStart.getFullYear(), monthStart.getMonth() + 1, 1);
+  let thisWeek = 0;
+  let thisMonth = 0;
+  for (const shot of allShots) {
+    const shotDate = getShotStatsDate(shot);
+    if (!shotDate) continue;
+    if (shotDate >= weekStart && shotDate < weekEnd) thisWeek++;
+    if (shotDate >= monthStart && shotDate < monthEnd) thisMonth++;
+  }
+  return { total: allShots.length, thisWeek, thisMonth };
+}
+
+function computeMostPulledBeans(shots, beans, limit = STATS_TOP_BEANS_LIMIT) {
+  const counts = new Map();
+  for (const shot of Array.isArray(shots) ? shots : []) {
+    if (!shot?.beanId) continue;
+    counts.set(shot.beanId, (counts.get(shot.beanId) || 0) + 1);
+  }
+
+  const groups = new Map();
+  for (const bean of Array.isArray(beans) ? beans : []) {
+    const name = (bean.name || 'Unknown bean').trim();
+    const roaster = (bean.roaster || '').trim();
+    const key = (name.toLowerCase() + '|' + roaster.toLowerCase()).trim() || bean.id;
+    const group = groups.get(key) || {
+      key,
+      name,
+      roaster,
+      isArchived: true,
+      shotCount: 0,
+      bagCount: 0,
+      newestCreatedAt: ''
+    };
+    const createdAt = bean.createdAt || '';
+    const shouldUseBeanLabel = group.bagCount === 0
+      || (group.isArchived && !bean.isArchived)
+      || (group.isArchived === !!bean.isArchived && new Date(createdAt || 0) > new Date(group.newestCreatedAt || 0));
+    if (shouldUseBeanLabel) {
+      group.name = name;
+      group.roaster = roaster;
+      group.newestCreatedAt = createdAt;
+    }
+    group.isArchived = group.isArchived && !!bean.isArchived;
+    group.shotCount += counts.get(bean.id) || 0;
+    group.bagCount++;
+    groups.set(key, group);
+  }
+
+  return Array.from(groups.values())
+    .filter(group => group.shotCount > 0)
+    .sort((a, b) =>
+      (b.shotCount - a.shotCount)
+      || a.name.localeCompare(b.name)
+      || a.roaster.localeCompare(b.roaster)
+      || a.key.localeCompare(b.key)
+    )
+    .slice(0, limit)
+    .map(({ newestCreatedAt, ...group }) => group);
+}
+
+function computeQualityBreakdown(shots) {
+  const counts = Object.fromEntries(SHOT_QUALITY_ORDER.map(rating => [rating, 0]));
+  let ratedTotal = 0;
+  for (const shot of Array.isArray(shots) ? shots : []) {
+    const rating = normalizeRating(shot?.rating);
+    if (!rating || !(rating in counts)) continue;
+    counts[rating]++;
+    ratedTotal++;
+  }
+  return {
+    ratedTotal,
+    items: SHOT_QUALITY_ORDER.map(rating => ({
+      rating,
+      count: counts[rating],
+      percentage: ratedTotal ? Math.round((counts[rating] / ratedTotal) * 100) : 0
+    }))
+  };
+}
+
+function getShotCreatedAtTime(shot) {
+  const parsed = new Date(shot?.createdAt || '');
+  return isNaN(parsed.getTime()) ? 0 : parsed.getTime();
+}
+
+function getTrendMetricValue(shot, metric) {
+  if (!shot) return null;
+  if (metric === 'grind') {
+    const grindSize = Number(shot.grindSize);
+    return Number.isFinite(grindSize) && grindSize > 0 ? grindSize : null;
+  }
+  if (metric === 'ratio') {
+    const doseIn = Number(shot.doseIn);
+    const yieldOut = Number(shot.yieldOut);
+    return Number.isFinite(doseIn) && Number.isFinite(yieldOut) && doseIn > 0 && yieldOut > 0
+      ? yieldOut / doseIn
+      : null;
+  }
+  if (metric === 'extractionTime') {
+    const extractionTime = Number(shot.extractionTime);
+    return Number.isFinite(extractionTime) && extractionTime > 0 ? extractionTime : null;
+  }
+  return null;
+}
+
+function getBeanShotTrend(shots, beanId, metric) {
+  if (!Array.isArray(shots) || !beanId) return [];
+  return shots
+    .map((shot, index) => {
+      const value = getTrendMetricValue(shot, metric);
+      if (shot?.beanId !== beanId || value == null) return null;
+      const shotDate = getShotStatsDate(shot);
+      return {
+        id: shot.id || String(index),
+        shotDate: shot?.shotDate || shot?.createdAt || '',
+        createdAt: shot?.createdAt || '',
+        value,
+        orderDate: shotDate ? shotDate.getTime() : getShotCreatedAtTime(shot),
+        orderCreatedAt: getShotCreatedAtTime(shot),
+        orderIndex: index
+      };
+    })
+    .filter(Boolean)
+    .sort((a, b) =>
+      (a.orderDate - b.orderDate)
+      || (a.orderCreatedAt - b.orderCreatedAt)
+      || (a.orderIndex - b.orderIndex)
+    )
+    .map(({ orderDate, orderCreatedAt, orderIndex, ...point }) => point);
+}
+
+function roundTrendCoord(value) {
+  return Math.round(value * 100) / 100;
+}
+
+function getTrendScaleY(value, scale) {
+  if (!scale || scale.max === scale.min) return BEAN_TREND_CHART_HEIGHT / 2;
+  const plotHeight = scale.height - (scale.paddingY * 2);
+  return scale.paddingY + ((scale.max - value) / (scale.max - scale.min)) * plotHeight;
+}
+
+function buildTrendTargetBand(scale, targetRange) {
+  if (!targetRange || !scale) return null;
+  const targetMin = Number(targetRange.min);
+  const targetMax = Number(targetRange.max);
+  if (!Number.isFinite(targetMin) || !Number.isFinite(targetMax)) return null;
+  const clampedMin = Math.max(scale.min, Math.min(scale.max, targetMin));
+  const clampedMax = Math.max(scale.min, Math.min(scale.max, targetMax));
+  const yTop = roundTrendCoord(getTrendScaleY(clampedMax, scale));
+  const yBottom = roundTrendCoord(getTrendScaleY(clampedMin, scale));
+  return {
+    x: scale.paddingX,
+    y: yTop,
+    width: scale.width - (scale.paddingX * 2),
+    height: Math.max(1, roundTrendCoord(yBottom - yTop))
+  };
+}
+
+function buildTrendPath(series, options = {}) {
+  const values = (Array.isArray(series) ? series : [])
+    .map(point => Number(point?.value))
+    .filter(value => Number.isFinite(value));
+  const width = BEAN_TREND_CHART_WIDTH;
+  const height = BEAN_TREND_CHART_HEIGHT;
+  const paddingX = BEAN_TREND_CHART_PADDING_X;
+  const paddingY = BEAN_TREND_CHART_PADDING_Y;
+
+  if (values.length === 0) {
+    return {
+      width,
+      height,
+      viewBox: `0 0 ${width} ${height}`,
+      path: '',
+      markPath: '',
+      gridPath: '',
+      axisPath: '',
+      points: [],
+      min: null,
+      max: null,
+      latest: null,
+      yTicks: [],
+      targetBand: null,
+      scale: null
+    };
+  }
+
+  const domainValues = values.concat((options.domainValues || []).map(Number).filter(value => Number.isFinite(value)));
+  const min = Math.min(...values);
+  const max = Math.max(...values);
+  const domainMin = Math.min(...domainValues);
+  const domainMax = Math.max(...domainValues);
+  const isFlat = domainMin === domainMax;
+  const range = domainMax - domainMin;
+  const paddedMin = isFlat ? domainMin : domainMin - (range * BEAN_TREND_VALUE_PADDING_RATIO);
+  const paddedMax = isFlat ? domainMax : domainMax + (range * BEAN_TREND_VALUE_PADDING_RATIO);
+  const scale = { width, height, paddingX, paddingY, min: paddedMin, max: paddedMax };
+  const plotWidth = width - (paddingX * 2);
+  const lastIndex = Math.max(values.length - 1, 1);
+
+  const points = values.map((value, index) => {
+    const x = values.length === 1 ? width / 2 : paddingX + ((index / lastIndex) * plotWidth);
+    const y = isFlat ? height / 2 : getTrendScaleY(value, scale);
+    return { x: roundTrendCoord(x), y: roundTrendCoord(y), value };
+  });
+
+  const path = points.map((point, index) => `${index === 0 ? 'M' : 'L'} ${point.x} ${point.y}`).join(' ');
+  const markPath = points.map(point => `M ${point.x - 2} ${point.y} L ${point.x + 2} ${point.y} M ${point.x} ${point.y - 2} L ${point.x} ${point.y + 2}`).join(' ');
+  const yTickValues = isFlat
+    ? [min]
+    : [domainMax, (domainMax + domainMin) / 2, domainMin];
+  const yTicks = yTickValues.map(value => ({ value, y: roundTrendCoord(getTrendScaleY(value, scale)) }));
+  const gridPath = yTicks.map(tick => `M ${paddingX} ${tick.y} L ${width - paddingX} ${tick.y}`).join(' ');
+  const axisPath = `M ${paddingX} ${paddingY} L ${paddingX} ${height - paddingY} L ${width - paddingX} ${height - paddingY}`;
+  return {
+    width,
+    height,
+    viewBox: `0 0 ${width} ${height}`,
+    path,
+    markPath,
+    gridPath,
+    axisPath,
+    points,
+    min,
+    max,
+    latest: values[values.length - 1],
+    yTicks,
+    targetBand: buildTrendTargetBand(scale, options.targetRange),
+    scale
+  };
+}
+
 function normalizeRating(r) {
   if (r == null) return null;
   if (r === 'bad' || r === 'okay' || r === 'great' || r === 'perfect') return r;
@@ -206,6 +482,248 @@ test('daysBetween - calculates correctly', () => {
 
 test('daysBetween - handles same day', () => {
   assertEqual(daysBetween('2026-01-15', '2026-01-15'), 0);
+});
+
+// --- Stats date window tests ---
+test('getWeekStart - Monday stays same day', () => {
+  assertEqual(localDateStr(getWeekStart(new Date(2026, 4, 18))), '2026-05-18');
+});
+
+test('getWeekStart - Sunday belongs to prior Monday', () => {
+  assertEqual(localDateStr(getWeekStart(new Date(2026, 4, 24))), '2026-05-18');
+});
+
+test('getWeekStart - handles year boundary', () => {
+  assertEqual(localDateStr(getWeekStart(new Date(2026, 0, 1))), '2025-12-29');
+});
+
+test('getMonthStart - returns first day of month', () => {
+  assertEqual(localDateStr(getMonthStart(new Date(2026, 4, 22))), '2026-05-01');
+});
+
+test('getMonthStart - handles year boundary month', () => {
+  assertEqual(localDateStr(getMonthStart(new Date(2026, 0, 1))), '2026-01-01');
+});
+
+test('computeShotCounts - totals all shots and counts week/month windows', () => {
+  const shots = [
+    { shotDate: '2026-01-01', createdAt: '2026-01-01T08:00:00.000Z' },
+    { shotDate: '2026-01-04', createdAt: '2026-01-04T08:00:00.000Z' },
+    { shotDate: '2025-12-29', createdAt: '2025-12-29T08:00:00.000Z' },
+    { shotDate: '2025-12-28', createdAt: '2025-12-28T08:00:00.000Z' },
+    { createdAt: '2026-01-02T08:00:00.000Z' },
+    { createdAt: '' }
+  ];
+  assertDeepEqual(computeShotCounts(shots, new Date(2026, 0, 1)), {
+    total: 6,
+    thisWeek: 4,
+    thisMonth: 3
+  });
+});
+
+test('computeShotCounts - returns zeros for non-array input', () => {
+  assertDeepEqual(computeShotCounts(null, new Date(2026, 0, 1)), {
+    total: 0,
+    thisWeek: 0,
+    thisMonth: 0
+  });
+});
+
+test('computeMostPulledBeans - ranks beans by shot count and applies limit', () => {
+  const beans = [
+    { id: 'alpha', name: 'Alpha', roaster: 'One', isArchived: false },
+    { id: 'beta', name: 'Beta', roaster: 'Two', isArchived: false },
+    { id: 'gamma', name: 'Gamma', roaster: 'Three', isArchived: false }
+  ];
+  const shots = [
+    { beanId: 'beta' },
+    { beanId: 'beta' },
+    { beanId: 'beta' },
+    { beanId: 'alpha' },
+    { beanId: 'alpha' },
+    { beanId: 'gamma' }
+  ];
+  assertDeepEqual(
+    computeMostPulledBeans(shots, beans, 2).map(item => [item.key, item.shotCount]),
+    [['beta|two', 3], ['alpha|one', 2]]
+  );
+});
+
+test('computeMostPulledBeans - tie breaks by bean name', () => {
+  const beans = [
+    { id: 'b', name: 'Beta', roaster: 'Two', isArchived: false },
+    { id: 'a', name: 'Alpha', roaster: 'One', isArchived: false }
+  ];
+  const shots = [{ beanId: 'b' }, { beanId: 'a' }];
+  assertDeepEqual(
+    computeMostPulledBeans(shots, beans).map(item => item.key),
+    ['alpha|one', 'beta|two']
+  );
+});
+
+test('computeMostPulledBeans - aggregates copied bags by normalized name and roaster', () => {
+  const beans = [
+    { id: 'old-bag', name: 'Ethiopia Guji', roaster: 'Demo Roaster', isArchived: true, createdAt: '2026-01-01T08:00:00.000Z' },
+    { id: 'new-bag', name: ' ethiopia guji ', roaster: 'demo roaster', isArchived: false, createdAt: '2026-02-01T08:00:00.000Z' }
+  ];
+  const shots = [{ beanId: 'old-bag' }, { beanId: 'old-bag' }, { beanId: 'new-bag' }];
+  assertDeepEqual(computeMostPulledBeans(shots, beans)[0], {
+    key: 'ethiopia guji|demo roaster',
+    name: 'ethiopia guji',
+    roaster: 'demo roaster',
+    isArchived: false,
+    shotCount: 3,
+    bagCount: 2
+  });
+});
+
+test('computeMostPulledBeans - marks a group archived only when all bags are archived', () => {
+  const beans = [
+    { id: 'archived-1', name: 'Archived', roaster: 'Roaster', isArchived: true },
+    { id: 'archived-2', name: 'Archived', roaster: 'Roaster', isArchived: true }
+  ];
+  const shots = [{ beanId: 'archived-1' }, { beanId: 'archived-2' }];
+  assertDeepEqual(computeMostPulledBeans(shots, beans)[0], {
+    key: 'archived|roaster',
+    name: 'Archived',
+    roaster: 'Roaster',
+    isArchived: true,
+    shotCount: 2,
+    bagCount: 2
+  });
+});
+
+test('computeQualityBreakdown - excludes unrated shots from percentage base', () => {
+  const breakdown = computeQualityBreakdown([
+    { rating: 'bad' },
+    { rating: 'okay' },
+    { rating: 4 },
+    { rating: 'perfect' },
+    { rating: null }
+  ]);
+  assertEqual(breakdown.ratedTotal, 4);
+  assertDeepEqual(breakdown.items, [
+    { rating: 'bad', count: 1, percentage: 25 },
+    { rating: 'okay', count: 1, percentage: 25 },
+    { rating: 'great', count: 1, percentage: 25 },
+    { rating: 'perfect', count: 1, percentage: 25 }
+  ]);
+});
+
+test('computeQualityBreakdown - handles no rated shots', () => {
+  assertDeepEqual(computeQualityBreakdown([{ rating: null }]), {
+    ratedTotal: 0,
+    items: [
+      { rating: 'bad', count: 0, percentage: 0 },
+      { rating: 'okay', count: 0, percentage: 0 },
+      { rating: 'great', count: 0, percentage: 0 },
+      { rating: 'perfect', count: 0, percentage: 0 }
+    ]
+  });
+});
+
+// --- Bean trend tests ---
+test('getBeanShotTrend - returns chronological grind series by shot date then created date', () => {
+  const shots = [
+    { id: 'later-date', beanId: 'bean-1', grindSize: 7, shotDate: '2026-01-03', createdAt: '2026-01-03T08:00:00.000Z' },
+    { id: 'later-created', beanId: 'bean-1', grindSize: 5, shotDate: '2026-01-02', createdAt: '2026-01-02T09:00:00.000Z' },
+    { id: 'other-bean', beanId: 'bean-2', grindSize: 1, shotDate: '2026-01-01', createdAt: '2026-01-01T08:00:00.000Z' },
+    { id: 'earlier-created', beanId: 'bean-1', grindSize: 4, shotDate: '2026-01-02', createdAt: '2026-01-02T07:00:00.000Z' }
+  ];
+
+  assertDeepEqual(
+    getBeanShotTrend(shots, 'bean-1', 'grind').map(point => [point.id, point.value]),
+    [['earlier-created', 4], ['later-created', 5], ['later-date', 7]]
+  );
+});
+
+test('getBeanShotTrend - maps ratio and skips shots missing metric values', () => {
+  const shots = [
+    { id: 'ratio-1', beanId: 'bean-1', doseIn: 18, yieldOut: 36, shotDate: '2026-01-01', createdAt: '2026-01-01T08:00:00.000Z' },
+    { id: 'missing-yield', beanId: 'bean-1', doseIn: 18, yieldOut: null, shotDate: '2026-01-02', createdAt: '2026-01-02T08:00:00.000Z' },
+    { id: 'ratio-2', beanId: 'bean-1', doseIn: 20, yieldOut: 44, shotDate: '2026-01-03', createdAt: '2026-01-03T08:00:00.000Z' },
+    { id: 'bad-dose', beanId: 'bean-1', doseIn: 0, yieldOut: 36, shotDate: '2026-01-04', createdAt: '2026-01-04T08:00:00.000Z' }
+  ];
+
+  assertDeepEqual(
+    getBeanShotTrend(shots, 'bean-1', 'ratio').map(point => [point.id, point.value]),
+    [['ratio-1', 2], ['ratio-2', 2.2]]
+  );
+});
+
+test('getBeanShotTrend - returns empty series for no shots, unknown bean, or unknown metric', () => {
+  const shots = [{ id: 'shot-1', beanId: 'bean-1', grindSize: 5, shotDate: '2026-01-01' }];
+
+  assertDeepEqual(getBeanShotTrend([], 'bean-1', 'grind'), []);
+  assertDeepEqual(getBeanShotTrend(shots, 'missing-bean', 'grind'), []);
+  assertDeepEqual(getBeanShotTrend(shots, 'bean-1', 'unknown'), []);
+});
+
+test('buildTrendPath - returns empty geometry for empty series', () => {
+  assertDeepEqual(buildTrendPath([]), {
+    width: BEAN_TREND_CHART_WIDTH,
+    height: BEAN_TREND_CHART_HEIGHT,
+    viewBox: '0 0 240 96',
+    path: '',
+    markPath: '',
+    gridPath: '',
+    axisPath: '',
+    points: [],
+    min: null,
+    max: null,
+    latest: null,
+    yTicks: [],
+    targetBand: null,
+    scale: null
+  });
+});
+
+test('buildTrendPath - centers a single-shot series', () => {
+  const chart = buildTrendPath([{ value: 5 }]);
+
+  assertEqual(chart.viewBox, '0 0 240 96');
+  assertEqual(chart.path, 'M 120 48');
+  assertDeepEqual(chart.points, [{ x: 120, y: 48, value: 5 }]);
+  assertEqual(chart.min, 5);
+  assertEqual(chart.max, 5);
+  assertEqual(chart.latest, 5);
+});
+
+test('buildTrendPath - guards flat series divide-by-zero with centered line', () => {
+  const chart = buildTrendPath([{ value: 5 }, { value: 5 }, { value: 5 }]);
+
+  assertEqual(chart.path, 'M 8 48 L 120 48 L 232 48');
+  assertDeepEqual(chart.points, [
+    { x: 8, y: 48, value: 5 },
+    { x: 120, y: 48, value: 5 },
+    { x: 232, y: 48, value: 5 }
+  ]);
+  assert(!chart.path.includes('NaN'), 'Flat trend path should not include NaN');
+  assert(chart.markPath.includes('M 6 48'), 'Flat trend should still render point marks');
+});
+
+test('buildTrendPath - scales non-flat series inside padded bounds', () => {
+  const chart = buildTrendPath([{ value: 5 }, { value: 6 }, { value: 7 }]);
+
+  assertEqual(chart.points.length, 3);
+  assert(chart.points[0].y < BEAN_TREND_CHART_HEIGHT - BEAN_TREND_CHART_PADDING_Y, 'Lowest point should have bottom padding');
+  assert(chart.points[2].y > BEAN_TREND_CHART_PADDING_Y, 'Highest point should have top padding');
+  assertEqual(chart.yTicks.length, 3);
+  assert(chart.gridPath.includes('L 232'), 'Grid path should span the plot width');
+  assert(chart.axisPath.includes('L 232 86'), 'Axis path should include the bottom x-axis');
+  assertEqual(chart.latest, 7);
+});
+
+test('buildTrendPath - includes optional target band in the same scale', () => {
+  const chart = buildTrendPath(
+    [{ value: 2 }, { value: 2.2 }],
+    { domainValues: [1.9, 2.2], targetRange: { min: 1.9, max: 2.2 } }
+  );
+
+  assert(chart.targetBand, 'Expected target band geometry');
+  assertEqual(chart.targetBand.x, BEAN_TREND_CHART_PADDING_X);
+  assertEqual(chart.targetBand.width, BEAN_TREND_CHART_WIDTH - (BEAN_TREND_CHART_PADDING_X * 2));
+  assert(chart.targetBand.height > 1, 'Target band should have visible height');
 });
 
 // --- Rating Normalization Tests ---
