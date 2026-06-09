@@ -317,7 +317,7 @@ textarea.form-input { min-height: 80px; resize: vertical; line-height: 1.5; }
 .stats-count-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
 .stats-count-item { background: var(--cream-dark); border-radius: var(--radius-sm); padding: 12px 10px; text-align: center; }
 .stats-count-value { display: block; font-family: var(--font-heading); font-size: 28px; font-weight: 700; line-height: 1; color: var(--espresso); }
-.stats-count-label { display: block; margin-top: 6px; font-size: 11px; font-weight: 600; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.5px; }
+.stats-count-label { display: block; margin-bottom: 6px; font-size: 11px; font-weight: 600; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.5px; }
 .stats-ranked-list { display: flex; flex-direction: column; gap: 10px; }
 .stats-ranked-item { display: grid; grid-template-columns: 26px 1fr auto; align-items: center; gap: 10px; }
 .stats-rank { width: 26px; height: 26px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; background: rgba(212,165,116,0.18); color: var(--amber-dark); font-size: 12px; font-weight: 700; }
@@ -1403,16 +1403,16 @@ textarea.form-input { min-height: 80px; resize: vertical; line-height: 1.5; }
           <div class="stats-card-label">Shots logged</div>
           <div class="stats-count-grid">
             <div class="stats-count-item">
-              <span class="stats-count-value" data-testid="stats-total-shots" x-text="statsTotalShots"></span>
               <span class="stats-count-label">All time</span>
+              <span class="stats-count-value" data-testid="stats-total-shots" x-text="statsTotalShots"></span>
             </div>
             <div class="stats-count-item">
-              <span class="stats-count-value" data-testid="stats-month-shots" x-text="statsShotsThisMonth"></span>
               <span class="stats-count-label">Month</span>
+              <span class="stats-count-value" data-testid="stats-month-shots" x-text="statsShotsThisMonth"></span>
             </div>
             <div class="stats-count-item">
-              <span class="stats-count-value" data-testid="stats-week-shots" x-text="statsShotsThisWeek"></span>
               <span class="stats-count-label">Week</span>
+              <span class="stats-count-value" data-testid="stats-week-shots" x-text="statsShotsThisWeek"></span>
             </div>
           </div>
         </section>
@@ -1428,11 +1428,10 @@ textarea.form-input { min-height: 80px; resize: vertical; line-height: 1.5; }
                   <div class="stats-ranked-name" x-text="item.name"></div>
                   <div class="stats-ranked-meta">
                     <span x-text="item.roaster"></span>
-                    <span x-show="item.bagCount > 1" x-text="item.bagCount + ' bags'"></span>
-                    <span x-show="item.isArchived" class="badge badge-archived">Archived</span>
+                    <span x-show="item.bagCount > 1" x-text="'· ' + item.bagCount + ' bags'"></span>
                   </div>
                 </div>
-                <div class="stats-ranked-count"><span x-text="item.shotCount"></span> shots</div>
+                <div class="stats-ranked-count" x-text="item.shotCount + (item.shotCount === 1 ? ' shot' : ' shots')"></div>
               </div>
             </template>
           </div>
