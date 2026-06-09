@@ -489,7 +489,7 @@ async function runTests() {
       const fallback = doc.querySelector('[data-testid="bean-trends-empty"]');
       const charts = doc.querySelectorAll('.trend-chart');
       assert(appWindow.getComputedStyle(fallback).display === 'none', 'Fallback should be hidden when chart data is available');
-      assertEqual(charts.length, 3);
+      assertEqual(charts.length, 4);
       assert(!doc.querySelector('[data-testid="bean-trend-grind"]').textContent.includes('Latest'), 'Trend cards should not show latest callouts');
       assert(!doc.querySelector('[data-testid="bean-trend-grind"]').textContent.includes('Adjustment'), 'Trend cards should not show top-right meta labels');
       assert(!doc.querySelector('[data-testid="bean-trends-section"]').textContent.includes('Shot-by-shot plots'), 'Trend section should not show description copy');
@@ -498,6 +498,8 @@ async function runTests() {
       assert(!doc.querySelector('[data-testid="bean-trend-grind"]').textContent.includes('Shot 1'));
       assert(doc.querySelector('[data-testid="bean-trend-ratio"]').textContent.includes('Ratio'));
       assert(doc.querySelector('[data-testid="bean-trend-extractionTime"]').textContent.includes('Time'));
+      assert(doc.querySelector('[data-testid="bean-trend-flow"]').textContent.includes('Flow'));
+      assert(doc.querySelector('[data-testid="bean-trend-flow"]').textContent.includes('g/s'));
       assert(doc.querySelector('[data-testid="bean-trend-grind"] .trend-chart-line').getAttribute('d').startsWith('M '));
       assert(doc.querySelector('[data-testid="bean-trend-grind"] .trend-chart-gridline').getAttribute('d').includes('L 232'));
       const grindCard = doc.querySelector('[data-testid="bean-trend-grind"]');
@@ -512,6 +514,7 @@ async function runTests() {
       assert(Math.abs((lastLabelBox.left + lastLabelBox.width / 2) - lastPointX) < 2, 'Last x-axis label should center under the last data point');
       assert(appWindow.getComputedStyle(doc.querySelector('[data-testid="bean-trend-ratio"] .trend-chart-band')).display !== 'none', 'Ratio chart should show a target band');
       assert(appWindow.getComputedStyle(doc.querySelector('[data-testid="bean-trend-extractionTime"] .trend-chart-band')).display !== 'none', 'Extraction time chart should show a target band');
+      assert(appWindow.getComputedStyle(doc.querySelector('[data-testid="bean-trend-flow"] .trend-chart-band')).display !== 'none', 'Flow chart should show a target band');
     } finally {
       app.shots = originalShots;
     }

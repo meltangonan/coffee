@@ -216,6 +216,13 @@ function getTrendMetricValue(shot, metric) {
     const extractionTime = Number(shot.extractionTime);
     return Number.isFinite(extractionTime) && extractionTime > 0 ? extractionTime : null;
   }
+  if (metric === 'flow') {
+    const yieldOut = Number(shot.yieldOut);
+    const extractionTime = Number(shot.extractionTime);
+    return Number.isFinite(yieldOut) && Number.isFinite(extractionTime) && yieldOut > 0 && extractionTime > 0
+      ? yieldOut / extractionTime
+      : null;
+  }
   return null;
 }
 
@@ -648,6 +655,20 @@ test('getBeanShotTrend - maps ratio and skips shots missing metric values', () =
   assertDeepEqual(
     getBeanShotTrend(shots, 'bean-1', 'ratio').map(point => [point.id, point.value]),
     [['ratio-1', 2], ['ratio-2', 2.2]]
+  );
+});
+
+test('getBeanShotTrend - maps flow rate and skips shots missing metric values', () => {
+  const shots = [
+    { id: 'flow-1', beanId: 'bean-1', yieldOut: 36, extractionTime: 24, shotDate: '2026-01-01', createdAt: '2026-01-01T08:00:00.000Z' },
+    { id: 'missing-time', beanId: 'bean-1', yieldOut: 36, extractionTime: null, shotDate: '2026-01-02', createdAt: '2026-01-02T08:00:00.000Z' },
+    { id: 'flow-2', beanId: 'bean-1', yieldOut: 36, extractionTime: 30, shotDate: '2026-01-03', createdAt: '2026-01-03T08:00:00.000Z' },
+    { id: 'bad-time', beanId: 'bean-1', yieldOut: 36, extractionTime: 0, shotDate: '2026-01-04', createdAt: '2026-01-04T08:00:00.000Z' }
+  ];
+
+  assertDeepEqual(
+    getBeanShotTrend(shots, 'bean-1', 'flow').map(point => [point.id, point.value]),
+    [['flow-1', 1.5], ['flow-2', 1.2]]
   );
 });
 

@@ -253,6 +253,7 @@ textarea.form-input { min-height: 80px; resize: vertical; line-height: 1.5; }
 .shot-visualizer-target { position: absolute; top: 0; bottom: 0; border-radius: 999px; background: rgba(123,160,91,0.28); }
 .shot-visualizer-target.ratio { left: 38.889%; width: 22.222%; }
 .shot-visualizer-target.time { left: 37.5%; width: 12.5%; }
+.shot-visualizer-target.flow { left: 40%; width: 15%; }
 .shot-visualizer-fill { height: 100%; width: 0; border-radius: 999px; background: var(--amber-dark); transition: width 0.2s ease; }
 .shot-visualizer-fill.good { background: var(--freshness-optimal); }
 .shot-visualizer-fill.warning { background: var(--freshness-past); }
@@ -823,6 +824,15 @@ textarea.form-input { min-height: 80px; resize: vertical; line-height: 1.5; }
                           </div>
                           <span class="shot-visualizer-value" x-text="getShotMetrics(shot)?.timeLabel"></span>
                         </div>
+                        <div class="shot-visualizer-row">
+                          <span class="shot-visualizer-label">Flow</span>
+                          <div class="shot-visualizer-track">
+                            <span class="shot-visualizer-target flow"></span>
+                            <span class="shot-visualizer-fill" :class="getShotMetrics(shot)?.assessmentStatus" :style="'width: ' + (getShotMetrics(shot)?.flowPct || 0) + '%'"></span>
+                            <span class="shot-visualizer-point" :style="'left: ' + (getShotMetrics(shot)?.flowPct || 0) + '%'"></span>
+                          </div>
+                          <span class="shot-visualizer-value" x-text="getShotMetrics(shot)?.flowLabel"></span>
+                        </div>
                       </div>
                       <div x-show="shot.notes" class="text-muted" style="margin-top:2px; font-style:italic; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" x-text="shot.notes"></div>
                       <div x-show="getShotAssessmentChips(shot).length" class="shot-assessment-chips">
@@ -1145,6 +1155,15 @@ textarea.form-input { min-height: 80px; resize: vertical; line-height: 1.5; }
                           <span class="shot-visualizer-point" :style="'left: ' + (getShotMetrics(shot)?.timePct || 0) + '%'"></span>
                         </div>
                         <span class="shot-visualizer-value" x-text="getShotMetrics(shot)?.timeLabel"></span>
+                      </div>
+                      <div class="shot-visualizer-row">
+                        <span class="shot-visualizer-label">Flow</span>
+                        <div class="shot-visualizer-track">
+                          <span class="shot-visualizer-target flow"></span>
+                          <span class="shot-visualizer-fill" :class="getShotMetrics(shot)?.assessmentStatus" :style="'width: ' + (getShotMetrics(shot)?.flowPct || 0) + '%'"></span>
+                          <span class="shot-visualizer-point" :style="'left: ' + (getShotMetrics(shot)?.flowPct || 0) + '%'"></span>
+                        </div>
+                        <span class="shot-visualizer-value" x-text="getShotMetrics(shot)?.flowLabel"></span>
                       </div>
                     </div>
                     <div x-show="shot.notes" class="text-muted" style="margin-top:2px; font-style:italic; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" x-text="shot.notes"></div>
@@ -1501,6 +1520,15 @@ textarea.form-input { min-height: 80px; resize: vertical; line-height: 1.5; }
             <span class="shot-visualizer-point" :style="'left: ' + (metrics?.timePct || 0) + '%'"></span>
           </div>
           <span class="shot-visualizer-value" x-text="metrics?.timeLabel"></span>
+        </div>
+        <div class="shot-visualizer-row">
+          <span class="shot-visualizer-label">Flow</span>
+          <div class="shot-visualizer-track">
+            <span class="shot-visualizer-target flow"></span>
+            <span class="shot-visualizer-fill" :class="metrics?.assessmentStatus" :style="'width: ' + (metrics?.flowPct || 0) + '%'"></span>
+            <span class="shot-visualizer-point" :style="'left: ' + (metrics?.flowPct || 0) + '%'"></span>
+          </div>
+          <span class="shot-visualizer-value" x-text="metrics?.flowLabel"></span>
         </div>
         <div x-show="getShotAssessmentChips(shot).length" class="shot-assessment-chips">
           <template x-for="chip in getShotAssessmentChips(shot)" :key="chip.label">
@@ -2017,6 +2045,8 @@ const BREW_RATIO_NEAR_TARGET_HIGH = 2.2;  // Above this: cut-sooner yield guidan
 const FLOW_RATE_CHOKE_MAX = 1.0;          // Below + very low ratio: choking
 const FLOW_RATE_FAST_SLIGHT = 1.6;        // Over-target and at/above: slightly fast flow
 const FLOW_RATE_FAST = 1.8;               // Over-target and at/above: fast flow
+const FLOW_RATE_TARGET_LOW = 1.2;         // Display band: typical shot (1:2 in 25-30s)
+const FLOW_RATE_TARGET_HIGH = 1.5;        // Display band only — warnings still use thresholds above
 
 function hexToRgba(hex, alpha) {
   const m = hex.match(/^#?([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})$/i);
@@ -2172,6 +2202,13 @@ function getTrendMetricValue(shot, metric) {
   if (metric === 'extractionTime') {
     const extractionTime = Number(shot.extractionTime);
     return Number.isFinite(extractionTime) && extractionTime > 0 ? extractionTime : null;
+  }
+  if (metric === 'flow') {
+    const yieldOut = Number(shot.yieldOut);
+    const extractionTime = Number(shot.extractionTime);
+    return Number.isFinite(yieldOut) && Number.isFinite(extractionTime) && yieldOut > 0 && extractionTime > 0
+      ? yieldOut / extractionTime
+      : null;
   }
   return null;
 }
@@ -2912,6 +2949,7 @@ function app() {
       if (!Number.isFinite(Number(value))) return '\u2014';
       if (metric === 'ratio') return '1:' + Number(value).toFixed(1);
       if (metric === 'extractionTime') return Math.round(Number(value)) + 's';
+      if (metric === 'flow') return Number(value).toFixed(1);
       return Number.isInteger(Number(value)) ? String(Number(value)) : Number(value).toFixed(1);
     },
     formatBeanTrendDate(point) {
@@ -2936,6 +2974,12 @@ function app() {
           label: 'Time',
           yAxisLabel: 'seconds',
           targetRange: { min: EXTRACTION_TIME_SLIGHTLY_FAST, max: EXTRACTION_TIME_STANDARD_MAX }
+        },
+        {
+          metric: 'flow',
+          label: 'Flow',
+          yAxisLabel: 'g/s',
+          targetRange: { min: FLOW_RATE_TARGET_LOW, max: FLOW_RATE_TARGET_HIGH }
         }
       ].map(config => {
         const series = this.getBeanShotTrend(beanId, config.metric);
@@ -3556,15 +3600,19 @@ function app() {
       if (!Number.isFinite(doseIn) || !Number.isFinite(yieldOut) || !Number.isFinite(extractionTime)
         || doseIn <= 0 || yieldOut <= 0 || extractionTime <= 0) return null;
       const ratio = yieldOut / doseIn;
+      const flowRate = yieldOut / extractionTime;
       const assessmentStatus = this.getShotAssessment(shot)?.status || '';
       const clamp = value => Math.max(0, Math.min(100, value));
       return {
         ratio,
         extractionTime,
+        flowRate,
         ratioLabel: '1:' + ratio.toFixed(1),
         timeLabel: Math.round(extractionTime) + 's',
+        flowLabel: flowRate.toFixed(1) + ' g/s',
         ratioPct: clamp(((ratio - 1.1) / 1.8) * 100),
         timePct: clamp(((extractionTime - 10) / 40) * 100),
+        flowPct: clamp(((flowRate - 0.4) / 2) * 100),
         assessmentStatus
       };
     },
