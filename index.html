@@ -343,8 +343,12 @@ textarea.form-input { min-height: 80px; resize: vertical; line-height: 1.5; }
 .trend-chart-header { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; margin-bottom: 10px; }
 .trend-chart-title { font-size: 13px; font-weight: 700; color: var(--text-secondary); }
 .trend-chart-body { display: grid; grid-template-columns: 14px 42px minmax(0, 1fr); gap: 6px; align-items: stretch; }
-.trend-axis-title { display: flex; align-items: center; justify-content: center; color: var(--text-muted); font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.4px; writing-mode: vertical-rl; transform: rotate(180deg); }
-.trend-y-axis-values { display: flex; flex-direction: column; justify-content: space-between; min-height: 96px; color: var(--text-muted); font-size: 10px; font-weight: 600; text-align: right; }
+/* padding-top lands visually at the bottom after the 180deg rotation, matching .trend-plot's 18px date strip
+   so the title centers on the 96px chart area */
+.trend-axis-title { display: flex; align-items: center; justify-content: center; padding-top: 18px; color: var(--text-muted); font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.4px; writing-mode: vertical-rl; transform: rotate(180deg); }
+.trend-y-axis-values { position: relative; height: 96px; color: var(--text-muted); font-size: 10px; font-weight: 600; text-align: right; }
+/* Tick labels are positioned at their exact gridline y (viewBox units = px at the fixed 96px height) */
+.trend-y-axis-values span { position: absolute; right: 0; transform: translateY(-50%); }
 .trend-plot { min-width: 0; position: relative; padding-bottom: 18px; }
 /* Date labels are absolutely positioned at the exact viewBox fractions of the data points
    (8/240 = 1/30 and 232/240 = 29/30), so they always sit directly under the markers. */
@@ -356,7 +360,7 @@ textarea.form-input { min-height: 80px; resize: vertical; line-height: 1.5; }
 .trend-chart-axis { fill: none; stroke: rgba(44,24,16,0.22); stroke-width: 1.2; stroke-linecap: round; stroke-linejoin: round; vector-effect: non-scaling-stroke; }
 .trend-chart-band { fill: rgba(212,165,116,0.16); }
 .trend-chart-line { fill: none; stroke: var(--amber-dark); stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; vector-effect: non-scaling-stroke; }
-.trend-chart-marks { fill: none; stroke: var(--espresso); stroke-width: 1.4; stroke-linecap: round; vector-effect: non-scaling-stroke; opacity: 0.72; }
+.trend-chart-marks { fill: none; stroke: var(--espresso); stroke-width: 4.5; stroke-linecap: round; vector-effect: non-scaling-stroke; opacity: 0.72; }
 
 /* Today tab — no beans onboarding state */
 .today-no-beans-state { display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 60px 24px 48px; min-height: calc(100dvh - var(--tab-total) - var(--safe-top) - 80px); }
@@ -802,8 +806,7 @@ textarea.form-input { min-height: 80px; resize: vertical; line-height: 1.5; }
                         <span x-show="shot.grindSize" x-text="'Grind ' + shot.grindSize"></span>
                         <span x-show="shot.doseIn"><span x-show="shot.grindSize"> &middot; </span><span x-text="shot.doseIn + 'g'"></span></span>
                         <span x-show="shot.yieldOut"> &#8594; <span x-text="shot.yieldOut + 'g'"></span></span>
-                        <span x-show="shot.doseIn && shot.yieldOut"> (<span x-text="'1:' + (shot.yieldOut / shot.doseIn).toFixed(1)"></span>)</span>
-                        <span x-show="shot.extractionTime"><span x-show="shot.grindSize || shot.doseIn || shot.yieldOut"> &middot; </span><span x-text="shot.extractionTime + 's'"></span><span x-show="getShotFlowRateLabel(shot)"> (<span x-text="getShotFlowRateLabel(shot)"></span>)</span></span>
+                        <span x-show="shot.extractionTime"><span x-show="shot.grindSize || shot.doseIn || shot.yieldOut"> &middot; </span><span x-text="shot.extractionTime + 's'"></span></span>
                       </div>
                       <div x-show="getShotMetrics(shot)" class="shot-visualizer compact">
                         <div class="shot-visualizer-row">
@@ -1062,51 +1065,6 @@ textarea.form-input { min-height: 80px; resize: vertical; line-height: 1.5; }
           <p class="text-secondary" style="font-style: italic;" x-text="selectedBean?.notes"></p>
         </div>
 
-        <!-- Bean Trends -->
-        <div class="bean-trends mb-20" data-testid="bean-trends-section">
-          <div class="bean-trends-header">
-            <h3 class="heading-md">Trends</h3>
-            <span class="bean-trends-count" x-text="getBeanTrendShotCount(selectedBeanId) + (getBeanTrendShotCount(selectedBeanId) === 1 ? ' shot' : ' shots')"></span>
-          </div>
-
-          <div x-show="!hasBeanTrendData(selectedBeanId)" class="trend-empty-state" data-testid="bean-trends-empty">
-            Log a couple of shots to see trends.
-          </div>
-
-          <div x-show="hasBeanTrendData(selectedBeanId)" class="trend-chart-grid">
-            <template x-for="chart in getBeanTrendCharts(selectedBeanId)" :key="chart.metric">
-              <section class="trend-chart" :data-testid="'bean-trend-' + chart.metric" :aria-label="chart.label + ' trend'">
-                <div class="trend-chart-header">
-                  <span class="trend-chart-title" x-text="chart.label"></span>
-                </div>
-                <div class="trend-chart-body">
-                  <div class="trend-axis-title" x-text="chart.yAxisLabel"></div>
-                  <div class="trend-y-axis-values">
-                    <template x-for="tick in chart.yTicks" :key="chart.metric + '-' + tick.label">
-                      <span x-text="tick.label"></span>
-                    </template>
-                  </div>
-                  <div class="trend-plot">
-                    <svg class="trend-chart-svg" :viewBox="chart.geometry.viewBox" preserveAspectRatio="none" aria-hidden="true">
-                      <path class="trend-chart-gridline" :d="chart.geometry.gridPath"></path>
-                      <path class="trend-chart-axis" :d="chart.geometry.axisPath"></path>
-                      <rect x-show="chart.geometry.targetBand" class="trend-chart-band"
-                            :x="chart.geometry.targetBand?.x || 0"
-                            :y="chart.geometry.targetBand?.y || 0"
-                            :width="chart.geometry.targetBand?.width || 0"
-                            :height="chart.geometry.targetBand?.height || 0"></rect>
-                      <path class="trend-chart-line" :d="chart.geometry.path"></path>
-                      <path class="trend-chart-marks" :d="chart.geometry.markPath"></path>
-                    </svg>
-                    <span class="trend-axis-date trend-axis-date-first" x-text="chart.firstDateLabel"></span>
-                    <span class="trend-axis-date trend-axis-date-last" x-text="chart.lastDateLabel"></span>
-                  </div>
-                </div>
-              </section>
-            </template>
-          </div>
-        </div>
-
         <!-- Shot History -->
         <div class="mb-20" x-data="{ showAllShots: false }">
           <div style="display: flex; align-items: center; justify-content: space-between;" class="mb-12">
@@ -1133,8 +1091,7 @@ textarea.form-input { min-height: 80px; resize: vertical; line-height: 1.5; }
                       <span x-show="shot.grindSize">Grind <span x-text="shot.grindSize"></span></span>
                       <span x-show="shot.doseIn"><span x-show="shot.grindSize"> &middot; </span><span x-text="shot.doseIn + 'g'"></span></span>
                       <span x-show="shot.yieldOut"> &#8594; <span x-text="shot.yieldOut + 'g'"></span></span>
-                      <span x-show="shot.doseIn && shot.yieldOut"> (<span x-text="'1:' + (shot.yieldOut / shot.doseIn).toFixed(1)"></span>)</span>
-                      <span x-show="shot.extractionTime"><span x-show="shot.grindSize || shot.doseIn || shot.yieldOut"> &middot; </span><span x-text="shot.extractionTime + 's'"></span><span x-show="getShotFlowRateLabel(shot)"> (<span x-text="getShotFlowRateLabel(shot)"></span>)</span></span>
+                      <span x-show="shot.extractionTime"><span x-show="shot.grindSize || shot.doseIn || shot.yieldOut"> &middot; </span><span x-text="shot.extractionTime + 's'"></span></span>
                     </div>
                     <div class="shot-date" x-text="formatDate(shot.shotDate || shot.createdAt)"></div>
                     <div x-show="getShotMetrics(shot)" class="shot-visualizer compact">
@@ -1178,6 +1135,51 @@ textarea.form-input { min-height: 80px; resize: vertical; line-height: 1.5; }
             </div>
           </template>
           <button x-show="!showAllShots && getShotsForBean(selectedBeanId).length > 5" class="beans-section-link" style="display: block; margin-top: 8px; width: 100%; text-align: center;" @click="showAllShots = true">View all</button>
+        </div>
+
+        <!-- Bean Trends -->
+        <div class="bean-trends mb-20" data-testid="bean-trends-section">
+          <div class="bean-trends-header">
+            <h3 class="heading-md">Trends</h3>
+            <span class="bean-trends-count" x-text="getBeanTrendShotCount(selectedBeanId) + (getBeanTrendShotCount(selectedBeanId) === 1 ? ' shot' : ' shots')"></span>
+          </div>
+
+          <div x-show="!hasBeanTrendData(selectedBeanId)" class="trend-empty-state" data-testid="bean-trends-empty">
+            Log a couple of shots to see trends.
+          </div>
+
+          <div x-show="hasBeanTrendData(selectedBeanId)" class="trend-chart-grid">
+            <template x-for="chart in getBeanTrendCharts(selectedBeanId)" :key="chart.metric">
+              <section class="trend-chart" :data-testid="'bean-trend-' + chart.metric" :aria-label="chart.label + ' trend'">
+                <div class="trend-chart-header">
+                  <span class="trend-chart-title" x-text="chart.label"></span>
+                </div>
+                <div class="trend-chart-body">
+                  <div class="trend-axis-title" x-text="chart.yAxisLabel"></div>
+                  <div class="trend-y-axis-values">
+                    <template x-for="tick in chart.yTicks" :key="chart.metric + '-' + tick.y">
+                      <span :style="'top: ' + tick.y + 'px'" x-text="tick.label"></span>
+                    </template>
+                  </div>
+                  <div class="trend-plot">
+                    <svg class="trend-chart-svg" :view-box.camel="chart.geometry.viewBox" preserveAspectRatio="none" aria-hidden="true">
+                      <path class="trend-chart-gridline" :d="chart.geometry.gridPath"></path>
+                      <path class="trend-chart-axis" :d="chart.geometry.axisPath"></path>
+                      <rect x-show="chart.geometry.targetBand" class="trend-chart-band"
+                            :x="chart.geometry.targetBand?.x || 0"
+                            :y="chart.geometry.targetBand?.y || 0"
+                            :width="chart.geometry.targetBand?.width || 0"
+                            :height="chart.geometry.targetBand?.height || 0"></rect>
+                      <path class="trend-chart-line" :d="chart.geometry.path"></path>
+                      <path class="trend-chart-marks" :d="chart.geometry.markPath"></path>
+                    </svg>
+                    <span x-show="chart.firstDateLabel !== chart.lastDateLabel" class="trend-axis-date trend-axis-date-first" x-text="chart.firstDateLabel"></span>
+                    <span class="trend-axis-date trend-axis-date-last" x-text="chart.lastDateLabel"></span>
+                  </div>
+                </div>
+              </section>
+            </template>
+          </div>
         </div>
 
         <!-- Rating (editable only here, not on Edit Bean form) -->
@@ -2314,7 +2316,9 @@ function buildTrendPath(series, options = {}) {
   });
 
   const path = points.map((point, index) => `${index === 0 ? 'M' : 'L'} ${point.x} ${point.y}`).join(' ');
-  const markPath = points.map(point => `M ${point.x - 2} ${point.y} L ${point.x + 2} ${point.y} M ${point.x} ${point.y - 2} L ${point.x} ${point.y + 2}`).join(' ');
+  // Near-zero-length segments with round linecaps render as dots sized by the
+  // non-scaling stroke, so markers stay round when the svg stretches horizontally
+  const markPath = points.map(point => `M ${point.x} ${point.y} l 0.01 0`).join(' ');
   const yTickValues = isFlat
     ? [min]
     : [domainMax, (domainMax + domainMin) / 2, domainMin];
