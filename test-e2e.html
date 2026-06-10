@@ -446,6 +446,52 @@ async function runTests() {
     }
   });
 
+  await test('Stats sweet spot renders bands from great and perfect shots', async () => {
+    const originalShots = app.shots;
+    const today = localDateStr();
+    const bestShot = (id, rating) => ({
+      id, beanId: 'e2e-active-bean', grindSize: 6, doseIn: 18, yieldOut: 36,
+      extractionTime: 27, rating, notes: '', shotDate: today, createdAt: new Date().toISOString()
+    });
+    const shots = Array.from({ length: 10 }, (_, i) => bestShot('spot-' + i, i % 2 ? 'perfect' : 'great'));
+    // a bad-rated outlier that must not move the bands
+    shots.push({ ...bestShot('spot-bad', 'bad'), yieldOut: 54, extractionTime: 60 });
+    app.shots = shots;
+
+    try {
+      app.activateTab('stats');
+      await wait(50);
+      const doc = appWindow.document;
+      assert(doc.querySelector('[data-testid="stats-sweet-spot-card"]'), 'Sweet spot card should render');
+      assertEqual(doc.querySelector('[data-testid="stats-sweet-spot-ratio"]').textContent, '1:2.0');
+      assertEqual(doc.querySelector('[data-testid="stats-sweet-spot-time"]').textContent, '27s');
+      assertEqual(
+        doc.querySelector('[data-testid="stats-sweet-spot-caption"]').textContent,
+        'Where your 10 great and perfect shots cluster.'
+      );
+    } finally {
+      app.shots = originalShots;
+    }
+  });
+
+  await test('Stats sweet spot is hidden below ten qualifying shots', async () => {
+    const originalShots = app.shots;
+    const today = localDateStr();
+    app.shots = Array.from({ length: 9 }, (_, i) => ({
+      id: 'spot-few-' + i, beanId: 'e2e-active-bean', grindSize: 6, doseIn: 18, yieldOut: 36,
+      extractionTime: 27, rating: 'great', notes: '', shotDate: today, createdAt: new Date().toISOString()
+    }));
+
+    try {
+      app.activateTab('stats');
+      await wait(50);
+      assert(!appWindow.document.querySelector('[data-testid="stats-sweet-spot-card"]'),
+        'Sweet spot card should not render below the threshold');
+    } finally {
+      app.shots = originalShots;
+    }
+  });
+
   await test('Stats most-pulled beans aggregate copied bags', async () => {
     const originalBeans = app.beans;
     const originalShots = app.shots;

@@ -345,6 +345,9 @@ textarea.form-input { min-height: 80px; resize: vertical; line-height: 1.5; }
 .stats-fact-label { font-size: 13px; color: var(--text-secondary); }
 .stats-fact-value { font-size: 14px; font-weight: 600; color: var(--text-primary); text-align: right; }
 .stats-recap-delta { margin-top: 10px; font-size: 12px; color: var(--text-muted); }
+.stats-sweet-spot-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.stats-sweet-spot-value { font-size: 20px; line-height: 1.2; }
+.stats-sweet-spot-caption { margin-top: 10px; font-size: 12px; color: var(--text-muted); }
 
 /* Bean trend charts */
 .bean-trends-header { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 10px; }
@@ -1447,6 +1450,23 @@ textarea.form-input { min-height: 80px; resize: vertical; line-height: 1.5; }
           </div>
         </section>
 
+        <template x-if="statsSweetSpot.eligible">
+          <section class="stats-card" aria-label="Sweet spot" data-testid="stats-sweet-spot-card">
+            <div class="stats-card-label">Sweet spot</div>
+            <div class="stats-count-grid stats-sweet-spot-grid">
+              <div class="stats-count-item">
+                <span class="stats-count-label">Ratio</span>
+                <span class="stats-count-value stats-sweet-spot-value" data-testid="stats-sweet-spot-ratio" x-text="statsSweetSpotRatioText"></span>
+              </div>
+              <div class="stats-count-item">
+                <span class="stats-count-label">Time</span>
+                <span class="stats-count-value stats-sweet-spot-value" data-testid="stats-sweet-spot-time" x-text="statsSweetSpotTimeText"></span>
+              </div>
+            </div>
+            <div class="stats-sweet-spot-caption" data-testid="stats-sweet-spot-caption" x-text="statsSweetSpotCaption"></div>
+          </section>
+        </template>
+
         <template x-if="statsMonthlyRecap">
           <section class="stats-card" aria-label="Monthly recap" data-testid="stats-recap-card">
             <div class="stats-card-label" x-text="statsRecapTitle"></div>
@@ -2086,6 +2106,7 @@ const FRESHNESS_OPTIMAL_DAYS = 21;
 // Stats feature thresholds
 const STATS_TOP_BEANS_LIMIT = 5;
 const STATS_HEATMAP_WEEKS = 13; // 12 full Mon-start weeks + current week
+const STATS_SWEET_SPOT_MIN_SHOTS = 10; // sweet spot needs this many great/perfect shots
 const BEAN_TREND_MIN_SHOTS = 2;
 const BEAN_TREND_CHART_WIDTH = 240;
 const BEAN_TREND_CHART_HEIGHT = 96;
@@ -2334,6 +2355,45 @@ function computeQualityBreakdown(shots) {
       count: counts[rating],
       percentage: ratedTotal ? Math.round((counts[rating] / ratedTotal) * 100) : 0
     }))
+  };
+}
+
+function getPercentileValue(sortedValues, fraction) {
+  if (!sortedValues.length) return null;
+  const index = (sortedValues.length - 1) * fraction;
+  const lower = Math.floor(index);
+  const upper = Math.ceil(index);
+  return sortedValues[lower] + (sortedValues[upper] - sortedValues[lower]) * (index - lower);
+}
+
+function computeSweetSpot(shots) {
+  const ratios = [];
+  const times = [];
+  let count = 0;
+  for (const shot of Array.isArray(shots) ? shots : []) {
+    const rating = normalizeRating(shot?.rating);
+    if (rating !== 'great' && rating !== 'perfect') continue;
+    const doseIn = Number(shot?.doseIn);
+    const yieldOut = Number(shot?.yieldOut);
+    const extractionTime = Number(shot?.extractionTime);
+    const valid = Number.isFinite(doseIn) && doseIn > 0
+      && Number.isFinite(yieldOut) && yieldOut > 0
+      && Number.isFinite(extractionTime) && extractionTime > 0;
+    if (!valid) continue;
+    ratios.push(yieldOut / doseIn);
+    times.push(extractionTime);
+    count++;
+  }
+  if (count < STATS_SWEET_SPOT_MIN_SHOTS) {
+    return { eligible: false, count, ratio: null, time: null };
+  }
+  ratios.sort((a, b) => a - b);
+  times.sort((a, b) => a - b);
+  return {
+    eligible: true,
+    count,
+    ratio: { low: getPercentileValue(ratios, 0.25), high: getPercentileValue(ratios, 0.75) },
+    time: { low: getPercentileValue(times, 0.25), high: getPercentileValue(times, 0.75) }
   };
 }
 
@@ -3108,6 +3168,26 @@ function app() {
         ? date.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })
         : (day?.date || '');
       return label + ': ' + day.count + (day.count === 1 ? ' shot' : ' shots');
+    },
+    get statsSweetSpot() { return computeSweetSpot(this.shots); },
+    get statsSweetSpotRatioText() {
+      const spot = this.statsSweetSpot;
+      if (!spot.eligible) return '';
+      const low = spot.ratio.low.toFixed(1);
+      const high = spot.ratio.high.toFixed(1);
+      return low === high ? '1:' + low : '1:' + low + '–' + high;
+    },
+    get statsSweetSpotTimeText() {
+      const spot = this.statsSweetSpot;
+      if (!spot.eligible) return '';
+      const low = Math.round(spot.time.low);
+      const high = Math.round(spot.time.high);
+      return low === high ? low + 's' : low + '–' + high + 's';
+    },
+    get statsSweetSpotCaption() {
+      const spot = this.statsSweetSpot;
+      if (!spot.eligible) return '';
+      return 'Where your ' + spot.count + ' great and perfect shots cluster.';
     },
     get statsMonthlyRecap() { return computeMonthlyRecap(this.shots, this.beans); },
     statsRecapMonthName(monthIndex) {

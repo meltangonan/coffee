@@ -71,6 +71,7 @@ function daysBetween(d1, d2) {
 
 const STATS_TOP_BEANS_LIMIT = 5;
 const STATS_HEATMAP_WEEKS = 13; // 12 full Mon-start weeks + current week
+const STATS_SWEET_SPOT_MIN_SHOTS = 10; // sweet spot needs this many great/perfect shots
 const BEAN_TREND_CHART_WIDTH = 240;
 const BEAN_TREND_CHART_HEIGHT = 96;
 const BEAN_TREND_CHART_PADDING_X = 8;
@@ -180,6 +181,45 @@ function computeHeatmapWeeks(shots, refDate = new Date()) {
 function formatGramsTotal(grams) {
   if (grams >= 1000) return (Math.round((grams / 1000) * 10) / 10) + ' kg';
   return Math.round(grams) + ' g';
+}
+
+function getPercentileValue(sortedValues, fraction) {
+  if (!sortedValues.length) return null;
+  const index = (sortedValues.length - 1) * fraction;
+  const lower = Math.floor(index);
+  const upper = Math.ceil(index);
+  return sortedValues[lower] + (sortedValues[upper] - sortedValues[lower]) * (index - lower);
+}
+
+function computeSweetSpot(shots) {
+  const ratios = [];
+  const times = [];
+  let count = 0;
+  for (const shot of Array.isArray(shots) ? shots : []) {
+    const rating = normalizeRating(shot?.rating);
+    if (rating !== 'great' && rating !== 'perfect') continue;
+    const doseIn = Number(shot?.doseIn);
+    const yieldOut = Number(shot?.yieldOut);
+    const extractionTime = Number(shot?.extractionTime);
+    const valid = Number.isFinite(doseIn) && doseIn > 0
+      && Number.isFinite(yieldOut) && yieldOut > 0
+      && Number.isFinite(extractionTime) && extractionTime > 0;
+    if (!valid) continue;
+    ratios.push(yieldOut / doseIn);
+    times.push(extractionTime);
+    count++;
+  }
+  if (count < STATS_SWEET_SPOT_MIN_SHOTS) {
+    return { eligible: false, count, ratio: null, time: null };
+  }
+  ratios.sort((a, b) => a - b);
+  times.sort((a, b) => a - b);
+  return {
+    eligible: true,
+    count,
+    ratio: { low: getPercentileValue(ratios, 0.25), high: getPercentileValue(ratios, 0.75) },
+    time: { low: getPercentileValue(times, 0.25), high: getPercentileValue(times, 0.75) }
+  };
 }
 
 function computeMonthlyRecap(shots, beans, refDate = new Date()) {
@@ -741,6 +781,66 @@ test('formatGramsTotal - unit thresholds', () => {
   assertEqual(formatGramsTotal(999), '999 g');
   assertEqual(formatGramsTotal(1000), '1 kg');
   assertEqual(formatGramsTotal(2460), '2.5 kg');
+});
+
+test('getPercentileValue - exact and interpolated quartiles', () => {
+  assertEqual(getPercentileValue([10, 20, 30, 40, 50], 0.25), 20);
+  assertEqual(getPercentileValue([10, 20, 30, 40, 50], 0.75), 40);
+  assertEqual(getPercentileValue([10, 20, 30, 40], 0.25), 17.5);
+  assertEqual(getPercentileValue([10, 20, 30, 40], 0.75), 32.5);
+  assertEqual(getPercentileValue([7], 0.25), 7);
+  assertEqual(getPercentileValue([], 0.5), null);
+});
+
+// 10 great/perfect shots: ratios 1.8-2.2 (x2 each), times 24-30
+function sweetSpotShots() {
+  const yields = [18, 18, 19, 19, 20, 20, 21, 21, 22, 22];
+  const times = [24, 24, 26, 26, 27, 27, 28, 28, 30, 30];
+  return yields.map((yieldOut, i) => ({
+    rating: i % 2 ? 'perfect' : 'great',
+    doseIn: 10,
+    yieldOut,
+    extractionTime: times[i]
+  }));
+}
+
+test('computeSweetSpot - quartile bands from great and perfect shots', () => {
+  const spot = computeSweetSpot(sweetSpotShots());
+  assert(spot.eligible, '10 qualifying shots should be eligible');
+  assertEqual(spot.count, 10);
+  assertEqual(spot.ratio.low, 1.9);
+  assertEqual(spot.ratio.high, 2.1);
+  assertEqual(spot.time.low, 26);
+  assertEqual(spot.time.high, 28);
+});
+
+test('computeSweetSpot - not eligible below ten qualifying shots', () => {
+  const spot = computeSweetSpot(sweetSpotShots().slice(1));
+  assertEqual(spot.count, 9);
+  assert(!spot.eligible);
+  assertEqual(spot.ratio, null);
+  assertEqual(computeSweetSpot([]).eligible, false);
+  assertEqual(computeSweetSpot(null).count, 0);
+});
+
+test('computeSweetSpot - ignores bad, okay, unrated, and invalid shots', () => {
+  const noise = [
+    { rating: 'bad', doseIn: 10, yieldOut: 40, extractionTime: 60 },
+    { rating: 'okay', doseIn: 10, yieldOut: 40, extractionTime: 60 },
+    { rating: null, doseIn: 10, yieldOut: 40, extractionTime: 60 },
+    { rating: 'great', doseIn: 0, yieldOut: 40, extractionTime: 60 },
+    { rating: 'perfect', doseIn: 10, yieldOut: 40 }
+  ];
+  const spot = computeSweetSpot(sweetSpotShots().concat(noise));
+  assertEqual(spot.count, 10, 'Noise shots should not join the pool');
+  assertEqual(spot.ratio.high, 2.1, 'Bands should be unaffected by noise shots');
+});
+
+test('computeSweetSpot - legacy numeric ratings are normalized', () => {
+  const shots = sweetSpotShots().map((shot, i) => ({ ...shot, rating: i % 2 ? 5 : 4 }));
+  const spot = computeSweetSpot(shots);
+  assert(spot.eligible, 'Numeric 4/5 ratings should count as great/perfect');
+  assertEqual(spot.count, 10);
 });
 
 test('computeMonthlyRecap - summarizes the last completed month', () => {

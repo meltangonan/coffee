@@ -2,7 +2,10 @@
 
 *Status: v2 approved and implemented 2026-06-09. Post-ship review (same day): the Brew
 patterns, Superlatives, and Fun totals cards were removed at the user's request — shipped
-and kept: brew rhythm heatmap + run facts, and the monthly recap. Targets the current local single-HTML app. Complements
+and kept: brew rhythm heatmap + run facts, and the monthly recap. Added in their place: a
+Sweet spot card (interquartile ratio and extraction-time bands across great+perfect-rated
+shots, hidden below 10 qualifying shots) — the user's personal best-shot reference rather
+than generic espresso standards. Targets the current local single-HTML app. Complements
 SPEC.md (the public-app pivot) — everything here is client-derived and ports cleanly to
 Supabase later; shareable recap cards are deferred to the pivot's dial-in-card work.*
 
