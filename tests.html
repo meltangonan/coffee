@@ -514,7 +514,9 @@ function buildTrendPath(series, options = {}) {
   });
 
   const path = points.map((point, index) => `${index === 0 ? 'M' : 'L'} ${point.x} ${point.y}`).join(' ');
-  const markPath = points.map(point => `M ${point.x - 2} ${point.y} L ${point.x + 2} ${point.y} M ${point.x} ${point.y - 2} L ${point.x} ${point.y + 2}`).join(' ');
+  // Near-zero-length segments with round linecaps render as dots sized by the
+  // non-scaling stroke, so markers stay round when the svg stretches horizontally
+  const markPath = points.map(point => `M ${point.x} ${point.y} l 0.01 0`).join(' ');
   const yTickValues = isFlat
     ? [min]
     : [domainMax, (domainMax + domainMin) / 2, domainMin];
@@ -1180,7 +1182,7 @@ test('buildTrendPath - guards flat series divide-by-zero with centered line', ()
     { x: 232, y: 48, value: 5 }
   ]);
   assert(!chart.path.includes('NaN'), 'Flat trend path should not include NaN');
-  assert(chart.markPath.includes('M 6 48'), 'Flat trend should still render point marks');
+  assert(chart.markPath.includes('M 8 48 l 0.01 0'), 'Flat trend should still render point marks');
 });
 
 test('buildTrendPath - scales non-flat series inside padded bounds', () => {
