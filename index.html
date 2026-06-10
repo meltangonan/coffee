@@ -2285,6 +2285,67 @@ function computeBrewHourPattern(shots) {
   };
 }
 
+function computeSuperlatives(shots, refDate = new Date()) {
+  const dayCounts = new Map();
+  const weekCounts = new Map();
+  for (const shot of Array.isArray(shots) ? shots : []) {
+    const date = getShotStatsDate(shot);
+    if (!date) continue;
+    const dayKey = localDateStr(date);
+    dayCounts.set(dayKey, (dayCounts.get(dayKey) || 0) + 1);
+    const weekKey = localDateStr(getWeekStart(date));
+    weekCounts.set(weekKey, (weekCounts.get(weekKey) || 0) + 1);
+  }
+  let biggestDay = null;
+  for (const [date, count] of dayCounts) {
+    // ties: earliest date wins
+    if (!biggestDay || count > biggestDay.count || (count === biggestDay.count && date < biggestDay.date)) {
+      biggestDay = { date, count };
+    }
+  }
+  let bestWeek = null;
+  for (const [weekStart, count] of weekCounts) {
+    if (!bestWeek || count > bestWeek.count || (count === bestWeek.count && weekStart < bestWeek.weekStart)) {
+      bestWeek = { weekStart, count };
+    }
+  }
+  return { biggestDay, bestWeek, longestRun: computeBrewDayRuns(shots, refDate).longest };
+}
+
+function formatGramsTotal(grams) {
+  if (grams >= 1000) return (Math.round((grams / 1000) * 10) / 10) + ' kg';
+  return Math.round(grams) + ' g';
+}
+
+function formatMlTotal(ml) {
+  if (ml >= 1000) return (Math.round((ml / 1000) * 10) / 10) + ' L';
+  return Math.round(ml) + ' ml';
+}
+
+function formatSecondsTotal(seconds) {
+  if (seconds >= 3600) return (Math.round((seconds / 3600) * 10) / 10) + ' h';
+  return Math.floor(seconds / 60) + ' min';
+}
+
+function computeFunTotals(shots) {
+  let grams = 0;
+  let ml = 0;
+  let seconds = 0;
+  for (const shot of Array.isArray(shots) ? shots : []) {
+    const doseIn = Number(shot?.doseIn);
+    const yieldOut = Number(shot?.yieldOut);
+    const extractionTime = Number(shot?.extractionTime);
+    if (Number.isFinite(doseIn) && doseIn > 0) grams += doseIn;
+    if (Number.isFinite(yieldOut) && yieldOut > 0) ml += yieldOut; // espresso: g ≈ ml
+    if (Number.isFinite(extractionTime) && extractionTime > 0) seconds += extractionTime;
+  }
+  return {
+    coffeeGround: { grams, label: formatGramsTotal(grams) },
+    espressoPulled: { ml, label: formatMlTotal(ml) },
+    timeWatching: { seconds, label: formatSecondsTotal(seconds) }
+  };
+}
+
 function computeMostPulledBeans(shots, beans, limit = STATS_TOP_BEANS_LIMIT) {
   const counts = new Map();
   for (const shot of Array.isArray(shots) ? shots : []) {

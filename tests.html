@@ -239,6 +239,67 @@ function computeBrewHourPattern(shots) {
   };
 }
 
+function computeSuperlatives(shots, refDate = new Date()) {
+  const dayCounts = new Map();
+  const weekCounts = new Map();
+  for (const shot of Array.isArray(shots) ? shots : []) {
+    const date = getShotStatsDate(shot);
+    if (!date) continue;
+    const dayKey = localDateStr(date);
+    dayCounts.set(dayKey, (dayCounts.get(dayKey) || 0) + 1);
+    const weekKey = localDateStr(getWeekStart(date));
+    weekCounts.set(weekKey, (weekCounts.get(weekKey) || 0) + 1);
+  }
+  let biggestDay = null;
+  for (const [date, count] of dayCounts) {
+    // ties: earliest date wins
+    if (!biggestDay || count > biggestDay.count || (count === biggestDay.count && date < biggestDay.date)) {
+      biggestDay = { date, count };
+    }
+  }
+  let bestWeek = null;
+  for (const [weekStart, count] of weekCounts) {
+    if (!bestWeek || count > bestWeek.count || (count === bestWeek.count && weekStart < bestWeek.weekStart)) {
+      bestWeek = { weekStart, count };
+    }
+  }
+  return { biggestDay, bestWeek, longestRun: computeBrewDayRuns(shots, refDate).longest };
+}
+
+function formatGramsTotal(grams) {
+  if (grams >= 1000) return (Math.round((grams / 1000) * 10) / 10) + ' kg';
+  return Math.round(grams) + ' g';
+}
+
+function formatMlTotal(ml) {
+  if (ml >= 1000) return (Math.round((ml / 1000) * 10) / 10) + ' L';
+  return Math.round(ml) + ' ml';
+}
+
+function formatSecondsTotal(seconds) {
+  if (seconds >= 3600) return (Math.round((seconds / 3600) * 10) / 10) + ' h';
+  return Math.floor(seconds / 60) + ' min';
+}
+
+function computeFunTotals(shots) {
+  let grams = 0;
+  let ml = 0;
+  let seconds = 0;
+  for (const shot of Array.isArray(shots) ? shots : []) {
+    const doseIn = Number(shot?.doseIn);
+    const yieldOut = Number(shot?.yieldOut);
+    const extractionTime = Number(shot?.extractionTime);
+    if (Number.isFinite(doseIn) && doseIn > 0) grams += doseIn;
+    if (Number.isFinite(yieldOut) && yieldOut > 0) ml += yieldOut; // espresso: g ≈ ml
+    if (Number.isFinite(extractionTime) && extractionTime > 0) seconds += extractionTime;
+  }
+  return {
+    coffeeGround: { grams, label: formatGramsTotal(grams) },
+    espressoPulled: { ml, label: formatMlTotal(ml) },
+    timeWatching: { seconds, label: formatSecondsTotal(seconds) }
+  };
+}
+
 function computeMostPulledBeans(shots, beans, limit = STATS_TOP_BEANS_LIMIT) {
   const counts = new Map();
   for (const shot of Array.isArray(shots) ? shots : []) {
@@ -859,6 +920,83 @@ test('computeBrewHourPattern - modal-hour tie goes to the earliest hour', () => 
   for (let i = 0; i < 5; i++) shots.push(sameDayShotAtHour(11 + i, 4, 8));
   const pattern = computeBrewHourPattern(shots);
   assertEqual(pattern.peakHour, 8);
+});
+
+test('computeSuperlatives - biggest day, best week, longest run from fixtures', () => {
+  // brew days: 12, 14 (x3), 18 (x2), 20 (x2), 21 (x2)
+  const shots = shotsOnDates([
+    '2026-05-12',
+    '2026-05-14', '2026-05-14', '2026-05-14',
+    '2026-05-18', '2026-05-18',
+    '2026-05-20', '2026-05-20',
+    '2026-05-21', '2026-05-21'
+  ]);
+  const result = computeSuperlatives(shots, new Date(2026, 4, 25));
+  assertDeepEqual(result.biggestDay, { date: '2026-05-14', count: 3 });
+  // week of May 11: 4 shots; week of May 18: 6 shots
+  assertDeepEqual(result.bestWeek, { weekStart: '2026-05-18', count: 6 });
+  assertEqual(result.longestRun, 2, 'May 20-21 is the longest run of brew days');
+});
+
+test('computeSuperlatives - biggest-day and best-week ties go to the earliest', () => {
+  // two days with 2 shots each; two Mon-start weeks with 2 shots each
+  const shots = shotsOnDates(['2026-05-20', '2026-05-20', '2026-05-12', '2026-05-12']);
+  const result = computeSuperlatives(shots, new Date(2026, 4, 25));
+  assertEqual(result.biggestDay.date, '2026-05-12');
+  assertEqual(result.bestWeek.weekStart, '2026-05-11');
+});
+
+test('computeSuperlatives - Sunday belongs to the Monday-start week', () => {
+  const shots = shotsOnDates(['2026-05-17', '2026-05-17', '2026-05-18']);
+  const result = computeSuperlatives(shots, new Date(2026, 4, 25));
+  assertDeepEqual(result.bestWeek, { weekStart: '2026-05-11', count: 2 });
+});
+
+test('computeSuperlatives - empty data', () => {
+  assertDeepEqual(computeSuperlatives([], new Date(2026, 4, 25)), {
+    biggestDay: null,
+    bestWeek: null,
+    longestRun: 0
+  });
+});
+
+test('formatGramsTotal / formatMlTotal / formatSecondsTotal - unit thresholds', () => {
+  assertEqual(formatGramsTotal(999), '999 g');
+  assertEqual(formatGramsTotal(1000), '1 kg');
+  assertEqual(formatGramsTotal(2460), '2.5 kg');
+  assertEqual(formatMlTotal(999), '999 ml');
+  assertEqual(formatMlTotal(1000), '1 L');
+  assertEqual(formatMlTotal(4830), '4.8 L');
+  assertEqual(formatSecondsTotal(59), '0 min');
+  assertEqual(formatSecondsTotal(3599), '59 min');
+  assertEqual(formatSecondsTotal(3600), '1 h');
+  assertEqual(formatSecondsTotal(5400), '1.5 h');
+});
+
+test('computeFunTotals - sums dose, yield, and extraction time', () => {
+  const shots = [
+    { doseIn: 18, yieldOut: 36, extractionTime: 25 },
+    { doseIn: 18, yieldOut: 36, extractionTime: 25 },
+    { doseIn: 18, yieldOut: 36, extractionTime: 25 }
+  ];
+  const totals = computeFunTotals(shots);
+  assertDeepEqual(totals.coffeeGround, { grams: 54, label: '54 g' });
+  assertDeepEqual(totals.espressoPulled, { ml: 108, label: '108 ml' });
+  assertDeepEqual(totals.timeWatching, { seconds: 75, label: '1 min' });
+});
+
+test('computeFunTotals - skips missing, zero, and invalid fields', () => {
+  const shots = [
+    { doseIn: 0, yieldOut: null, extractionTime: 'x' },
+    {},
+    { doseIn: 18 }
+  ];
+  const totals = computeFunTotals(shots);
+  assertEqual(totals.coffeeGround.grams, 18);
+  assertEqual(totals.espressoPulled.ml, 0);
+  assertEqual(totals.timeWatching.seconds, 0);
+  assertEqual(totals.espressoPulled.label, '0 ml');
+  assertEqual(totals.timeWatching.label, '0 min');
 });
 
 test('computeMostPulledBeans - ranks beans by shot count and applies limit', () => {
