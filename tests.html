@@ -179,6 +179,22 @@ function computeHeatmapWeeks(shots, refDate = new Date()) {
   return weeks;
 }
 
+function computeHeatmapMonthLabels(weeks) {
+  const labels = (Array.isArray(weeks) ? weeks : []).map((week, index, list) => {
+    const date = parseStatsDate(week.weekStart);
+    const prev = index > 0 ? parseStatsDate(list[index - 1].weekStart) : null;
+    const isNewMonth = !prev || (date && prev && date.getMonth() !== prev.getMonth());
+    return {
+      weekStart: week.weekStart,
+      label: date && isNewMonth ? date.toLocaleDateString(undefined, { month: 'short' }) : ''
+    };
+  });
+  for (let i = 0; i < labels.length - 1; i++) {
+    if (labels[i].label && labels[i + 1].label) labels[i].label = ''; // adjacent labels collide in narrow columns
+  }
+  return labels;
+}
+
 function formatGramsTotal(grams) {
   if (grams >= 1000) return (Math.round((grams / 1000) * 10) / 10) + ' kg';
   return Math.round(grams) + ' g';
@@ -824,6 +840,27 @@ test('computeHeatmapWeeks - shots outside the 13-week window are excluded', () =
     0
   );
   assertEqual(total, 1);
+});
+
+test('computeHeatmapMonthLabels - labels month changes, drops colliding first label', () => {
+  const shortMonth = iso => parseStatsDate(iso).toLocaleDateString(undefined, { month: 'short' });
+  // window 2026-02-23 .. 2026-05-18: Mar starts at column 1, adjacent to the
+  // window-start Feb label at column 0, so Feb is dropped to avoid collision
+  const labels = computeHeatmapMonthLabels(computeHeatmapWeeks([], new Date(2026, 4, 20)));
+  assertEqual(labels.length, 13);
+  assertDeepEqual(
+    labels.map(entry => entry.label),
+    ['', shortMonth('2026-03-02'), '', '', '', '', shortMonth('2026-04-06'), '', '', '', shortMonth('2026-05-04'), '', '']
+  );
+});
+
+test('computeHeatmapMonthLabels - keeps the window-start label when not colliding', () => {
+  const shortMonth = iso => parseStatsDate(iso).toLocaleDateString(undefined, { month: 'short' });
+  // window 2026-02-09 .. 2026-05-04: month changes are 3+ columns apart
+  const labels = computeHeatmapMonthLabels(computeHeatmapWeeks([], new Date(2026, 4, 4)));
+  assertEqual(labels[0].label, shortMonth('2026-02-09'));
+  assertEqual(labels.filter(entry => entry.label).length, 4);
+  assertDeepEqual(computeHeatmapMonthLabels([]), []);
 });
 
 test('computeHeatmapWeeks - future days in the current week are present with zero count', () => {

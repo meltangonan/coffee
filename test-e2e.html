@@ -388,6 +388,13 @@ async function runTests() {
 
       const runFacts = doc.querySelector('[data-testid="stats-run-facts"]').textContent;
       assertEqual(runFacts, 'Current run: 2 brew days · Longest: 2');
+
+      const dayLetters = Array.from(doc.querySelectorAll('.stats-heatmap-day-label')).map(el => el.textContent).join('');
+      assertEqual(dayLetters, 'MTWTFSS', 'Day axis should label Monday through Sunday');
+      const monthSlots = doc.querySelectorAll('.stats-heatmap-month-label');
+      assertEqual(monthSlots.length, 13, 'One month slot per week column');
+      const monthLabels = Array.from(monthSlots).map(el => el.textContent.trim()).filter(Boolean);
+      assert(monthLabels.length >= 2, 'Month axis should show month labels');
     } finally {
       app.shots = originalShots;
     }
