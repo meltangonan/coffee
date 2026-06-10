@@ -424,6 +424,14 @@ async function runTests() {
       const delta = doc.querySelector('[data-testid="stats-recap-delta"]').textContent;
       assert(delta.includes('2 more shots'), 'Delta should compare shots to the month before');
       assert(delta.includes('1 more brew day'), 'Delta should compare brew days to the month before');
+
+      const monthCols = doc.querySelectorAll('[data-testid="stats-recap-month-bars"] .stats-month-col');
+      assertEqual(monthCols.length, 12, 'Recap should chart 12 months');
+      const recapFill = doc.querySelector('[data-testid="stats-recap-month-bars"] .stats-month-fill.recap');
+      assert(recapFill, 'Recap month bar should be highlighted');
+      assertEqual(recapFill.style.height, '100%', 'Recap month should be the tallest bar');
+      const recapCol = recapFill.closest('.stats-month-col');
+      assert(recapCol.getAttribute('title').endsWith(': 3 shots'), 'Recap month bar title should show its count');
     } finally {
       app.shots = originalShots;
     }

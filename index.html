@@ -357,6 +357,13 @@ textarea.form-input { min-height: 80px; resize: vertical; line-height: 1.5; }
 .stats-zone-fill.standard { background: var(--freshness-optimal); }
 .stats-zone-pct { font-size: 12px; font-weight: 700; color: var(--espresso); text-align: right; }
 .stats-zone-range { font-size: 11px; color: var(--text-muted); text-align: right; white-space: nowrap; }
+.stats-month-bars { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); gap: 4px; margin-bottom: 14px; }
+.stats-month-col { display: flex; flex-direction: column; align-items: center; gap: 4px; }
+.stats-month-track { height: 56px; width: 100%; display: flex; align-items: flex-end; }
+.stats-month-fill { display: block; width: 100%; border-radius: 3px 3px 0 0; background: rgba(44,24,16,0.16); min-height: 2px; }
+.stats-month-fill.recap { background: var(--amber-dark); }
+.stats-month-letter { font-size: 9px; font-weight: 700; color: var(--text-muted); }
+.stats-month-letter.recap { color: var(--amber-dark); }
 
 /* Bean trend charts */
 .bean-trends-header { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 10px; }
@@ -1498,6 +1505,16 @@ textarea.form-input { min-height: 80px; resize: vertical; line-height: 1.5; }
         <template x-if="statsMonthlyRecap">
           <section class="stats-card" aria-label="Monthly recap" data-testid="stats-recap-card">
             <div class="stats-card-label" x-text="statsRecapTitle"></div>
+            <div class="stats-month-bars" data-testid="stats-recap-month-bars">
+              <template x-for="bar in statsRecapMonthBars" :key="bar.key">
+                <div class="stats-month-col" :title="bar.title" :aria-label="bar.title">
+                  <div class="stats-month-track">
+                    <span class="stats-month-fill" :class="{ recap: bar.isRecapMonth }" :style="'height: ' + bar.percent + '%'"></span>
+                  </div>
+                  <span class="stats-month-letter" :class="{ recap: bar.isRecapMonth }" x-text="bar.letter"></span>
+                </div>
+              </template>
+            </div>
             <div class="stats-fact-list">
               <div class="stats-fact-row">
                 <span class="stats-fact-label">Shots pulled</span>
@@ -2279,6 +2296,24 @@ function computeHeatmapWeeks(shots, refDate = new Date()) {
 function formatGramsTotal(grams) {
   if (grams >= 1000) return (Math.round((grams / 1000) * 10) / 10) + ' kg';
   return Math.round(grams) + ' g';
+}
+
+// Shots per calendar month for the `monthCount` months ending with the last completed month.
+function computeMonthlyShotVolume(shots, refDate = new Date(), monthCount = 12) {
+  const currentMonthStart = getMonthStart(refDate);
+  const months = [];
+  for (let i = monthCount; i >= 1; i--) {
+    const start = new Date(currentMonthStart.getFullYear(), currentMonthStart.getMonth() - i, 1);
+    months.push({ month: start.getMonth(), year: start.getFullYear(), count: 0 });
+  }
+  const first = months[0];
+  for (const shot of Array.isArray(shots) ? shots : []) {
+    const date = getShotStatsDate(shot);
+    if (!date) continue;
+    const index = (date.getFullYear() - first.year) * 12 + (date.getMonth() - first.month);
+    if (index >= 0 && index < months.length) months[index].count++;
+  }
+  return months;
 }
 
 function computeMonthlyRecap(shots, beans, refDate = new Date()) {
@@ -3259,6 +3294,18 @@ function app() {
       return zones.standardPercentage + '% of your ' + zones.total + ' shots in the standard range';
     },
     get statsMonthlyRecap() { return computeMonthlyRecap(this.shots, this.beans); },
+    get statsRecapMonthBars() {
+      const months = computeMonthlyShotVolume(this.shots);
+      const max = Math.max(1, ...months.map(entry => entry.count));
+      return months.map((entry, index) => ({
+        key: entry.year + '-' + entry.month,
+        letter: 'JFMAMJJASOND'.charAt(entry.month),
+        percent: Math.round((entry.count / max) * 100),
+        title: this.statsRecapMonthName(entry.month) + ' ' + entry.year + ': '
+          + entry.count + (entry.count === 1 ? ' shot' : ' shots'),
+        isRecapMonth: index === months.length - 1
+      }));
+    },
     statsRecapMonthName(monthIndex) {
       return new Date(2000, monthIndex, 1).toLocaleDateString(undefined, { month: 'long' });
     },

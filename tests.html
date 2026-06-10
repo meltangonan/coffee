@@ -257,6 +257,24 @@ function computeSweetSpot(shots) {
   };
 }
 
+// Shots per calendar month for the `monthCount` months ending with the last completed month.
+function computeMonthlyShotVolume(shots, refDate = new Date(), monthCount = 12) {
+  const currentMonthStart = getMonthStart(refDate);
+  const months = [];
+  for (let i = monthCount; i >= 1; i--) {
+    const start = new Date(currentMonthStart.getFullYear(), currentMonthStart.getMonth() - i, 1);
+    months.push({ month: start.getMonth(), year: start.getFullYear(), count: 0 });
+  }
+  const first = months[0];
+  for (const shot of Array.isArray(shots) ? shots : []) {
+    const date = getShotStatsDate(shot);
+    if (!date) continue;
+    const index = (date.getFullYear() - first.year) * 12 + (date.getMonth() - first.month);
+    if (index >= 0 && index < months.length) months[index].count++;
+  }
+  return months;
+}
+
 function computeMonthlyRecap(shots, beans, refDate = new Date()) {
   const currentMonthStart = getMonthStart(refDate);
   const recapStart = new Date(currentMonthStart.getFullYear(), currentMonthStart.getMonth() - 1, 1);
@@ -905,6 +923,28 @@ test('computeExtractionTimeZones - skips missing and invalid times', () => {
   const result = computeExtractionTimeZones(shots);
   assertEqual(result.total, 2);
   assertEqual(result.standardPercentage, 100);
+});
+
+test('computeMonthlyShotVolume - 12 months ending with the last completed month', () => {
+  const shots = [
+    { shotDate: '2026-05-10' }, { shotDate: '2026-05-20' }, // recap month
+    { shotDate: '2026-06-05' },  // current month, excluded
+    { shotDate: '2025-06-15' },  // first month of the window
+    { shotDate: '2025-05-31' }   // before the window, excluded
+  ];
+  const months = computeMonthlyShotVolume(shots, new Date(2026, 5, 9));
+  assertEqual(months.length, 12);
+  assertDeepEqual(months[0], { month: 5, year: 2025, count: 1 });
+  assertDeepEqual(months[11], { month: 4, year: 2026, count: 2 });
+  assertEqual(months.reduce((sum, entry) => sum + entry.count, 0), 3);
+});
+
+test('computeMonthlyShotVolume - year rollover and empty data', () => {
+  const months = computeMonthlyShotVolume([], new Date(2026, 0, 15));
+  assertEqual(months.length, 12);
+  assertDeepEqual(months[0], { month: 0, year: 2025, count: 0 });
+  assertDeepEqual(months[11], { month: 11, year: 2025, count: 0 });
+  assertEqual(computeMonthlyShotVolume(null, new Date(2026, 5, 9)).length, 12);
 });
 
 test('computeMonthlyRecap - summarizes the last completed month', () => {

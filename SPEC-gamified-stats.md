@@ -5,7 +5,10 @@ patterns, Superlatives, and Fun totals cards were removed at the user's request 
 and kept: brew rhythm heatmap + run facts, and the monthly recap. Added in their place: a
 Sweet spot card (interquartile ratio and extraction-time bands across great+perfect-rated
 shots, hidden below 10 qualifying shots) — the user's personal best-shot reference rather
-than generic espresso standards. Targets the current local single-HTML app. Complements
+than generic espresso standards. Added 2026-06-10, modeled on Strava's Training Zones and
+Monthly Recap screens: an Extraction zones card (distribution of all timed shots across the
+five extraction-time bands, hidden below 10 shots) and a 12-month volume bar chart at the
+top of the monthly recap card. Targets the current local single-HTML app. Complements
 SPEC.md (the public-app pivot) — everything here is client-derived and ports cleanly to
 Supabase later; shareable recap cards are deferred to the pivot's dial-in-card work.*
 
