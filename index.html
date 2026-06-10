@@ -333,6 +333,13 @@ textarea.form-input { min-height: 80px; resize: vertical; line-height: 1.5; }
 .stats-quality-fill.great { background: #4F6FA5; }
 .stats-quality-fill.perfect { background: var(--freshness-optimal); }
 .stats-quality-count { font-size: 12px; font-weight: 700; color: var(--espresso); text-align: right; white-space: nowrap; }
+.stats-heatmap { display: grid; grid-template-columns: repeat(13, minmax(0, 1fr)); gap: 3px; margin-bottom: 12px; }
+.stats-heatmap-col { display: grid; grid-template-rows: repeat(7, auto); gap: 3px; }
+.stats-heatmap-cell { aspect-ratio: 1 / 1; border-radius: 3px; background: var(--cream-dark); }
+.stats-heatmap-cell.level-1 { background: rgba(212,165,116,0.5); }
+.stats-heatmap-cell.level-2 { background: var(--amber-dark); }
+.stats-heatmap-cell.level-3 { background: var(--espresso); }
+.stats-heatmap-runs { font-size: 13px; color: var(--text-secondary); }
 
 /* Bean trend charts */
 .bean-trends-header { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 10px; }
@@ -1399,6 +1406,24 @@ textarea.form-input { min-height: 80px; resize: vertical; line-height: 1.5; }
       </div>
 
       <div x-show="statsHasData" class="stats-grid">
+        <section class="stats-card" aria-label="Brew rhythm" data-testid="stats-rhythm-card">
+          <div class="stats-card-label">Brew rhythm</div>
+          <div class="stats-heatmap" data-testid="stats-heatmap">
+            <template x-for="week in statsHeatmapWeeks" :key="week.weekStart">
+              <div class="stats-heatmap-col">
+                <template x-for="day in week.days" :key="day.date">
+                  <div class="stats-heatmap-cell"
+                       :class="'level-' + day.bucket"
+                       :title="formatHeatmapDayLabel(day)"
+                       :aria-label="formatHeatmapDayLabel(day)"
+                       :data-testid="'stats-heatmap-cell-' + day.date"></div>
+                </template>
+              </div>
+            </template>
+          </div>
+          <div class="stats-heatmap-runs" data-testid="stats-run-facts" x-text="statsRunFactsText"></div>
+        </section>
+
         <section class="stats-card" aria-label="Shot counts">
           <div class="stats-card-label">Shots logged</div>
           <div class="stats-count-grid">
@@ -2990,6 +3015,20 @@ function app() {
     get statsMostPulledBeans() { return computeMostPulledBeans(this.shots, this.beans, STATS_TOP_BEANS_LIMIT); },
     get statsQualityBreakdown() { return computeQualityBreakdown(this.shots); },
     get statsHasData() { return this.statsTotalShots > 0; },
+    get statsBrewDayRuns() { return computeBrewDayRuns(this.shots); },
+    get statsHeatmapWeeks() { return computeHeatmapWeeks(this.shots); },
+    get statsRunFactsText() {
+      const runs = this.statsBrewDayRuns;
+      const unit = runs.current === 1 ? 'brew day' : 'brew days';
+      return 'Current run: ' + runs.current + ' ' + unit + ' · Longest: ' + runs.longest;
+    },
+    formatHeatmapDayLabel(day) {
+      const date = parseStatsDate(day?.date);
+      const label = date
+        ? date.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })
+        : (day?.date || '');
+      return label + ': ' + day.count + (day.count === 1 ? ' shot' : ' shots');
+    },
     getBeanShotTrend(beanId, metric) { return getBeanShotTrend(this.shots, beanId, metric); },
     getBeanTrendChart(beanId, metric) { return buildTrendPath(this.getBeanShotTrend(beanId, metric)); },
     getBeanTrendShotCount(beanId) {

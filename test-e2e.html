@@ -345,6 +345,54 @@ async function runTests() {
     }
   });
 
+  await test('Stats brew rhythm heatmap and run facts render', async () => {
+    const originalShots = app.shots;
+    const dayStr = offset => {
+      const d = new Date();
+      d.setDate(d.getDate() + offset);
+      return localDateStr(d);
+    };
+    const shotAt = (id, dayOffset) => ({
+      id, beanId: 'e2e-active-bean', grindSize: 6, doseIn: 18, yieldOut: 36,
+      extractionTime: 25, rating: null, notes: '',
+      shotDate: dayStr(dayOffset), createdAt: new Date().toISOString()
+    });
+    // brew days: today (2 shots), yesterday (1), 3 days ago (3), 4 days ago (1)
+    app.shots = [
+      shotAt('rhythm-1', 0), shotAt('rhythm-2', 0),
+      shotAt('rhythm-3', -1),
+      shotAt('rhythm-4', -3), shotAt('rhythm-5', -3), shotAt('rhythm-6', -3),
+      shotAt('rhythm-7', -4)
+    ];
+
+    try {
+      assertEqual(app.statsBrewDayRuns.current, 2, 'Run ending today should span today and yesterday');
+      assertEqual(app.statsBrewDayRuns.longest, 2, 'Longest run should be 2 days');
+
+      app.activateTab('stats');
+      await wait(50);
+      const doc = appWindow.document;
+      const cells = doc.querySelectorAll('[data-testid^="stats-heatmap-cell-"]');
+      assertEqual(cells.length, 91, 'Heatmap should render 13 weeks of 7 days');
+
+      const todayCell = doc.querySelector('[data-testid="stats-heatmap-cell-' + dayStr(0) + '"]');
+      assert(todayCell, 'Today cell should exist');
+      assert(todayCell.classList.contains('level-2'), 'Two shots today should be bucket 2');
+      assert(todayCell.getAttribute('title').includes('2 shots'), 'Cell title should include the shot count');
+      assert(doc.querySelector('[data-testid="stats-heatmap-cell-' + dayStr(-1) + '"]').classList.contains('level-1'),
+        'One shot should be bucket 1');
+      assert(doc.querySelector('[data-testid="stats-heatmap-cell-' + dayStr(-3) + '"]').classList.contains('level-3'),
+        'Three shots should be bucket 3');
+      assert(doc.querySelector('[data-testid="stats-heatmap-cell-' + dayStr(-2) + '"]').classList.contains('level-0'),
+        'No shots should be bucket 0');
+
+      const runFacts = doc.querySelector('[data-testid="stats-run-facts"]').textContent;
+      assertEqual(runFacts, 'Current run: 2 brew days · Longest: 2');
+    } finally {
+      app.shots = originalShots;
+    }
+  });
+
   await test('Stats most-pulled beans aggregate copied bags', async () => {
     const originalBeans = app.beans;
     const originalShots = app.shots;
