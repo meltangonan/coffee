@@ -77,9 +77,6 @@ const BREW_RATIO_HIGH = 2.5;              // 2.21-2.5: high yield
 
 // Stats thresholds
 const STATS_HEATMAP_WEEKS = 13;       // 12 full Mon-start weeks + current week
-const STATS_DOW_MIN_SHOTS = 10;       // day-of-week facts need this many shots...
-const STATS_DOW_MIN_WEEKS = 3;        // ...across this many distinct Mon-start weeks
-const STATS_BREW_HOUR_MIN_SHOTS = 10; // brew-hour facts need this many same-day-logged shots
 ```
 
 ### Key Functional Modules (all methods on the `app()` object)
@@ -96,7 +93,7 @@ const STATS_BREW_HOUR_MIN_SHOTS = 10; // brew-hour facts need this many same-day
 - **Tab Navigation**: `activateTab` (switches tab, resets beans view to list, scrolls to top), `tabPaneStyle` (controls visibility and swipe animation transforms)
 - **Tab Swipe (Touch)**: `onTabSwipeStart`, `onTabSwipeMove`, `onTabSwipeEnd`, `resetTabSwipe` — edge-initiated horizontal swipe gesture to navigate between tabs on touch devices. Includes axis lock (horizontal vs vertical), boundary resistance, and blocked-target detection (inputs, modals, existing swipe containers).
 - **Calendar**: `calendarWeeks`, `calendarBars`, `calendarBarsUnique`, `calendarBarsForWeek`, `getRangeBandStyle`
-- **Stats (pure compute + getters)**: pure top-level functions `computeShotCounts`, `computeMostPulledBeans`, `computeQualityBreakdown`, `computeBrewDayRuns`, `computeHeatmapWeeks`, `computeDayOfWeekPattern`, `computeBrewHourPattern`, `computeSuperlatives`, `computeFunTotals`, `computeMonthlyRecap` (today-relative ones take `refDate = new Date()`), wired as `stats*` getters on `app()`; testable nodes use `data-testid="stats-*"`. All shot-date logic goes through `getShotStatsDate` (`shotDate || createdAt`); weeks start Monday via `getWeekStart`. Stats tab card order: Brew rhythm (heatmap + run facts) → Shots logged → Brew patterns → Superlatives → Fun totals → Monthly recap (hidden if last completed month is empty) → Most pulled beans → Quality breakdown. Pattern facts gate behind the minimum-data thresholds above; brew-hour uses only same-day-logged shots (`createdAt` date equals stats date) because backdated shots have meaningless clock times. Tone for stats copy is observational, never motivational: facts about the user, no records-to-beat, nudges, goals, or exclamation marks.
+- **Stats (pure compute + getters)**: pure top-level functions `computeShotCounts`, `computeMostPulledBeans`, `computeQualityBreakdown`, `computeBrewDayRuns`, `computeHeatmapWeeks`, `computeMonthlyRecap` (today-relative ones take `refDate = new Date()`), wired as `stats*` getters on `app()`; testable nodes use `data-testid="stats-*"`. All shot-date logic goes through `getShotStatsDate` (`shotDate || createdAt`); weeks start Monday via `getWeekStart`. Stats tab card order: Brew rhythm (heatmap + run facts) → Shots logged → Monthly recap (hidden if last completed month is empty) → Most pulled beans → Quality breakdown. Tone for stats copy is observational, never motivational: facts about the user, no records-to-beat, nudges, goals, or exclamation marks.
 - **Computed Properties**: `todayShots` (filtered by `shotDate === today`), `selectedBean`, `sortedBeans`, `currentBeans`, `archivedBeans`, `todayFormatted`, `calendarMonthLabel`; `getUniqueBeanSources()` for "Fill from previous bean" picker (de-duped by name+roaster, best representative; supports `{ archivedOnly: true }` option for Today modal context)
 
 ### Data Model

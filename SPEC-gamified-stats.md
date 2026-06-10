@@ -1,6 +1,8 @@
 # Spec: Wrapped-Style Stats — "Spotify Wrapped for your espresso"
 
-*Status: v2 approved and implemented 2026-06-09. Targets the current local single-HTML app. Complements
+*Status: v2 approved and implemented 2026-06-09. Post-ship review (same day): the Brew
+patterns, Superlatives, and Fun totals cards were removed at the user's request — shipped
+and kept: brew rhythm heatmap + run facts, and the monthly recap. Targets the current local single-HTML app. Complements
 SPEC.md (the public-app pivot) — everything here is client-derived and ports cleanly to
 Supabase later; shareable recap cards are deferred to the pivot's dial-in-card work.*
 
