@@ -300,6 +300,45 @@ function computeFunTotals(shots) {
   };
 }
 
+function computeMonthlyRecap(shots, beans, refDate = new Date()) {
+  const currentMonthStart = getMonthStart(refDate);
+  const recapStart = new Date(currentMonthStart.getFullYear(), currentMonthStart.getMonth() - 1, 1);
+  const prevStart = new Date(currentMonthStart.getFullYear(), currentMonthStart.getMonth() - 2, 1);
+  const recapShots = [];
+  let prevShotCount = 0;
+  const prevDays = new Set();
+  for (const shot of Array.isArray(shots) ? shots : []) {
+    const date = getShotStatsDate(shot);
+    if (!date) continue;
+    if (date >= recapStart && date < currentMonthStart) recapShots.push(shot);
+    else if (date >= prevStart && date < recapStart) {
+      prevShotCount++;
+      prevDays.add(localDateStr(date));
+    }
+  }
+  if (!recapShots.length) return null;
+  const days = new Set();
+  let grams = 0;
+  for (const shot of recapShots) {
+    days.add(localDateStr(getShotStatsDate(shot)));
+    const doseIn = Number(shot?.doseIn);
+    if (Number.isFinite(doseIn) && doseIn > 0) grams += doseIn;
+  }
+  return {
+    month: recapStart.getMonth(),
+    year: recapStart.getFullYear(),
+    prevMonth: prevStart.getMonth(),
+    shotCount: recapShots.length,
+    daysBrewed: days.size,
+    coffeeGround: formatGramsTotal(grams),
+    topBean: computeMostPulledBeans(recapShots, beans, 1)[0] || null,
+    quality: computeQualityBreakdown(recapShots),
+    deltas: prevShotCount > 0
+      ? { shots: recapShots.length - prevShotCount, days: days.size - prevDays.size }
+      : null
+  };
+}
+
 function computeMostPulledBeans(shots, beans, limit = STATS_TOP_BEANS_LIMIT) {
   const counts = new Map();
   for (const shot of Array.isArray(shots) ? shots : []) {
@@ -997,6 +1036,55 @@ test('computeFunTotals - skips missing, zero, and invalid fields', () => {
   assertEqual(totals.timeWatching.seconds, 0);
   assertEqual(totals.espressoPulled.label, '0 ml');
   assertEqual(totals.timeWatching.label, '0 min');
+});
+
+test('computeMonthlyRecap - summarizes the last completed month', () => {
+  const beans = [
+    { id: 'bean-a', name: 'Alpha', roaster: 'One', isArchived: false, createdAt: '2026-04-01T08:00:00.000Z' },
+    { id: 'bean-b', name: 'Beta', roaster: 'Two', isArchived: false, createdAt: '2026-04-01T08:00:00.000Z' }
+  ];
+  const shots = [
+    { beanId: 'bean-a', shotDate: '2026-05-01', doseIn: 18, rating: 'great' },
+    { beanId: 'bean-a', shotDate: '2026-05-01', doseIn: 18, rating: 'perfect' },
+    { beanId: 'bean-b', shotDate: '2026-05-31', doseIn: 20, rating: null },
+    { beanId: 'bean-a', shotDate: '2026-06-01', doseIn: 18 }, // current month, excluded
+    { beanId: 'bean-a', shotDate: '2026-04-30', doseIn: 18 }  // previous month
+  ];
+  const recap = computeMonthlyRecap(shots, beans, new Date(2026, 5, 9));
+  assertEqual(recap.month, 4);
+  assertEqual(recap.year, 2026);
+  assertEqual(recap.prevMonth, 3);
+  assertEqual(recap.shotCount, 3);
+  assertEqual(recap.daysBrewed, 2);
+  assertEqual(recap.coffeeGround, '56 g');
+  assertEqual(recap.topBean.name, 'Alpha');
+  assertEqual(recap.quality.ratedTotal, 2);
+  assertDeepEqual(recap.deltas, { shots: 2, days: 1 });
+});
+
+test('computeMonthlyRecap - null when the recap month has no shots', () => {
+  assertEqual(computeMonthlyRecap([{ shotDate: '2026-06-05', doseIn: 18 }], [], new Date(2026, 5, 9)), null);
+  assertEqual(computeMonthlyRecap([], [], new Date(2026, 5, 9)), null);
+});
+
+test('computeMonthlyRecap - no deltas when the previous month is empty', () => {
+  const recap = computeMonthlyRecap([{ shotDate: '2026-05-10', doseIn: 18 }], [], new Date(2026, 5, 9));
+  assertEqual(recap.shotCount, 1);
+  assertEqual(recap.deltas, null);
+});
+
+test('computeMonthlyRecap - year rollover recaps December', () => {
+  const shots = [
+    { shotDate: '2025-12-31', doseIn: 18 },
+    { shotDate: '2026-01-02', doseIn: 18 }, // current month, excluded
+    { shotDate: '2025-11-30', doseIn: 18 }  // previous month
+  ];
+  const recap = computeMonthlyRecap(shots, [], new Date(2026, 0, 15));
+  assertEqual(recap.month, 11);
+  assertEqual(recap.year, 2025);
+  assertEqual(recap.prevMonth, 10);
+  assertEqual(recap.shotCount, 1);
+  assertDeepEqual(recap.deltas, { shots: 0, days: 0 });
 });
 
 test('computeMostPulledBeans - ranks beans by shot count and applies limit', () => {

@@ -351,6 +351,7 @@ textarea.form-input { min-height: 80px; resize: vertical; line-height: 1.5; }
 .stats-fact-row { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; }
 .stats-fact-label { font-size: 13px; color: var(--text-secondary); }
 .stats-fact-value { font-size: 14px; font-weight: 600; color: var(--text-primary); text-align: right; }
+.stats-recap-delta { margin-top: 10px; font-size: 12px; color: var(--text-muted); }
 
 /* Bean trend charts */
 .bean-trends-header { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 10px; }
@@ -1515,6 +1516,37 @@ textarea.form-input { min-height: 80px; resize: vertical; line-height: 1.5; }
           </div>
         </section>
 
+        <template x-if="statsMonthlyRecap">
+          <section class="stats-card" aria-label="Monthly recap" data-testid="stats-recap-card">
+            <div class="stats-card-label" x-text="statsRecapTitle"></div>
+            <div class="stats-fact-list">
+              <div class="stats-fact-row">
+                <span class="stats-fact-label">Shots pulled</span>
+                <span class="stats-fact-value" data-testid="stats-recap-shots" x-text="statsMonthlyRecap.shotCount"></span>
+              </div>
+              <div class="stats-fact-row">
+                <span class="stats-fact-label">Days brewed</span>
+                <span class="stats-fact-value" data-testid="stats-recap-days" x-text="statsMonthlyRecap.daysBrewed"></span>
+              </div>
+              <div class="stats-fact-row" x-show="statsMonthlyRecap.topBean">
+                <span class="stats-fact-label">Top bean</span>
+                <span class="stats-fact-value" data-testid="stats-recap-top-bean"
+                      x-text="statsMonthlyRecap.topBean ? statsMonthlyRecap.topBean.name : ''"></span>
+              </div>
+              <div class="stats-fact-row">
+                <span class="stats-fact-label">Coffee ground</span>
+                <span class="stats-fact-value" data-testid="stats-recap-ground" x-text="statsMonthlyRecap.coffeeGround"></span>
+              </div>
+              <div class="stats-fact-row" x-show="statsRecapQualityText">
+                <span class="stats-fact-label">Quality</span>
+                <span class="stats-fact-value" data-testid="stats-recap-quality" x-text="statsRecapQualityText"></span>
+              </div>
+            </div>
+            <div class="stats-recap-delta" data-testid="stats-recap-delta"
+                 x-show="statsRecapDeltaText" x-text="statsRecapDeltaText"></div>
+          </section>
+        </template>
+
         <section class="stats-card" aria-label="Most pulled beans" data-testid="stats-most-pulled-card">
           <div class="stats-card-label">Most pulled beans</div>
           <div x-show="statsMostPulledBeans.length === 0" class="text-muted">No bean stats yet.</div>
@@ -2383,6 +2415,45 @@ function computeFunTotals(shots) {
     coffeeGround: { grams, label: formatGramsTotal(grams) },
     espressoPulled: { ml, label: formatMlTotal(ml) },
     timeWatching: { seconds, label: formatSecondsTotal(seconds) }
+  };
+}
+
+function computeMonthlyRecap(shots, beans, refDate = new Date()) {
+  const currentMonthStart = getMonthStart(refDate);
+  const recapStart = new Date(currentMonthStart.getFullYear(), currentMonthStart.getMonth() - 1, 1);
+  const prevStart = new Date(currentMonthStart.getFullYear(), currentMonthStart.getMonth() - 2, 1);
+  const recapShots = [];
+  let prevShotCount = 0;
+  const prevDays = new Set();
+  for (const shot of Array.isArray(shots) ? shots : []) {
+    const date = getShotStatsDate(shot);
+    if (!date) continue;
+    if (date >= recapStart && date < currentMonthStart) recapShots.push(shot);
+    else if (date >= prevStart && date < recapStart) {
+      prevShotCount++;
+      prevDays.add(localDateStr(date));
+    }
+  }
+  if (!recapShots.length) return null;
+  const days = new Set();
+  let grams = 0;
+  for (const shot of recapShots) {
+    days.add(localDateStr(getShotStatsDate(shot)));
+    const doseIn = Number(shot?.doseIn);
+    if (Number.isFinite(doseIn) && doseIn > 0) grams += doseIn;
+  }
+  return {
+    month: recapStart.getMonth(),
+    year: recapStart.getFullYear(),
+    prevMonth: prevStart.getMonth(),
+    shotCount: recapShots.length,
+    daysBrewed: days.size,
+    coffeeGround: formatGramsTotal(grams),
+    topBean: computeMostPulledBeans(recapShots, beans, 1)[0] || null,
+    quality: computeQualityBreakdown(recapShots),
+    deltas: prevShotCount > 0
+      ? { shots: recapShots.length - prevShotCount, days: days.size - prevDays.size }
+      : null
   };
 }
 
@@ -3256,6 +3327,34 @@ function app() {
       if (!entry) return '—';
       return 'Week of ' + this.formatStatsMonthDay(entry.weekStart) + ' · '
         + entry.count + (entry.count === 1 ? ' shot' : ' shots');
+    },
+    get statsMonthlyRecap() { return computeMonthlyRecap(this.shots, this.beans); },
+    statsRecapMonthName(monthIndex) {
+      return new Date(2000, monthIndex, 1).toLocaleDateString(undefined, { month: 'long' });
+    },
+    get statsRecapTitle() {
+      const recap = this.statsMonthlyRecap;
+      return recap ? this.statsRecapMonthName(recap.month) + ' in review' : '';
+    },
+    get statsRecapQualityText() {
+      const recap = this.statsMonthlyRecap;
+      if (!recap || !recap.quality.ratedTotal) return '';
+      return recap.quality.items
+        .filter(item => item.count > 0)
+        .map(item => item.count + ' ' + this.shotQualityLabel(item.rating).toLowerCase())
+        .join(' · ');
+    },
+    get statsRecapDeltaText() {
+      const recap = this.statsMonthlyRecap;
+      if (!recap || !recap.deltas) return '';
+      const phrase = (n, singular, plural) => {
+        if (n === 0) return 'same ' + plural;
+        const word = Math.abs(n) === 1 ? singular : plural;
+        return Math.abs(n) + ' ' + (n > 0 ? 'more' : 'fewer') + ' ' + word;
+      };
+      return 'vs ' + this.statsRecapMonthName(recap.prevMonth) + ': '
+        + phrase(recap.deltas.shots, 'shot', 'shots')
+        + ' · ' + phrase(recap.deltas.days, 'brew day', 'brew days');
     },
     getBeanShotTrend(beanId, metric) { return getBeanShotTrend(this.shots, beanId, metric); },
     getBeanTrendChart(beanId, metric) { return buildTrendPath(this.getBeanShotTrend(beanId, metric)); },

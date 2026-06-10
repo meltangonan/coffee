@@ -494,6 +494,59 @@ async function runTests() {
     }
   });
 
+  await test('Stats monthly recap renders the last completed month with deltas', async () => {
+    const originalShots = app.shots;
+    const monthDay = (monthOffset, day) => {
+      const now = new Date();
+      return localDateStr(new Date(now.getFullYear(), now.getMonth() + monthOffset, day));
+    };
+    const recapShot = (id, shotDate, rating) => ({
+      id, beanId: 'e2e-active-bean', grindSize: 6, doseIn: 18, yieldOut: 36,
+      extractionTime: 25, rating, notes: '', shotDate, createdAt: new Date().toISOString()
+    });
+    // last month: 3 shots over 2 days; month before: 1 shot
+    app.shots = [
+      recapShot('recap-1', monthDay(-1, 5), 'great'),
+      recapShot('recap-2', monthDay(-1, 5), 'great'),
+      recapShot('recap-3', monthDay(-1, 12), 'perfect'),
+      recapShot('recap-4', monthDay(-2, 10), null)
+    ];
+
+    try {
+      app.activateTab('stats');
+      await wait(50);
+      const doc = appWindow.document;
+      assert(doc.querySelector('[data-testid="stats-recap-card"]'), 'Recap card should render');
+      assertEqual(doc.querySelector('[data-testid="stats-recap-shots"]').textContent, '3');
+      assertEqual(doc.querySelector('[data-testid="stats-recap-days"]').textContent, '2');
+      assertEqual(doc.querySelector('[data-testid="stats-recap-ground"]').textContent, '54 g');
+      assertEqual(doc.querySelector('[data-testid="stats-recap-top-bean"]').textContent, 'E2E Active Bean');
+      assertEqual(doc.querySelector('[data-testid="stats-recap-quality"]').textContent, '2 great · 1 perfect');
+      const delta = doc.querySelector('[data-testid="stats-recap-delta"]').textContent;
+      assert(delta.includes('2 more shots'), 'Delta should compare shots to the month before');
+      assert(delta.includes('1 more brew day'), 'Delta should compare brew days to the month before');
+    } finally {
+      app.shots = originalShots;
+    }
+  });
+
+  await test('Stats monthly recap is hidden when last month had no shots', async () => {
+    const originalShots = app.shots;
+    app.shots = [
+      { id: 'recap-none', beanId: 'e2e-active-bean', grindSize: 6, doseIn: 18, yieldOut: 36,
+        extractionTime: 25, rating: null, notes: '', shotDate: localDateStr(), createdAt: new Date().toISOString() }
+    ];
+
+    try {
+      app.activateTab('stats');
+      await wait(50);
+      assert(!appWindow.document.querySelector('[data-testid="stats-recap-card"]'),
+        'Recap card should not render without last-month shots');
+    } finally {
+      app.shots = originalShots;
+    }
+  });
+
   await test('Stats most-pulled beans aggregate copied bags', async () => {
     const originalBeans = app.beans;
     const originalShots = app.shots;
