@@ -2024,6 +2024,7 @@ const FRESHNESS_OPTIMAL_DAYS = 21;
 
 // Stats feature thresholds
 const STATS_TOP_BEANS_LIMIT = 5;
+const STATS_HEATMAP_WEEKS = 13; // 12 full Mon-start weeks + current week
 const BEAN_TREND_MIN_SHOTS = 2;
 const BEAN_TREND_CHART_WIDTH = 240;
 const BEAN_TREND_CHART_HEIGHT = 96;
@@ -2113,6 +2114,55 @@ function computeShotCounts(shots, refDate = new Date()) {
     if (shotDate >= monthStart && shotDate < monthEnd) thisMonth++;
   }
   return { total: allShots.length, thisWeek, thisMonth };
+}
+
+function computeBrewDayRuns(shots, refDate = new Date()) {
+  const brewDays = new Set();
+  for (const shot of Array.isArray(shots) ? shots : []) {
+    const date = getShotStatsDate(shot);
+    if (date) brewDays.add(localDateStr(date));
+  }
+  let longest = 0;
+  for (const day of brewDays) {
+    const start = parseStatsDate(day);
+    if (brewDays.has(localDateStr(addDays(start, -1)))) continue; // not a run start
+    let length = 1;
+    while (brewDays.has(localDateStr(addDays(start, length)))) length++;
+    if (length > longest) longest = length;
+  }
+  const today = parseStatsDate(refDate) || parseStatsDate(new Date());
+  let cursor = null;
+  if (brewDays.has(localDateStr(today))) cursor = today;
+  else if (brewDays.has(localDateStr(addDays(today, -1)))) cursor = addDays(today, -1);
+  let current = 0;
+  while (cursor && brewDays.has(localDateStr(cursor))) {
+    current++;
+    cursor = addDays(cursor, -1);
+  }
+  return { current, longest };
+}
+
+function computeHeatmapWeeks(shots, refDate = new Date()) {
+  const counts = new Map();
+  for (const shot of Array.isArray(shots) ? shots : []) {
+    const date = getShotStatsDate(shot);
+    if (!date) continue;
+    const key = localDateStr(date);
+    counts.set(key, (counts.get(key) || 0) + 1);
+  }
+  const currentWeekStart = getWeekStart(refDate);
+  const weeks = [];
+  for (let weekIndex = STATS_HEATMAP_WEEKS - 1; weekIndex >= 0; weekIndex--) {
+    const weekStart = addDays(currentWeekStart, -7 * weekIndex);
+    const days = [];
+    for (let dayIndex = 0; dayIndex < 7; dayIndex++) {
+      const date = localDateStr(addDays(weekStart, dayIndex));
+      const count = counts.get(date) || 0;
+      days.push({ date, count, bucket: Math.min(count, 3) });
+    }
+    weeks.push({ weekStart: localDateStr(weekStart), days });
+  }
+  return weeks;
 }
 
 function computeMostPulledBeans(shots, beans, limit = STATS_TOP_BEANS_LIMIT) {

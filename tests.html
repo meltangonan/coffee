@@ -70,6 +70,7 @@ function daysBetween(d1, d2) {
 }
 
 const STATS_TOP_BEANS_LIMIT = 5;
+const STATS_HEATMAP_WEEKS = 13; // 12 full Mon-start weeks + current week
 const BEAN_TREND_CHART_WIDTH = 240;
 const BEAN_TREND_CHART_HEIGHT = 96;
 const BEAN_TREND_CHART_PADDING_X = 8;
@@ -125,6 +126,55 @@ function computeShotCounts(shots, refDate = new Date()) {
     if (shotDate >= monthStart && shotDate < monthEnd) thisMonth++;
   }
   return { total: allShots.length, thisWeek, thisMonth };
+}
+
+function computeBrewDayRuns(shots, refDate = new Date()) {
+  const brewDays = new Set();
+  for (const shot of Array.isArray(shots) ? shots : []) {
+    const date = getShotStatsDate(shot);
+    if (date) brewDays.add(localDateStr(date));
+  }
+  let longest = 0;
+  for (const day of brewDays) {
+    const start = parseStatsDate(day);
+    if (brewDays.has(localDateStr(addDays(start, -1)))) continue; // not a run start
+    let length = 1;
+    while (brewDays.has(localDateStr(addDays(start, length)))) length++;
+    if (length > longest) longest = length;
+  }
+  const today = parseStatsDate(refDate) || parseStatsDate(new Date());
+  let cursor = null;
+  if (brewDays.has(localDateStr(today))) cursor = today;
+  else if (brewDays.has(localDateStr(addDays(today, -1)))) cursor = addDays(today, -1);
+  let current = 0;
+  while (cursor && brewDays.has(localDateStr(cursor))) {
+    current++;
+    cursor = addDays(cursor, -1);
+  }
+  return { current, longest };
+}
+
+function computeHeatmapWeeks(shots, refDate = new Date()) {
+  const counts = new Map();
+  for (const shot of Array.isArray(shots) ? shots : []) {
+    const date = getShotStatsDate(shot);
+    if (!date) continue;
+    const key = localDateStr(date);
+    counts.set(key, (counts.get(key) || 0) + 1);
+  }
+  const currentWeekStart = getWeekStart(refDate);
+  const weeks = [];
+  for (let weekIndex = STATS_HEATMAP_WEEKS - 1; weekIndex >= 0; weekIndex--) {
+    const weekStart = addDays(currentWeekStart, -7 * weekIndex);
+    const days = [];
+    for (let dayIndex = 0; dayIndex < 7; dayIndex++) {
+      const date = localDateStr(addDays(weekStart, dayIndex));
+      const count = counts.get(date) || 0;
+      days.push({ date, count, bucket: Math.min(count, 3) });
+    }
+    weeks.push({ weekStart: localDateStr(weekStart), days });
+  }
+  return weeks;
 }
 
 function computeMostPulledBeans(shots, beans, limit = STATS_TOP_BEANS_LIMIT) {
@@ -534,6 +584,113 @@ test('computeShotCounts - returns zeros for non-array input', () => {
     thisWeek: 0,
     thisMonth: 0
   });
+});
+
+// Fixture reference for brew-day runs / heatmap tests:
+// 2026-05-18 is a Monday; refDate 2026-05-20 is the Wednesday of that week.
+
+test('computeBrewDayRuns - empty data returns zero runs', () => {
+  assertDeepEqual(computeBrewDayRuns([], new Date(2026, 4, 20)), { current: 0, longest: 0 });
+  assertDeepEqual(computeBrewDayRuns(null, new Date(2026, 4, 20)), { current: 0, longest: 0 });
+});
+
+test('computeBrewDayRuns - single brew day today', () => {
+  const shots = [{ shotDate: '2026-05-20', createdAt: '2026-05-20T08:00:00.000Z' }];
+  assertDeepEqual(computeBrewDayRuns(shots, new Date(2026, 4, 20)), { current: 1, longest: 1 });
+});
+
+test('computeBrewDayRuns - gap breaks a run', () => {
+  // 15-16-17 brewed (3 days), gap on 18, 19-20 brewed (2 days, ends today)
+  const shots = ['2026-05-15', '2026-05-16', '2026-05-17', '2026-05-19', '2026-05-20']
+    .map(shotDate => ({ shotDate }));
+  assertDeepEqual(computeBrewDayRuns(shots, new Date(2026, 4, 20)), { current: 2, longest: 3 });
+});
+
+test('computeBrewDayRuns - run ending yesterday is still current', () => {
+  const shots = ['2026-05-17', '2026-05-18', '2026-05-19'].map(shotDate => ({ shotDate }));
+  assertDeepEqual(computeBrewDayRuns(shots, new Date(2026, 4, 20)), { current: 3, longest: 3 });
+});
+
+test('computeBrewDayRuns - run ending two days ago is not current', () => {
+  const shots = ['2026-05-16', '2026-05-17', '2026-05-18'].map(shotDate => ({ shotDate }));
+  assertDeepEqual(computeBrewDayRuns(shots, new Date(2026, 4, 20)), { current: 0, longest: 3 });
+});
+
+test('computeBrewDayRuns - multiple shots on one day count as one brew day', () => {
+  const shots = [
+    { shotDate: '2026-05-20', createdAt: '2026-05-20T07:00:00.000Z' },
+    { shotDate: '2026-05-20', createdAt: '2026-05-20T08:00:00.000Z' },
+    { shotDate: '2026-05-20', createdAt: '2026-05-20T15:00:00.000Z' }
+  ];
+  assertDeepEqual(computeBrewDayRuns(shots, new Date(2026, 4, 20)), { current: 1, longest: 1 });
+});
+
+test('computeBrewDayRuns - backdated shots count on shotDate, not createdAt', () => {
+  // both logged today, but brewed on the 18th and 19th
+  const shots = [
+    { shotDate: '2026-05-18', createdAt: '2026-05-20T08:00:00.000Z' },
+    { shotDate: '2026-05-19', createdAt: '2026-05-20T08:05:00.000Z' }
+  ];
+  assertDeepEqual(computeBrewDayRuns(shots, new Date(2026, 4, 20)), { current: 2, longest: 2 });
+});
+
+test('computeBrewDayRuns - falls back to createdAt when shotDate is missing', () => {
+  const shots = [{ createdAt: '2026-05-20T08:00:00.000Z' }];
+  assertDeepEqual(computeBrewDayRuns(shots, new Date(2026, 4, 20)), { current: 1, longest: 1 });
+});
+
+test('computeHeatmapWeeks - 13 Monday-start columns ending in the current week', () => {
+  const weeks = computeHeatmapWeeks([], new Date(2026, 4, 20));
+  assertEqual(weeks.length, 13);
+  assertEqual(weeks[0].weekStart, '2026-02-23');
+  assertEqual(weeks[12].weekStart, '2026-05-18');
+  weeks.forEach(week => {
+    assertEqual(week.days.length, 7);
+    assertEqual(week.days[0].date, week.weekStart);
+  });
+});
+
+test('computeHeatmapWeeks - Sunday refDate keeps the Monday-start current week', () => {
+  const weeks = computeHeatmapWeeks([], new Date(2026, 4, 24));
+  assertEqual(weeks[12].weekStart, '2026-05-18');
+});
+
+test('computeHeatmapWeeks - bucket boundaries 0/1/2/3+', () => {
+  const shots = [
+    { shotDate: '2026-05-18' },
+    { shotDate: '2026-05-19' }, { shotDate: '2026-05-19' },
+    { shotDate: '2026-05-20' }, { shotDate: '2026-05-20' }, { shotDate: '2026-05-20' },
+    { shotDate: '2026-05-14' }, { shotDate: '2026-05-14' }, { shotDate: '2026-05-14' },
+    { shotDate: '2026-05-14' }, { shotDate: '2026-05-14' }
+  ];
+  const weeks = computeHeatmapWeeks(shots, new Date(2026, 4, 20));
+  const current = weeks[12].days;
+  assertDeepEqual(current[0], { date: '2026-05-18', count: 1, bucket: 1 });
+  assertDeepEqual(current[1], { date: '2026-05-19', count: 2, bucket: 2 });
+  assertDeepEqual(current[2], { date: '2026-05-20', count: 3, bucket: 3 });
+  assertDeepEqual(current[3], { date: '2026-05-21', count: 0, bucket: 0 });
+  // five shots on the previous Thursday clamp to bucket 3
+  assertDeepEqual(weeks[11].days[3], { date: '2026-05-14', count: 5, bucket: 3 });
+});
+
+test('computeHeatmapWeeks - shots outside the 13-week window are excluded', () => {
+  const shots = [
+    { shotDate: '2026-02-22' }, // Sunday before the first column
+    { shotDate: '2026-02-23' }  // first cell of the window
+  ];
+  const weeks = computeHeatmapWeeks(shots, new Date(2026, 4, 20));
+  assertDeepEqual(weeks[0].days[0], { date: '2026-02-23', count: 1, bucket: 1 });
+  const total = weeks.reduce(
+    (sum, week) => sum + week.days.reduce((daySum, day) => daySum + day.count, 0),
+    0
+  );
+  assertEqual(total, 1);
+});
+
+test('computeHeatmapWeeks - future days in the current week are present with zero count', () => {
+  const weeks = computeHeatmapWeeks([{ shotDate: '2026-05-20' }], new Date(2026, 4, 20));
+  const lastDay = weeks[12].days[6];
+  assertDeepEqual(lastDay, { date: '2026-05-24', count: 0, bucket: 0 });
 });
 
 test('computeMostPulledBeans - ranks beans by shot count and applies limit', () => {
