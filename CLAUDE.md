@@ -295,6 +295,7 @@ Calendar bar colors are defined in JS `BAR_COLORS` array. Spacing utilities (`.m
 - `brainstorms/2026-02-06-cross-device-sync-code-brainstorm.md` — Cross-device sync (code approach)
 - `brainstorms/2026-02-06-cross-device-auth-brainstorm.md` — Cross-device auth considerations
 - `brainstorms/2026-02-20-save-shot-as-best-dial-in-brainstorm.md` — Save shot as best dial-in
+- `brainstorms/2026-06-09-wrapped-stats-spec.md` — Wrapped-style stats spec (closed; shipped June 2026 with post-ship revisions recorded in its header)
 
 ## Testing
 

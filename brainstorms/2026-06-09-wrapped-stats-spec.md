@@ -1,6 +1,9 @@
 # Spec: Wrapped-Style Stats — "Spotify Wrapped for your espresso"
 
-*Status: v2 approved and implemented 2026-06-09. Post-ship review (same day): the Brew
+*Status: CLOSED 2026-06-10 — all success criteria verified, shipped to main. Kept as a
+decision record; the live source of truth for current behavior is CLAUDE.md.*
+
+*History: v2 approved and implemented 2026-06-09. Post-ship review (same day): the Brew
 patterns, Superlatives, and Fun totals cards were removed at the user's request — shipped
 and kept: brew rhythm heatmap + run facts, and the monthly recap. Added in their place: a
 Sweet spot card (interquartile ratio and extraction-time bands across great+perfect-rated
