@@ -460,6 +460,40 @@ async function runTests() {
     }
   });
 
+  await test('Stats superlatives and fun totals render computed values', async () => {
+    const originalShots = app.shots;
+    // four shots today keeps every expectation weekday-independent
+    const today = localDateStr();
+    app.shots = Array.from({ length: 4 }, (_, i) => ({
+      id: 'superlative-' + i, beanId: 'e2e-active-bean', grindSize: 6, doseIn: 18,
+      yieldOut: 36, extractionTime: 25, rating: null, notes: '',
+      shotDate: today, createdAt: new Date().toISOString()
+    }));
+
+    try {
+      app.activateTab('stats');
+      await wait(50);
+      const doc = appWindow.document;
+      const todayLabel = new Date().toLocaleDateString(undefined, { month: 'long', day: 'numeric' });
+      assertEqual(
+        doc.querySelector('[data-testid="stats-biggest-day-fact"]').textContent,
+        todayLabel + ' · 4 shots'
+      );
+      assertEqual(
+        doc.querySelector('[data-testid="stats-longest-run-fact"]').textContent,
+        '1 brew day'
+      );
+      const bestWeek = doc.querySelector('[data-testid="stats-best-week-fact"]').textContent;
+      assert(bestWeek.startsWith('Week of '), 'Best week should be phrased as "Week of ..."');
+      assert(bestWeek.endsWith('· 4 shots'), 'Best week should count all four shots');
+      assertEqual(doc.querySelector('[data-testid="stats-total-ground"]').textContent, '72 g');
+      assertEqual(doc.querySelector('[data-testid="stats-total-pulled"]').textContent, '144 ml');
+      assertEqual(doc.querySelector('[data-testid="stats-total-time"]').textContent, '1 min');
+    } finally {
+      app.shots = originalShots;
+    }
+  });
+
   await test('Stats most-pulled beans aggregate copied bags', async () => {
     const originalBeans = app.beans;
     const originalShots = app.shots;

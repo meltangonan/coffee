@@ -347,6 +347,10 @@ textarea.form-input { min-height: 80px; resize: vertical; line-height: 1.5; }
 .stats-dow-track { height: 44px; width: 100%; display: flex; align-items: flex-end; background: rgba(44,24,16,0.05); border-radius: 4px; overflow: hidden; }
 .stats-dow-fill { display: block; width: 100%; background: var(--amber-dark); border-radius: 4px 4px 0 0; }
 .stats-dow-label { font-size: 10px; font-weight: 700; color: var(--text-muted); }
+.stats-fact-list { display: flex; flex-direction: column; gap: 10px; }
+.stats-fact-row { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; }
+.stats-fact-label { font-size: 13px; color: var(--text-secondary); }
+.stats-fact-value { font-size: 14px; font-weight: 600; color: var(--text-primary); text-align: right; }
 
 /* Bean trend charts */
 .bean-trends-header { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 10px; }
@@ -1473,6 +1477,42 @@ textarea.form-input { min-height: 80px; resize: vertical; line-height: 1.5; }
             <div class="stats-pattern-headline" data-testid="stats-brew-hour"
                  x-text="'Your brew hour: ' + statsBrewHourPattern.peakLabel"></div>
           </template>
+        </section>
+
+        <section class="stats-card" aria-label="Superlatives" data-testid="stats-superlatives-card">
+          <div class="stats-card-label">Superlatives</div>
+          <div class="stats-fact-list">
+            <div class="stats-fact-row">
+              <span class="stats-fact-label">Biggest brew day</span>
+              <span class="stats-fact-value" data-testid="stats-biggest-day-fact" x-text="statsBiggestDayText"></span>
+            </div>
+            <div class="stats-fact-row">
+              <span class="stats-fact-label">Longest run</span>
+              <span class="stats-fact-value" data-testid="stats-longest-run-fact" x-text="statsLongestRunText"></span>
+            </div>
+            <div class="stats-fact-row">
+              <span class="stats-fact-label">Best week</span>
+              <span class="stats-fact-value" data-testid="stats-best-week-fact" x-text="statsBestWeekText"></span>
+            </div>
+          </div>
+        </section>
+
+        <section class="stats-card" aria-label="Fun totals" data-testid="stats-totals-card">
+          <div class="stats-card-label">Fun totals</div>
+          <div class="stats-fact-list">
+            <div class="stats-fact-row">
+              <span class="stats-fact-label">Coffee ground</span>
+              <span class="stats-fact-value" data-testid="stats-total-ground" x-text="statsFunTotals.coffeeGround.label"></span>
+            </div>
+            <div class="stats-fact-row">
+              <span class="stats-fact-label">Espresso pulled</span>
+              <span class="stats-fact-value" data-testid="stats-total-pulled" x-text="statsFunTotals.espressoPulled.label"></span>
+            </div>
+            <div class="stats-fact-row">
+              <span class="stats-fact-label">Watching extractions</span>
+              <span class="stats-fact-value" data-testid="stats-total-time" x-text="statsFunTotals.timeWatching.label"></span>
+            </div>
+          </div>
         </section>
 
         <section class="stats-card" aria-label="Most pulled beans" data-testid="stats-most-pulled-card">
@@ -3195,6 +3235,27 @@ function app() {
         count,
         percent: Math.round((count / max) * 100)
       }));
+    },
+    get statsSuperlatives() { return computeSuperlatives(this.shots); },
+    get statsFunTotals() { return computeFunTotals(this.shots); },
+    formatStatsMonthDay(value, monthFormat = 'long') {
+      const date = parseStatsDate(value);
+      return date ? date.toLocaleDateString(undefined, { month: monthFormat, day: 'numeric' }) : (value || '');
+    },
+    get statsBiggestDayText() {
+      const entry = this.statsSuperlatives.biggestDay;
+      if (!entry) return '—';
+      return this.formatStatsMonthDay(entry.date) + ' · ' + entry.count + (entry.count === 1 ? ' shot' : ' shots');
+    },
+    get statsLongestRunText() {
+      const longest = this.statsSuperlatives.longestRun;
+      return longest + (longest === 1 ? ' brew day' : ' brew days');
+    },
+    get statsBestWeekText() {
+      const entry = this.statsSuperlatives.bestWeek;
+      if (!entry) return '—';
+      return 'Week of ' + this.formatStatsMonthDay(entry.weekStart) + ' · '
+        + entry.count + (entry.count === 1 ? ' shot' : ' shots');
     },
     getBeanShotTrend(beanId, metric) { return getBeanShotTrend(this.shots, beanId, metric); },
     getBeanTrendChart(beanId, metric) { return buildTrendPath(this.getBeanShotTrend(beanId, metric)); },
