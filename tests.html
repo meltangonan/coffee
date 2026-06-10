@@ -71,6 +71,11 @@ function daysBetween(d1, d2) {
 
 const STATS_TOP_BEANS_LIMIT = 5;
 const STATS_HEATMAP_WEEKS = 13; // 12 full Mon-start weeks + current week
+const STATS_DOW_MIN_SHOTS = 10;       // day-of-week facts need this many shots...
+const STATS_DOW_MIN_WEEKS = 3;        // ...across this many distinct Mon-start weeks
+const STATS_BREW_HOUR_MIN_SHOTS = 10; // brew-hour facts need this many same-day-logged shots
+const STATS_DAY_NAMES = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+const STATS_DAY_LABELS = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
 const BEAN_TREND_CHART_WIDTH = 240;
 const BEAN_TREND_CHART_HEIGHT = 96;
 const BEAN_TREND_CHART_PADDING_X = 8;
@@ -175,6 +180,63 @@ function computeHeatmapWeeks(shots, refDate = new Date()) {
     weeks.push({ weekStart: localDateStr(weekStart), days });
   }
   return weeks;
+}
+
+function computeDayOfWeekPattern(shots) {
+  const counts = [0, 0, 0, 0, 0, 0, 0]; // Mon..Sun
+  const weeks = new Set();
+  let total = 0;
+  for (const shot of Array.isArray(shots) ? shots : []) {
+    const date = getShotStatsDate(shot);
+    if (!date) continue;
+    const day = date.getDay();
+    counts[day === 0 ? 6 : day - 1]++;
+    weeks.add(localDateStr(getWeekStart(date)));
+    total++;
+  }
+  let busiestIndex = 0;
+  for (let i = 1; i < 7; i++) {
+    if (counts[i] > counts[busiestIndex]) busiestIndex = i; // ties: earliest weekday wins
+  }
+  return {
+    eligible: total >= STATS_DOW_MIN_SHOTS && weeks.size >= STATS_DOW_MIN_WEEKS,
+    total,
+    counts,
+    busiestIndex,
+    busiestDay: STATS_DAY_NAMES[busiestIndex],
+    busiestCount: counts[busiestIndex]
+  };
+}
+
+function formatBrewHourLabel(hour) {
+  const display = hour % 12 === 0 ? 12 : hour % 12;
+  return display + (hour < 12 ? 'am' : 'pm');
+}
+
+function computeBrewHourPattern(shots) {
+  const counts = new Array(24).fill(0);
+  let total = 0;
+  for (const shot of Array.isArray(shots) ? shots : []) {
+    const created = new Date(shot?.createdAt || '');
+    if (isNaN(created.getTime())) continue;
+    const statsDate = getShotStatsDate(shot);
+    if (!statsDate) continue;
+    // backdated shots have meaningless clock times — same-day-logged only
+    if (localDateStr(created) !== localDateStr(statsDate)) continue;
+    counts[created.getHours()]++;
+    total++;
+  }
+  let peakHour = 0;
+  for (let hour = 1; hour < 24; hour++) {
+    if (counts[hour] > counts[peakHour]) peakHour = hour; // ties: earliest hour wins
+  }
+  return {
+    eligible: total >= STATS_BREW_HOUR_MIN_SHOTS,
+    total,
+    counts,
+    peakHour,
+    peakLabel: formatBrewHourLabel(peakHour)
+  };
 }
 
 function computeMostPulledBeans(shots, beans, limit = STATS_TOP_BEANS_LIMIT) {
@@ -691,6 +753,112 @@ test('computeHeatmapWeeks - future days in the current week are present with zer
   const weeks = computeHeatmapWeeks([{ shotDate: '2026-05-20' }], new Date(2026, 4, 20));
   const lastDay = weeks[12].days[6];
   assertDeepEqual(lastDay, { date: '2026-05-24', count: 0, bucket: 0 });
+});
+
+// Day-of-week / brew-hour pattern fixtures. 2026-05-18 is a Monday.
+
+function shotsOnDates(dates) {
+  return dates.map(shotDate => ({ shotDate }));
+}
+
+test('computeDayOfWeekPattern - counts shots per weekday with Sunday last', () => {
+  const pattern = computeDayOfWeekPattern(shotsOnDates([
+    '2026-05-18', // Mon
+    '2026-05-24', '2026-05-24', '2026-05-24', // Sun x3
+    '2026-05-22'  // Fri
+  ]));
+  assertDeepEqual(pattern.counts, [1, 0, 0, 0, 1, 0, 3]);
+  assertEqual(pattern.busiestIndex, 6);
+  assertEqual(pattern.busiestDay, 'Sunday');
+  assertEqual(pattern.busiestCount, 3);
+});
+
+test('computeDayOfWeekPattern - eligible at exactly 10 shots across 3 weeks', () => {
+  // 10 shots: 4 in week of May 4, 3 in week of May 11, 3 in week of May 18
+  const dates = [
+    '2026-05-04', '2026-05-05', '2026-05-06', '2026-05-10',
+    '2026-05-11', '2026-05-12', '2026-05-17',
+    '2026-05-18', '2026-05-19', '2026-05-24'
+  ];
+  assert(computeDayOfWeekPattern(shotsOnDates(dates)).eligible, 'Should be eligible at the boundary');
+  assert(!computeDayOfWeekPattern(shotsOnDates(dates.slice(1))).eligible, '9 shots should not be eligible');
+});
+
+test('computeDayOfWeekPattern - 10 shots in only 2 distinct weeks is not eligible', () => {
+  const dates = [
+    '2026-05-11', '2026-05-12', '2026-05-13', '2026-05-14', '2026-05-15',
+    '2026-05-18', '2026-05-19', '2026-05-20', '2026-05-21', '2026-05-22'
+  ];
+  const pattern = computeDayOfWeekPattern(shotsOnDates(dates));
+  assertEqual(pattern.total, 10);
+  assert(!pattern.eligible, 'Two distinct weeks should not be eligible');
+});
+
+test('computeDayOfWeekPattern - busiest-day tie goes to the earliest weekday', () => {
+  const pattern = computeDayOfWeekPattern(shotsOnDates([
+    '2026-05-20', '2026-05-20', // Wed x2
+    '2026-05-18', '2026-05-18'  // Mon x2
+  ]));
+  assertEqual(pattern.busiestDay, 'Monday');
+});
+
+test('computeDayOfWeekPattern - empty data returns zeros and not eligible', () => {
+  const pattern = computeDayOfWeekPattern([]);
+  assertDeepEqual(pattern.counts, [0, 0, 0, 0, 0, 0, 0]);
+  assert(!pattern.eligible);
+});
+
+test('formatBrewHourLabel - 12-hour labels', () => {
+  assertEqual(formatBrewHourLabel(0), '12am');
+  assertEqual(formatBrewHourLabel(7), '7am');
+  assertEqual(formatBrewHourLabel(12), '12pm');
+  assertEqual(formatBrewHourLabel(15), '3pm');
+  assertEqual(formatBrewHourLabel(23), '11pm');
+});
+
+// Builds a same-day-logged shot at a local clock hour.
+function sameDayShotAtHour(day, month, hour) {
+  const created = new Date(2026, month, day, hour, 15);
+  return { shotDate: localDateStr(created), createdAt: created.toISOString() };
+}
+
+test('computeBrewHourPattern - picks the modal hour from same-day-logged shots', () => {
+  const shots = [];
+  for (let i = 0; i < 6; i++) shots.push(sameDayShotAtHour(4 + i, 4, 7));
+  for (let i = 0; i < 4; i++) shots.push(sameDayShotAtHour(11 + i, 4, 15));
+  const pattern = computeBrewHourPattern(shots);
+  assert(pattern.eligible, '10 same-day shots should be eligible');
+  assertEqual(pattern.peakHour, 7);
+  assertEqual(pattern.peakLabel, '7am');
+  assertEqual(pattern.counts[15], 4);
+});
+
+test('computeBrewHourPattern - backdated shots are excluded', () => {
+  const shots = [];
+  for (let i = 0; i < 9; i++) shots.push(sameDayShotAtHour(4 + i, 4, 8));
+  // five backdated shots: brewed earlier, logged 2026-05-20
+  const logged = new Date(2026, 4, 20, 22, 0);
+  for (let i = 0; i < 5; i++) {
+    shots.push({ shotDate: '2026-05-' + String(10 + i).padStart(2, '0'), createdAt: logged.toISOString() });
+  }
+  const pattern = computeBrewHourPattern(shots);
+  assertEqual(pattern.total, 9, 'Backdated shots should not count toward the pool');
+  assert(!pattern.eligible, '9 same-day shots should not be eligible');
+});
+
+test('computeBrewHourPattern - legacy shots without shotDate count as same-day', () => {
+  const created = new Date(2026, 4, 20, 9, 30);
+  const pattern = computeBrewHourPattern([{ createdAt: created.toISOString() }]);
+  assertEqual(pattern.total, 1);
+  assertEqual(pattern.peakHour, 9);
+});
+
+test('computeBrewHourPattern - modal-hour tie goes to the earliest hour', () => {
+  const shots = [];
+  for (let i = 0; i < 5; i++) shots.push(sameDayShotAtHour(4 + i, 4, 14));
+  for (let i = 0; i < 5; i++) shots.push(sameDayShotAtHour(11 + i, 4, 8));
+  const pattern = computeBrewHourPattern(shots);
+  assertEqual(pattern.peakHour, 8);
 });
 
 test('computeMostPulledBeans - ranks beans by shot count and applies limit', () => {

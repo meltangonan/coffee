@@ -393,6 +393,73 @@ async function runTests() {
     }
   });
 
+  await test('Stats brew patterns show facts above the data thresholds', async () => {
+    const originalShots = app.shots;
+    // offsets in multiples of 7 keep every shot on today's weekday, across 4 distinct weeks
+    const shotAtOffsetHour = (id, dayOffset, hour) => {
+      const d = new Date();
+      d.setDate(d.getDate() + dayOffset);
+      d.setHours(hour, 15, 0, 0);
+      return {
+        id, beanId: 'e2e-active-bean', grindSize: 6, doseIn: 18, yieldOut: 36,
+        extractionTime: 25, rating: null, notes: '', shotDate: localDateStr(d),
+        createdAt: d.toISOString()
+      };
+    };
+    const shots = [];
+    [0, -7, -14, -21].forEach((offset, week) => {
+      for (let i = 0; i < 3; i++) shots.push(shotAtOffsetHour('pattern-' + week + '-' + i, offset, 7));
+    });
+    app.shots = shots;
+
+    const dayNamesSundayFirst = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+    const expectedDay = dayNamesSundayFirst[new Date().getDay()];
+
+    try {
+      assert(app.statsDayOfWeekPattern.eligible, '12 shots across 4 weeks should be eligible');
+      assert(app.statsBrewHourPattern.eligible, '12 same-day shots should be eligible');
+
+      app.activateTab('stats');
+      await wait(50);
+      const doc = appWindow.document;
+      assertEqual(
+        doc.querySelector('[data-testid="stats-busiest-day"]').textContent,
+        expectedDay + ' is your biggest brew day'
+      );
+      assertEqual(
+        doc.querySelector('[data-testid="stats-brew-hour"]').textContent,
+        'Your brew hour: 7am'
+      );
+      const emptyState = doc.querySelector('[data-testid="stats-patterns-empty"]');
+      assertEqual(emptyState.style.display, 'none', 'Empty state should be hidden above threshold');
+      const bars = doc.querySelectorAll('.stats-dow-fill');
+      assertEqual(bars.length, 7, 'Should render a bar per weekday');
+    } finally {
+      app.shots = originalShots;
+    }
+  });
+
+  await test('Stats brew patterns show empty state below the data thresholds', async () => {
+    const originalShots = app.shots;
+    app.shots = [
+      { id: 'few-1', beanId: 'e2e-active-bean', grindSize: 6, doseIn: 18, yieldOut: 36,
+        extractionTime: 25, rating: null, notes: '', shotDate: localDateStr(), createdAt: new Date().toISOString() }
+    ];
+
+    try {
+      app.activateTab('stats');
+      await wait(50);
+      const doc = appWindow.document;
+      const emptyState = doc.querySelector('[data-testid="stats-patterns-empty"]');
+      assert(emptyState, 'Empty state node should exist');
+      assert(emptyState.style.display !== 'none', 'Empty state should be visible below threshold');
+      assert(!doc.querySelector('[data-testid="stats-busiest-day"]'), 'Busiest-day fact should not render');
+      assert(!doc.querySelector('[data-testid="stats-brew-hour"]'), 'Brew-hour fact should not render');
+    } finally {
+      app.shots = originalShots;
+    }
+  });
+
   await test('Stats most-pulled beans aggregate copied bags', async () => {
     const originalBeans = app.beans;
     const originalShots = app.shots;

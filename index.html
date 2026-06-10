@@ -340,6 +340,13 @@ textarea.form-input { min-height: 80px; resize: vertical; line-height: 1.5; }
 .stats-heatmap-cell.level-2 { background: var(--amber-dark); }
 .stats-heatmap-cell.level-3 { background: var(--espresso); }
 .stats-heatmap-runs { font-size: 13px; color: var(--text-secondary); }
+.stats-pattern-block { margin-bottom: 14px; }
+.stats-pattern-headline { font-size: 14px; font-weight: 600; color: var(--text-primary); }
+.stats-dow-bars { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 6px; margin-top: 10px; }
+.stats-dow-col { display: flex; flex-direction: column; align-items: center; gap: 4px; }
+.stats-dow-track { height: 44px; width: 100%; display: flex; align-items: flex-end; background: rgba(44,24,16,0.05); border-radius: 4px; overflow: hidden; }
+.stats-dow-fill { display: block; width: 100%; background: var(--amber-dark); border-radius: 4px 4px 0 0; }
+.stats-dow-label { font-size: 10px; font-weight: 700; color: var(--text-muted); }
 
 /* Bean trend charts */
 .bean-trends-header { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 10px; }
@@ -1442,6 +1449,32 @@ textarea.form-input { min-height: 80px; resize: vertical; line-height: 1.5; }
           </div>
         </section>
 
+        <section class="stats-card" aria-label="Brew patterns" data-testid="stats-patterns-card">
+          <div class="stats-card-label">Brew patterns</div>
+          <div x-show="!statsDayOfWeekPattern.eligible && !statsBrewHourPattern.eligible"
+               class="text-muted" data-testid="stats-patterns-empty">Still learning your rhythm.</div>
+          <template x-if="statsDayOfWeekPattern.eligible">
+            <div class="stats-pattern-block">
+              <div class="stats-pattern-headline" data-testid="stats-busiest-day"
+                   x-text="statsDayOfWeekPattern.busiestDay + ' is your biggest brew day'"></div>
+              <div class="stats-dow-bars">
+                <template x-for="(bar, index) in statsDayOfWeekBars" :key="index">
+                  <div class="stats-dow-col">
+                    <div class="stats-dow-track">
+                      <span class="stats-dow-fill" :style="'height: ' + bar.percent + '%'"></span>
+                    </div>
+                    <span class="stats-dow-label" x-text="bar.label"></span>
+                  </div>
+                </template>
+              </div>
+            </div>
+          </template>
+          <template x-if="statsBrewHourPattern.eligible">
+            <div class="stats-pattern-headline" data-testid="stats-brew-hour"
+                 x-text="'Your brew hour: ' + statsBrewHourPattern.peakLabel"></div>
+          </template>
+        </section>
+
         <section class="stats-card" aria-label="Most pulled beans" data-testid="stats-most-pulled-card">
           <div class="stats-card-label">Most pulled beans</div>
           <div x-show="statsMostPulledBeans.length === 0" class="text-muted">No bean stats yet.</div>
@@ -2050,6 +2083,11 @@ const FRESHNESS_OPTIMAL_DAYS = 21;
 // Stats feature thresholds
 const STATS_TOP_BEANS_LIMIT = 5;
 const STATS_HEATMAP_WEEKS = 13; // 12 full Mon-start weeks + current week
+const STATS_DOW_MIN_SHOTS = 10;       // day-of-week facts need this many shots...
+const STATS_DOW_MIN_WEEKS = 3;        // ...across this many distinct Mon-start weeks
+const STATS_BREW_HOUR_MIN_SHOTS = 10; // brew-hour facts need this many same-day-logged shots
+const STATS_DAY_NAMES = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+const STATS_DAY_LABELS = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
 const BEAN_TREND_MIN_SHOTS = 2;
 const BEAN_TREND_CHART_WIDTH = 240;
 const BEAN_TREND_CHART_HEIGHT = 96;
@@ -2188,6 +2226,63 @@ function computeHeatmapWeeks(shots, refDate = new Date()) {
     weeks.push({ weekStart: localDateStr(weekStart), days });
   }
   return weeks;
+}
+
+function computeDayOfWeekPattern(shots) {
+  const counts = [0, 0, 0, 0, 0, 0, 0]; // Mon..Sun
+  const weeks = new Set();
+  let total = 0;
+  for (const shot of Array.isArray(shots) ? shots : []) {
+    const date = getShotStatsDate(shot);
+    if (!date) continue;
+    const day = date.getDay();
+    counts[day === 0 ? 6 : day - 1]++;
+    weeks.add(localDateStr(getWeekStart(date)));
+    total++;
+  }
+  let busiestIndex = 0;
+  for (let i = 1; i < 7; i++) {
+    if (counts[i] > counts[busiestIndex]) busiestIndex = i; // ties: earliest weekday wins
+  }
+  return {
+    eligible: total >= STATS_DOW_MIN_SHOTS && weeks.size >= STATS_DOW_MIN_WEEKS,
+    total,
+    counts,
+    busiestIndex,
+    busiestDay: STATS_DAY_NAMES[busiestIndex],
+    busiestCount: counts[busiestIndex]
+  };
+}
+
+function formatBrewHourLabel(hour) {
+  const display = hour % 12 === 0 ? 12 : hour % 12;
+  return display + (hour < 12 ? 'am' : 'pm');
+}
+
+function computeBrewHourPattern(shots) {
+  const counts = new Array(24).fill(0);
+  let total = 0;
+  for (const shot of Array.isArray(shots) ? shots : []) {
+    const created = new Date(shot?.createdAt || '');
+    if (isNaN(created.getTime())) continue;
+    const statsDate = getShotStatsDate(shot);
+    if (!statsDate) continue;
+    // backdated shots have meaningless clock times — same-day-logged only
+    if (localDateStr(created) !== localDateStr(statsDate)) continue;
+    counts[created.getHours()]++;
+    total++;
+  }
+  let peakHour = 0;
+  for (let hour = 1; hour < 24; hour++) {
+    if (counts[hour] > counts[peakHour]) peakHour = hour; // ties: earliest hour wins
+  }
+  return {
+    eligible: total >= STATS_BREW_HOUR_MIN_SHOTS,
+    total,
+    counts,
+    peakHour,
+    peakLabel: formatBrewHourLabel(peakHour)
+  };
 }
 
 function computeMostPulledBeans(shots, beans, limit = STATS_TOP_BEANS_LIMIT) {
@@ -3028,6 +3123,17 @@ function app() {
         ? date.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })
         : (day?.date || '');
       return label + ': ' + day.count + (day.count === 1 ? ' shot' : ' shots');
+    },
+    get statsDayOfWeekPattern() { return computeDayOfWeekPattern(this.shots); },
+    get statsBrewHourPattern() { return computeBrewHourPattern(this.shots); },
+    get statsDayOfWeekBars() {
+      const pattern = this.statsDayOfWeekPattern;
+      const max = pattern.busiestCount || 1;
+      return pattern.counts.map((count, index) => ({
+        label: STATS_DAY_LABELS[index],
+        count,
+        percent: Math.round((count / max) * 100)
+      }));
     },
     getBeanShotTrend(beanId, metric) { return getBeanShotTrend(this.shots, beanId, metric); },
     getBeanTrendChart(beanId, metric) { return buildTrendPath(this.getBeanShotTrend(beanId, metric)); },
