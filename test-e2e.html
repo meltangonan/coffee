@@ -492,6 +492,55 @@ async function runTests() {
     }
   });
 
+  await test('Stats extraction zones render the time-band distribution', async () => {
+    const originalShots = app.shots;
+    const today = localDateStr();
+    const timedShot = (id, extractionTime) => ({
+      id, beanId: 'e2e-active-bean', grindSize: 6, doseIn: 18, yieldOut: 36,
+      extractionTime, rating: null, notes: '', shotDate: today, createdAt: new Date().toISOString()
+    });
+    // 2 fast, 6 standard, 1 slightly slow, 1 slow
+    const times = [20, 21, 26, 27, 27, 28, 29, 30, 33, 40];
+    app.shots = times.map((time, i) => timedShot('zone-' + i, time));
+
+    try {
+      app.activateTab('stats');
+      await wait(50);
+      const doc = appWindow.document;
+      assert(doc.querySelector('[data-testid="stats-zones-card"]'), 'Zones card should render');
+      assertEqual(
+        doc.querySelector('[data-testid="stats-zones-headline"]').textContent,
+        '60% of your 10 shots in the standard range'
+      );
+      const fastRow = doc.querySelector('[data-testid="stats-zone-fast"]').textContent;
+      assert(fastRow.includes('20%'), 'Fast zone should show 20%');
+      assert(fastRow.includes('<22s'), 'Fast zone should show its range');
+      const standardFill = doc.querySelector('[data-testid="stats-zone-standard"] .stats-zone-fill');
+      assert(standardFill.classList.contains('standard'), 'Standard zone bar should be highlighted');
+      assertEqual(standardFill.style.width, '60%');
+    } finally {
+      app.shots = originalShots;
+    }
+  });
+
+  await test('Stats extraction zones are hidden below ten timed shots', async () => {
+    const originalShots = app.shots;
+    const today = localDateStr();
+    app.shots = Array.from({ length: 9 }, (_, i) => ({
+      id: 'zone-few-' + i, beanId: 'e2e-active-bean', grindSize: 6, doseIn: 18, yieldOut: 36,
+      extractionTime: 27, rating: null, notes: '', shotDate: today, createdAt: new Date().toISOString()
+    }));
+
+    try {
+      app.activateTab('stats');
+      await wait(50);
+      assert(!appWindow.document.querySelector('[data-testid="stats-zones-card"]'),
+        'Zones card should not render below the threshold');
+    } finally {
+      app.shots = originalShots;
+    }
+  });
+
   await test('Stats most-pulled beans aggregate copied bags', async () => {
     const originalBeans = app.beans;
     const originalShots = app.shots;

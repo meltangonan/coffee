@@ -348,6 +348,15 @@ textarea.form-input { min-height: 80px; resize: vertical; line-height: 1.5; }
 .stats-sweet-spot-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 .stats-sweet-spot-value { font-size: 20px; line-height: 1.2; }
 .stats-sweet-spot-caption { margin-top: 10px; font-size: 12px; color: var(--text-muted); }
+.stats-zones-headline { font-size: 14px; font-weight: 600; color: var(--text-primary); margin-bottom: 12px; }
+.stats-zones-list { display: flex; flex-direction: column; gap: 8px; }
+.stats-zone-row { display: grid; grid-template-columns: 82px minmax(0, 1fr) 38px 52px; align-items: center; gap: 8px; }
+.stats-zone-label { font-size: 12px; color: var(--text-secondary); }
+.stats-zone-track { height: 8px; border-radius: 999px; background: rgba(44,24,16,0.08); overflow: hidden; }
+.stats-zone-fill { display: block; height: 100%; border-radius: inherit; background: var(--amber-dark); }
+.stats-zone-fill.standard { background: var(--freshness-optimal); }
+.stats-zone-pct { font-size: 12px; font-weight: 700; color: var(--espresso); text-align: right; }
+.stats-zone-range { font-size: 11px; color: var(--text-muted); text-align: right; white-space: nowrap; }
 
 /* Bean trend charts */
 .bean-trends-header { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 10px; }
@@ -1467,6 +1476,25 @@ textarea.form-input { min-height: 80px; resize: vertical; line-height: 1.5; }
           </section>
         </template>
 
+        <template x-if="statsExtractionZones.eligible">
+          <section class="stats-card" aria-label="Extraction zones" data-testid="stats-zones-card">
+            <div class="stats-card-label">Extraction zones</div>
+            <div class="stats-zones-headline" data-testid="stats-zones-headline" x-text="statsExtractionZonesHeadline"></div>
+            <div class="stats-zones-list">
+              <template x-for="zone in statsExtractionZones.zones" :key="zone.key">
+                <div class="stats-zone-row" :data-testid="'stats-zone-' + zone.key">
+                  <span class="stats-zone-label" x-text="zone.label"></span>
+                  <div class="stats-zone-track">
+                    <span class="stats-zone-fill" :class="{ standard: zone.key === 'standard' }" :style="'width: ' + zone.percentage + '%'"></span>
+                  </div>
+                  <span class="stats-zone-pct" x-text="zone.percentage + '%'"></span>
+                  <span class="stats-zone-range" x-text="zone.range"></span>
+                </div>
+              </template>
+            </div>
+          </section>
+        </template>
+
         <template x-if="statsMonthlyRecap">
           <section class="stats-card" aria-label="Monthly recap" data-testid="stats-recap-card">
             <div class="stats-card-label" x-text="statsRecapTitle"></div>
@@ -2107,6 +2135,7 @@ const FRESHNESS_OPTIMAL_DAYS = 21;
 const STATS_TOP_BEANS_LIMIT = 5;
 const STATS_HEATMAP_WEEKS = 13; // 12 full Mon-start weeks + current week
 const STATS_SWEET_SPOT_MIN_SHOTS = 10; // sweet spot needs this many great/perfect shots
+const STATS_ZONES_MIN_SHOTS = 10;      // extraction zones need this many shots
 const BEAN_TREND_MIN_SHOTS = 2;
 const BEAN_TREND_CHART_WIDTH = 240;
 const BEAN_TREND_CHART_HEIGHT = 96;
@@ -2394,6 +2423,40 @@ function computeSweetSpot(shots) {
     count,
     ratio: { low: getPercentileValue(ratios, 0.25), high: getPercentileValue(ratios, 0.75) },
     time: { low: getPercentileValue(times, 0.25), high: getPercentileValue(times, 0.75) }
+  };
+}
+
+// Mirrors the time-branch boundaries in getShotAssessment, on raw extraction time.
+function computeExtractionTimeZones(shots) {
+  const zones = [
+    { key: 'fast', label: 'Fast', range: '<' + EXTRACTION_TIME_FAST + 's', count: 0 },
+    { key: 'slightly-fast', label: 'Slightly fast', range: EXTRACTION_TIME_FAST + '–' + (EXTRACTION_TIME_SLIGHTLY_FAST - 1) + 's', count: 0 },
+    { key: 'standard', label: 'Standard', range: EXTRACTION_TIME_SLIGHTLY_FAST + '–' + EXTRACTION_TIME_STANDARD_MAX + 's', count: 0 },
+    { key: 'slightly-slow', label: 'Slightly slow', range: (EXTRACTION_TIME_STANDARD_MAX + 1) + '–' + EXTRACTION_TIME_SLIGHTLY_SLOW + 's', count: 0 },
+    { key: 'slow', label: 'Slow', range: '>' + EXTRACTION_TIME_SLIGHTLY_SLOW + 's', count: 0 }
+  ];
+  let total = 0;
+  for (const shot of Array.isArray(shots) ? shots : []) {
+    const time = Number(shot?.extractionTime);
+    if (!Number.isFinite(time) || time <= 0) continue;
+    let index;
+    if (time < EXTRACTION_TIME_FAST) index = 0;
+    else if (time < EXTRACTION_TIME_SLIGHTLY_FAST) index = 1;
+    else if (time <= EXTRACTION_TIME_STANDARD_MAX) index = 2;
+    else if (time <= EXTRACTION_TIME_SLIGHTLY_SLOW) index = 3;
+    else index = 4;
+    zones[index].count++;
+    total++;
+  }
+  const withPercentages = zones.map(zone => ({
+    ...zone,
+    percentage: total ? Math.round((zone.count / total) * 100) : 0
+  }));
+  return {
+    eligible: total >= STATS_ZONES_MIN_SHOTS,
+    total,
+    standardPercentage: withPercentages[2].percentage,
+    zones: withPercentages
   };
 }
 
@@ -3188,6 +3251,12 @@ function app() {
       const spot = this.statsSweetSpot;
       if (!spot.eligible) return '';
       return 'Where your ' + spot.count + ' great and perfect shots cluster.';
+    },
+    get statsExtractionZones() { return computeExtractionTimeZones(this.shots); },
+    get statsExtractionZonesHeadline() {
+      const zones = this.statsExtractionZones;
+      if (!zones.eligible) return '';
+      return zones.standardPercentage + '% of your ' + zones.total + ' shots in the standard range';
     },
     get statsMonthlyRecap() { return computeMonthlyRecap(this.shots, this.beans); },
     statsRecapMonthName(monthIndex) {

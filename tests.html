@@ -72,6 +72,7 @@ function daysBetween(d1, d2) {
 const STATS_TOP_BEANS_LIMIT = 5;
 const STATS_HEATMAP_WEEKS = 13; // 12 full Mon-start weeks + current week
 const STATS_SWEET_SPOT_MIN_SHOTS = 10; // sweet spot needs this many great/perfect shots
+const STATS_ZONES_MIN_SHOTS = 10;      // extraction zones need this many shots
 const BEAN_TREND_CHART_WIDTH = 240;
 const BEAN_TREND_CHART_HEIGHT = 96;
 const BEAN_TREND_CHART_PADDING_X = 8;
@@ -189,6 +190,40 @@ function getPercentileValue(sortedValues, fraction) {
   const lower = Math.floor(index);
   const upper = Math.ceil(index);
   return sortedValues[lower] + (sortedValues[upper] - sortedValues[lower]) * (index - lower);
+}
+
+// Mirrors the time-branch boundaries in getShotAssessment, on raw extraction time.
+function computeExtractionTimeZones(shots) {
+  const zones = [
+    { key: 'fast', label: 'Fast', range: '<' + EXTRACTION_TIME_FAST + 's', count: 0 },
+    { key: 'slightly-fast', label: 'Slightly fast', range: EXTRACTION_TIME_FAST + '–' + (EXTRACTION_TIME_SLIGHTLY_FAST - 1) + 's', count: 0 },
+    { key: 'standard', label: 'Standard', range: EXTRACTION_TIME_SLIGHTLY_FAST + '–' + EXTRACTION_TIME_STANDARD_MAX + 's', count: 0 },
+    { key: 'slightly-slow', label: 'Slightly slow', range: (EXTRACTION_TIME_STANDARD_MAX + 1) + '–' + EXTRACTION_TIME_SLIGHTLY_SLOW + 's', count: 0 },
+    { key: 'slow', label: 'Slow', range: '>' + EXTRACTION_TIME_SLIGHTLY_SLOW + 's', count: 0 }
+  ];
+  let total = 0;
+  for (const shot of Array.isArray(shots) ? shots : []) {
+    const time = Number(shot?.extractionTime);
+    if (!Number.isFinite(time) || time <= 0) continue;
+    let index;
+    if (time < EXTRACTION_TIME_FAST) index = 0;
+    else if (time < EXTRACTION_TIME_SLIGHTLY_FAST) index = 1;
+    else if (time <= EXTRACTION_TIME_STANDARD_MAX) index = 2;
+    else if (time <= EXTRACTION_TIME_SLIGHTLY_SLOW) index = 3;
+    else index = 4;
+    zones[index].count++;
+    total++;
+  }
+  const withPercentages = zones.map(zone => ({
+    ...zone,
+    percentage: total ? Math.round((zone.count / total) * 100) : 0
+  }));
+  return {
+    eligible: total >= STATS_ZONES_MIN_SHOTS,
+    total,
+    standardPercentage: withPercentages[2].percentage,
+    zones: withPercentages
+  };
 }
 
 function computeSweetSpot(shots) {
@@ -841,6 +876,35 @@ test('computeSweetSpot - legacy numeric ratings are normalized', () => {
   const spot = computeSweetSpot(shots);
   assert(spot.eligible, 'Numeric 4/5 ratings should count as great/perfect');
   assertEqual(spot.count, 10);
+});
+
+function zoneShots(times) {
+  return times.map(extractionTime => ({ extractionTime }));
+}
+
+test('computeExtractionTimeZones - buckets shots at the exact boundaries', () => {
+  const result = computeExtractionTimeZones(zoneShots([21, 22, 24, 25, 27, 28, 30, 31, 35, 36]));
+  assert(result.eligible, '10 timed shots should be eligible');
+  assertEqual(result.total, 10);
+  assertDeepEqual(result.zones.map(zone => zone.count), [1, 2, 4, 2, 1]);
+  assertDeepEqual(result.zones.map(zone => zone.percentage), [10, 20, 40, 20, 10]);
+  assertEqual(result.standardPercentage, 40);
+  assertDeepEqual(result.zones.map(zone => zone.range), ['<22s', '22–24s', '25–30s', '31–35s', '>35s']);
+});
+
+test('computeExtractionTimeZones - not eligible below ten timed shots', () => {
+  const result = computeExtractionTimeZones(zoneShots([27, 27, 27, 27, 27, 27, 27, 27, 27]));
+  assertEqual(result.total, 9);
+  assert(!result.eligible);
+  assertEqual(computeExtractionTimeZones([]).total, 0);
+  assertEqual(computeExtractionTimeZones(null).eligible, false);
+});
+
+test('computeExtractionTimeZones - skips missing and invalid times', () => {
+  const shots = zoneShots([27, 27]).concat([{ extractionTime: 0 }, { extractionTime: 'x' }, {}]);
+  const result = computeExtractionTimeZones(shots);
+  assertEqual(result.total, 2);
+  assertEqual(result.standardPercentage, 100);
 });
 
 test('computeMonthlyRecap - summarizes the last completed month', () => {
