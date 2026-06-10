@@ -30,11 +30,11 @@ Serve the directory and open:
 
 ## Architecture
 
-The entire application lives in `index.html` (~2,300 lines) with three inline sections:
+The entire application lives in `index.html` (~4,200 lines) with three inline sections:
 
-1. **CSS** (lines ~31-498): Design system with CSS variables, component styles, responsive layout, and spacing utilities. Uses "Warm Industrial Cafe" aesthetic with Playfair Display (headings) and DM Sans (body) fonts.
-2. **HTML** (lines ~500-1330): Alpine.js template directives. Root element uses `x-data="app()" x-init="init()"`. Tab-based navigation (Today, Beans, Calendar) with no routing library.
-3. **JavaScript** (lines ~1332-2301): Alpine components, helper functions, and main `app()` object.
+1. **CSS**: Design system with CSS variables, component styles, responsive layout, and spacing utilities. Uses "Warm Industrial Cafe" aesthetic with Playfair Display (headings) and DM Sans (body) fonts.
+2. **HTML**: Alpine.js template directives. Root element uses `x-data="app()" x-init="init()"`. Tab-based navigation (Today, Beans, Calendar, Stats) with no routing library.
+3. **JavaScript**: Alpine components, helper functions, and main `app()` object.
 
 ### File Structure
 
@@ -54,7 +54,7 @@ brainstorms/        — Design docs and decision records
 | **Bean** | A coffee bean bag/batch | name, roaster, roastDate, rating, notes, isArchived, optimal settings |
 | **Shot** | A single espresso pull | beanId (foreign key), grindSize, doseIn, yieldOut, extractionTime, rating, notes, shotDate, createdAt |
 | **Freshness** | Bean age status | Derived from roastDate: resting/optimal/past |
-| **Tab** | Navigation state | today/beans/calendar (swipeable on touch devices) |
+| **Tab** | Navigation state | today/beans/calendar/stats (swipeable on touch devices) |
 | **View** | Sub-navigation in Beans tab | list/detail/form/archive |
 
 ### Key Constants
@@ -74,6 +74,12 @@ const BREW_RATIO_VERY_LOW = 1.5;           // Below: very low yield
 const BREW_RATIO_LOW = 1.8;               // 1.5-1.79: low yield
 const BREW_RATIO_STANDARD_MAX = 2.2;      // 1.8-2.2: standard range
 const BREW_RATIO_HIGH = 2.5;              // 2.21-2.5: high yield
+
+// Stats thresholds
+const STATS_HEATMAP_WEEKS = 13;       // 12 full Mon-start weeks + current week
+const STATS_DOW_MIN_SHOTS = 10;       // day-of-week facts need this many shots...
+const STATS_DOW_MIN_WEEKS = 3;        // ...across this many distinct Mon-start weeks
+const STATS_BREW_HOUR_MIN_SHOTS = 10; // brew-hour facts need this many same-day-logged shots
 ```
 
 ### Key Functional Modules (all methods on the `app()` object)
@@ -90,6 +96,7 @@ const BREW_RATIO_HIGH = 2.5;              // 2.21-2.5: high yield
 - **Tab Navigation**: `activateTab` (switches tab, resets beans view to list, scrolls to top), `tabPaneStyle` (controls visibility and swipe animation transforms)
 - **Tab Swipe (Touch)**: `onTabSwipeStart`, `onTabSwipeMove`, `onTabSwipeEnd`, `resetTabSwipe` — edge-initiated horizontal swipe gesture to navigate between tabs on touch devices. Includes axis lock (horizontal vs vertical), boundary resistance, and blocked-target detection (inputs, modals, existing swipe containers).
 - **Calendar**: `calendarWeeks`, `calendarBars`, `calendarBarsUnique`, `calendarBarsForWeek`, `getRangeBandStyle`
+- **Stats (pure compute + getters)**: pure top-level functions `computeShotCounts`, `computeMostPulledBeans`, `computeQualityBreakdown`, `computeBrewDayRuns`, `computeHeatmapWeeks`, `computeDayOfWeekPattern`, `computeBrewHourPattern`, `computeSuperlatives`, `computeFunTotals`, `computeMonthlyRecap` (today-relative ones take `refDate = new Date()`), wired as `stats*` getters on `app()`; testable nodes use `data-testid="stats-*"`. All shot-date logic goes through `getShotStatsDate` (`shotDate || createdAt`); weeks start Monday via `getWeekStart`. Stats tab card order: Brew rhythm (heatmap + run facts) → Shots logged → Brew patterns → Superlatives → Fun totals → Monthly recap (hidden if last completed month is empty) → Most pulled beans → Quality breakdown. Pattern facts gate behind the minimum-data thresholds above; brew-hour uses only same-day-logged shots (`createdAt` date equals stats date) because backdated shots have meaningless clock times. Tone for stats copy is observational, never motivational: facts about the user, no records-to-beat, nudges, goals, or exclamation marks.
 - **Computed Properties**: `todayShots` (filtered by `shotDate === today`), `selectedBean`, `sortedBeans`, `currentBeans`, `archivedBeans`, `todayFormatted`, `calendarMonthLabel`; `getUniqueBeanSources()` for "Fill from previous bean" picker (de-duped by name+roaster, best representative; supports `{ archivedOnly: true }` option for Today modal context)
 
 ### Data Model
@@ -292,7 +299,11 @@ Calendar bar colors are defined in JS `BAR_COLORS` array. Spacing utilities (`.m
 
 ## Testing
 
-- `tests.html` — Unit tests for pure functions (date helpers, rating normalization, freshness logic)
+- `tests.html` — Unit tests for pure functions (date helpers, rating normalization, freshness logic, stats compute functions)
 - `test-e2e.html` — Integration tests that load the actual app and verify Alpine state/behavior
 
 Run by opening in browser after starting local server.
+
+`tests.html` does not import from the app — it carries verbatim copies of the pure helper
+functions (its script block is headed "Helper functions (extracted from app)"). When adding
+or changing a pure function in `index.html`, copy it into `tests.html` in the same change.

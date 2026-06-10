@@ -1,6 +1,6 @@
 # Spec: Wrapped-Style Stats — "Spotify Wrapped for your espresso"
 
-*Status: v2 approved 2026-06-09 (open questions resolved). Targets the current local single-HTML app. Complements
+*Status: v2 approved and implemented 2026-06-09. Targets the current local single-HTML app. Complements
 SPEC.md (the public-app pivot) — everything here is client-derived and ports cleanly to
 Supabase later; shareable recap cards are deferred to the pivot's dial-in-card work.*
 
@@ -179,15 +179,15 @@ Conventions:
 
 ## Success Criteria
 
-- [ ] Heatmap renders 13 columns (12 full weeks + current), correct Monday alignment, correct intensity per day.
-- [ ] Run facts show correct current and longest brew-day runs for seeded fixture data.
-- [ ] Day-of-week and brew-hour facts are correct for fixture data, and hidden below the data thresholds.
-- [ ] Brew-hour calculations exclude backdated shots.
-- [ ] Superlatives and fun totals match hand-calculated values, with correct unit formatting.
-- [ ] Monthly recap shows the last completed month with correct counts and deltas.
-- [ ] No copy anywhere in the new cards uses motivational framing (records, goals, encouragement).
-- [ ] All new compute functions have unit tests; all tests (old + new) pass in both test pages.
-- [ ] No new localStorage keys, no new dependencies, no console errors.
+- [x] Heatmap renders 13 columns (12 full weeks + current), correct Monday alignment, correct intensity per day.
+- [x] Run facts show correct current and longest brew-day runs for seeded fixture data.
+- [x] Day-of-week and brew-hour facts are correct for fixture data, and hidden below the data thresholds.
+- [x] Brew-hour calculations exclude backdated shots.
+- [x] Superlatives and fun totals match hand-calculated values, with correct unit formatting.
+- [x] Monthly recap shows the last completed month with correct counts and deltas.
+- [x] No copy anywhere in the new cards uses motivational framing (records, goals, encouragement).
+- [x] All new compute functions have unit tests; all tests (old + new) pass in both test pages.
+- [x] No new localStorage keys, no new dependencies, no console errors.
 
 ## Resolved Decisions (2026-06-09)
 
@@ -202,41 +202,41 @@ Conventions:
 
 Ordered by dependency. Each task lands with its tests; all existing tests keep passing.
 
-- [ ] **1. Brew-day runs + heatmap data (compute)** — `computeBrewDayRuns` (current/longest,
+- [x] **1. Brew-day runs + heatmap data (compute)** — `computeBrewDayRuns` (current/longest,
   today-or-yesterday rule) and `computeHeatmapWeeks` (13 Mon-start columns, 0/1/2/3+ buckets).
   - Acceptance: correct values for fixtures covering gaps, boundaries, backdated and multi-shot days.
   - Verify: new unit tests green in `tests.html`.
   - Files: `index.html`, `tests.html`
-- [ ] **2. Brew rhythm card (UI)** — heatmap grid + run facts copy in the Stats pane.
+- [x] **2. Brew rhythm card (UI)** — heatmap grid + run facts copy in the Stats pane.
   - Acceptance: renders per spec at top of Stats; cells expose "{date}: N shots" via title/aria-label;
     matches design tokens; observational copy only.
   - Verify: manual check on mobile width; e2e assertion for cell counts and run text.
   - Files: `index.html`, `test-e2e.html`
-- [ ] **3. Brew patterns (compute)** — `computeDayOfWeekPattern` and `computeBrewHourPattern`
+- [x] **3. Brew patterns (compute)** — `computeDayOfWeekPattern` and `computeBrewHourPattern`
   (same-day-logged filter, modal hour, threshold gating).
   - Acceptance: thresholds gate exactly at the boundary; backdated shots excluded from brew hour; tie handling defined and tested.
   - Verify: unit tests green.
   - Files: `index.html`, `tests.html`
-- [ ] **4. Brew patterns card (UI)** — headline facts + Mon–Sun bar distribution; "still
+- [x] **4. Brew patterns card (UI)** — headline facts + Mon–Sun bar distribution; "still
   learning your rhythm" empty state below threshold.
   - Acceptance: renders per spec; hidden facts below thresholds.
   - Verify: e2e with above- and below-threshold seeds.
   - Files: `index.html`, `test-e2e.html`
-- [ ] **5. Superlatives + fun totals (compute)** — `computeSuperlatives` (biggest day,
+- [x] **5. Superlatives + fun totals (compute)** — `computeSuperlatives` (biggest day,
   longest run, best week by total shots) and `computeFunTotals` (g/kg, ml/L, min/h formatting).
   - Acceptance: hand-calculated fixture values match; tie rule for biggest day defined and tested; unit thresholds correct.
   - Verify: unit tests green.
   - Files: `index.html`, `tests.html`
-- [ ] **6. Superlatives + fun totals cards (UI)** — two Stats cards, observational copy.
+- [x] **6. Superlatives + fun totals cards (UI)** — two Stats cards, observational copy.
   - Acceptance: renders per spec; empty states when no data.
   - Verify: e2e assertions.
   - Files: `index.html`, `test-e2e.html`
-- [ ] **7. Monthly recap (compute + UI)** — `computeMonthlyRecap` (last completed month,
+- [x] **7. Monthly recap (compute + UI)** — `computeMonthlyRecap` (last completed month,
   neutral deltas vs prior month) + recap card.
   - Acceptance: month boundaries correct; hidden when the month has no shots; deltas neutral in copy.
   - Verify: unit tests for boundaries/deltas; e2e render assertion.
   - Files: `index.html`, `tests.html`, `test-e2e.html`
-- [ ] **8. Docs** — update CLAUDE.md (new modules, Stats card order, patterns/conventions).
+- [x] **8. Docs** — update CLAUDE.md (new modules, Stats card order, patterns/conventions).
   - Acceptance: CLAUDE.md reflects shipped behavior; spec checked off.
   - Verify: review diff.
   - Files: `CLAUDE.md`, `SPEC-gamified-stats.md`
