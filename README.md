@@ -1,7 +1,7 @@
 
 # Coffee Journal
 
-A lightweight journal for home espresso. Track your beans, log shots, save your dial-ins, and see when each coffee is at its best.
+A lightweight journal for home espresso. Track your beans, log shots, and see when each coffee is at its best.
 
 No fluff. No accounts. Just the stuff you actually care about at the machine.
 
@@ -39,14 +39,14 @@ Each coffee you're working through lives here.
 * **Add beans**
   Name, roaster, roast date, notes, and a 1-5 star rating for the bag.
 
-* **Save a dial-in**
-  Once you've pulled a shot you like, save the grind, dose, yield, and extraction time as the bean's *best dial-in*. When you buy the same coffee again, you can duplicate the bean and keep those settings, changing only the roast date.
+* **Use the last shot as your starting point**
+  Each new shot starts from the most recent shot logged for that same bag. If there is no shot history yet, the app uses the standard defaults: grind 5, 18g in, 36g out, 25s.
 
 * **Archive finished bags**
-  When a bag is done, archive it instead of deleting. You can restore or duplicate it later and keep your history and settings.
+  When a bag is done, archive it instead of deleting. You can restore or duplicate it later and keep your history.
 
 * **Duplicate beans**
-  From a bean's detail page, duplicate it for a new bag of the same coffee. From the Add Bean form, you can also "Fill from previous bean" to copy name, roaster, notes, and dial-in from any past entry.
+  From a bean's detail page, duplicate it for a new bag of the same coffee. From the Add Bean form, you can also "Fill from previous bean" to copy identity details like name, roaster, and notes from a past entry.
 
 * **Delete beans**
   Deleting a bean permanently removes it and all its shot history. The app asks you to confirm before deleting, showing you how many shots will be lost.
@@ -129,14 +129,13 @@ If you need to move data manually, you can copy the `coffee_beans` and `coffee_s
 
 ## Tips
 
-* Tap a bean to see its full history and saved dial-in (including extraction time).
-* Archive beans instead of deleting them so you can reuse settings later.
-* When logging a shot, numeric fields show placeholder defaults from saved best dial-in (or app defaults 5 / 18g / 36g / 25s). Saving without touching those fields still logs those default values.
+* Tap a bean to see its full shot history.
+* Archive beans instead of deleting them so the history stays available.
+* When logging a shot, numeric fields show placeholder defaults from that bean's most recent shot, or app defaults (5 / 18g / 36g / 25s) when there is no history. Saving without touching those fields still logs those default values.
 * Backdate shots if you forgot to log them when pulling.
 * Shot cards show ratio (1:X.X) and notes inline so you can compare at a glance.
-* Treat saved dial-ins as references, not absolutes. Adjust as the coffee ages.
 * Swipe from the edge of the screen to quickly navigate between tabs.
-* Use "Fill from previous bean" when adding a new bag of a coffee you've had before to carry over your dial-in settings.
+* Use "Fill from previous bean" when adding a new bag of a coffee you've had before to carry over its identity details only.
 
 ---
 

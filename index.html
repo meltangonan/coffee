@@ -511,23 +511,6 @@ textarea.form-input { min-height: 80px; resize: vertical; line-height: 1.5; }
 .freshness-display.past .freshness-icon { background: var(--freshness-past); }
 .freshness-text { font-size: 14px; font-weight: 500; }
 
-.recipe-card { background: linear-gradient(135deg, var(--espresso) 0%, var(--espresso-light) 100%); border-radius: var(--radius-lg); padding: 20px; color: var(--cream); margin-bottom: 20px; position: relative; overflow: hidden; }
-.recipe-card::before { content: ''; position: absolute; top: -20px; right: -20px; width: 80px; height: 80px; background: rgba(212,165,116,0.1); border-radius: 50%; }
-.recipe-card-label { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 1.5px; color: var(--amber); margin-bottom: 12px; }
-.recipe-card-grid { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 12px; }
-.recipe-stat-label { font-size: 11px; color: rgba(245,240,232,0.6); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px; }
-.recipe-stat-value { font-family: var(--font-heading); font-size: 22px; font-weight: 600; }
-.recipe-card-edit { margin-top: 14px; color: var(--amber); font-size: 13px; padding: 6px 0; }
-.recipe-card-edit-form .stepper-dark { background: var(--cream); border: 1px solid rgba(44,24,16,0.2); }
-.recipe-card-edit-form .stepper-dark .stepper-btn { color: var(--espresso); font-weight: 500; }
-.recipe-card-edit-form .stepper-dark .stepper-btn:hover:not(:disabled) { background: var(--cream-dark); color: var(--espresso); }
-.recipe-card-edit-form .stepper-dark .stepper-btn:disabled { opacity: 0.4; color: var(--text-muted); }
-.recipe-card-edit-form .stepper-dark .stepper-input { color: var(--espresso); font-size: 17px; font-weight: 600; border-left-color: rgba(44,24,16,0.12); border-right-color: rgba(44,24,16,0.12); }
-.recipe-card-edit-form .stepper-dark .stepper-input::placeholder { color: var(--text-muted); }
-.recipe-card-edit-form .btn-cancel { background: rgba(245,240,232,0.15); color: var(--cream); }
-.recipe-card-edit-form .btn-cancel:hover { background: rgba(245,240,232,0.25); }
-
-
 .shot-row { position: relative; display: flex; align-items: center; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid rgba(44,24,16,0.06); }
 .shot-row:last-child { border-bottom: none; }
 .shot-info { display: flex; flex-direction: column; gap: 3px; min-width: 0; flex: 1; }
@@ -672,21 +655,6 @@ textarea.form-input { min-height: 80px; resize: vertical; line-height: 1.5; }
   .date-header .day-name { font-size: 38px; }
 }
 
-/* Best dial-in checkbox + comparison panel */
-.best-dialin-toggle { display: flex; align-items: center; justify-content: center; gap: 8px; margin-top: 12px; cursor: pointer; }
-.best-dialin-toggle input[type="checkbox"] { accent-color: var(--amber); width: 16px; height: 16px; cursor: pointer; }
-.best-dialin-toggle span { font-size: 13px; color: var(--text-secondary); font-weight: 500; user-select: none; }
-.best-dialin-comparison { background: rgba(212,165,116,0.08); border: 1px solid rgba(212,165,116,0.2); border-radius: var(--radius-sm); padding: 12px; margin-top: 10px; }
-.best-dialin-comparison-title { font-size: 13px; font-weight: 600; color: var(--espresso); margin-bottom: 8px; }
-.best-dialin-comparison-table { width: 100%; font-size: 12px; border-collapse: collapse; }
-.best-dialin-comparison-table th { font-weight: 500; color: var(--text-secondary); text-align: left; padding: 3px 0; }
-.best-dialin-comparison-table th:nth-child(2),
-.best-dialin-comparison-table th:nth-child(3) { text-align: right; }
-.best-dialin-comparison-table td { padding: 3px 0; color: var(--espresso); }
-.best-dialin-comparison-table td:nth-child(2),
-.best-dialin-comparison-table td:nth-child(3) { text-align: right; }
-.best-dialin-comparison-table td:nth-child(3) { font-weight: 600; color: var(--amber-dark); }
-.best-dialin-same { font-size: 12px; color: var(--text-secondary); text-align: center; padding: 4px 0; }
 </style>
 </head>
 <body>
@@ -1023,77 +991,6 @@ textarea.form-input { min-height: 80px; resize: vertical; line-height: 1.5; }
         <div x-show="selectedBean?.roastDate" class="freshness-display mb-16" :class="getFreshness(selectedBean).status">
           <span class="freshness-icon"></span>
           <span class="freshness-text" x-text="getFreshness(selectedBean).detail"></span>
-        </div>
-
-        <!-- Optimal Settings (always visible; set or change via Edit) -->
-        <div class="recipe-card">
-          <div class="recipe-card-label">Best dial-in</div>
-          <div class="text-secondary" style="font-size: 12px; margin-top: 2px; margin-bottom: 10px;">The best dial-in you’ve achieved for this coffee so far. Adjust as the coffee ages.</div>
-          <div x-show="editingOptimalBeanId !== selectedBeanId">
-            <div class="recipe-card-grid">
-              <div>
-                <div class="recipe-stat-label">Grind</div>
-                <div class="recipe-stat-value" x-text="selectedBean?.optimalGrindSize ?? '\u2014'"></div>
-              </div>
-              <div>
-                <div class="recipe-stat-label">Dose</div>
-                <div class="recipe-stat-value" x-text="selectedBean?.optimalDoseIn != null ? selectedBean.optimalDoseIn + 'g' : '\u2014'"></div>
-              </div>
-              <div>
-                <div class="recipe-stat-label">Yield</div>
-                <div class="recipe-stat-value" x-text="selectedBean?.optimalYieldOut != null ? selectedBean.optimalYieldOut + 'g' : '\u2014'"></div>
-              </div>
-              <div>
-                <div class="recipe-stat-label">Time</div>
-                <div class="recipe-stat-value" x-text="selectedBean?.optimalExtractionTime != null ? selectedBean.optimalExtractionTime + 's' : '\u2014'"></div>
-              </div>
-            </div>
-            <div x-show="selectedBean?.optimalDoseIn && selectedBean?.optimalYieldOut" style="margin-top:10px;">
-              <span class="recipe-stat-label">Ratio</span>
-              <span class="recipe-stat-value" style="font-size:16px; margin-left: 6px;" x-text="selectedBean?.optimalDoseIn && selectedBean?.optimalYieldOut ? '1:' + (selectedBean.optimalYieldOut / selectedBean.optimalDoseIn).toFixed(1) : ''"></span>
-            </div>
-            <button x-show="!selectedBean?.isArchived" type="button" class="btn btn-ghost recipe-card-edit" @click="startEditingOptimal()">Edit</button>
-          </div>
-          <div x-show="editingOptimalBeanId === selectedBeanId" class="recipe-card-edit-form">
-            <div x-data="optimalStepper()" x-init="stInit('grindSize', 1, 10, selectedBean?.optimalGrindSize ?? 5)">
-              <div class="recipe-stat-label">Grind</div>
-              <div class="stepper stepper-dark">
-                <button type="button" class="stepper-btn" aria-label="Decrease" :disabled="stVal() !== null && stVal() <= stMin" @click="stDec()">−</button>
-                <input type="number" inputmode="numeric" class="stepper-input" :min="stMin" :max="stMax" :placeholder="stPlaceholder()" :value="stVal() === null ? '' : stVal()" @input="stOnInput($event)" @focus="stOnFocus($event)">
-                <button type="button" class="stepper-btn" aria-label="Increase" :disabled="stVal() !== null && stVal() >= stMax" @click="stInc()">+</button>
-              </div>
-            </div>
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 12px;">
-              <div x-data="optimalStepper()" x-init="stInit('doseIn', 1, 50, selectedBean?.optimalDoseIn ?? 18)">
-                <div class="recipe-stat-label">Dose (g)</div>
-                <div class="stepper stepper-dark">
-                  <button type="button" class="stepper-btn" aria-label="Decrease" :disabled="stVal() !== null && stVal() <= stMin" @click="stDec()">−</button>
-                  <input type="number" inputmode="numeric" class="stepper-input" :min="stMin" :max="stMax" :placeholder="stPlaceholder()" :value="stVal() === null ? '' : stVal()" @input="stOnInput($event)" @focus="stOnFocus($event)">
-                  <button type="button" class="stepper-btn" aria-label="Increase" :disabled="stVal() !== null && stVal() >= stMax" @click="stInc()">+</button>
-                </div>
-              </div>
-              <div x-data="optimalStepper()" x-init="stInit('yieldOut', 1, 100, selectedBean?.optimalYieldOut ?? 36)">
-                <div class="recipe-stat-label">Yield (g)</div>
-                <div class="stepper stepper-dark">
-                  <button type="button" class="stepper-btn" aria-label="Decrease" :disabled="stVal() !== null && stVal() <= stMin" @click="stDec()">−</button>
-                  <input type="number" inputmode="numeric" class="stepper-input" :min="stMin" :max="stMax" :placeholder="stPlaceholder()" :value="stVal() === null ? '' : stVal()" @input="stOnInput($event)" @focus="stOnFocus($event)">
-                  <button type="button" class="stepper-btn" aria-label="Increase" :disabled="stVal() !== null && stVal() >= stMax" @click="stInc()">+</button>
-                </div>
-              </div>
-            </div>
-            <div style="margin-top: 12px;" x-data="optimalStepper()" x-init="stInit('extractionTime', 1, 60, selectedBean?.optimalExtractionTime ?? 25)">
-              <div class="recipe-stat-label">Extraction Time (s)</div>
-              <div class="stepper stepper-dark">
-                <button type="button" class="stepper-btn" aria-label="Decrease" :disabled="stVal() !== null && stVal() <= stMin" @click="stDec()">−</button>
-                <input type="number" inputmode="numeric" class="stepper-input" :min="stMin" :max="stMax" :placeholder="stPlaceholder()" :value="stVal() === null ? '' : stVal()" @input="stOnInput($event)" @focus="stOnFocus($event)">
-                <button type="button" class="stepper-btn" aria-label="Increase" :disabled="stVal() !== null && stVal() >= stMax" @click="stInc()">+</button>
-              </div>
-            </div>
-            <div style="display: flex; justify-content: space-between; margin-top: 12px;">
-              <button type="button" class="btn btn-cancel" @click="cancelEditingOptimal()">Cancel</button>
-              <button type="button" class="btn btn-amber" @click="saveOptimalSettings()">Save</button>
-            </div>
-          </div>
         </div>
 
         <!-- Notes -->
@@ -1731,31 +1628,6 @@ textarea.form-input { min-height: 80px; resize: vertical; line-height: 1.5; }
         <label class="form-label">Notes</label>
         <textarea class="form-input" placeholder="How did it taste?" x-model="shotForm.notes" rows="2" style="resize:none;"></textarea>
       </div>
-      <label class="best-dialin-toggle">
-        <input type="checkbox" x-model="shotForm.saveAsBestDialIn" @change="if (shotForm.saveAsBestDialIn) $nextTick(() => $el.closest('.panel')?.querySelector('.best-dialin-comparison')?.scrollIntoView({ behavior: 'smooth', block: 'nearest' }))">
-        <span>Save as best dial-in</span>
-      </label>
-      <template x-if="shotForm.saveAsBestDialIn">
-        <div class="best-dialin-comparison fade-in" x-data="{ get comp() { return getShotFormBestDialInComparison() } }">
-          <template x-if="comp.allSame">
-            <div class="best-dialin-same">Same as current best dial-in</div>
-          </template>
-          <template x-if="!comp.allSame">
-            <div>
-              <div class="best-dialin-comparison-title">Update Best Dial-In</div>
-              <table class="best-dialin-comparison-table">
-                <thead><tr><th></th><th>Current</th><th>New</th></tr></thead>
-                <tbody>
-                  <tr><td>Grind</td><td x-text="comp.current.grindSize ?? '—'"></td><td x-text="comp.next.grindSize ?? '—'"></td></tr>
-                  <tr><td>Dose</td><td x-text="comp.current.doseIn != null ? comp.current.doseIn + 'g' : '—'"></td><td x-text="comp.next.doseIn != null ? comp.next.doseIn + 'g' : '—'"></td></tr>
-                  <tr><td>Yield</td><td x-text="comp.current.yieldOut != null ? comp.current.yieldOut + 'g' : '—'"></td><td x-text="comp.next.yieldOut != null ? comp.next.yieldOut + 'g' : '—'"></td></tr>
-                  <tr><td>Time</td><td x-text="comp.current.extractionTime != null ? comp.current.extractionTime + 's' : '—'"></td><td x-text="comp.next.extractionTime != null ? comp.next.extractionTime + 's' : '—'"></td></tr>
-                </tbody>
-              </table>
-            </div>
-          </template>
-        </div>
-      </template>
       <div class="form-actions">
         <button class="btn btn-primary" style="flex: 1;" @click="saveShot()">Save Shot</button>
       </div>
@@ -2002,38 +1874,33 @@ textarea.form-input { min-height: 80px; resize: vertical; line-height: 1.5; }
 
 <script>
 document.addEventListener('alpine:init', () => {
-  /** Reusable numeric stepper component. formName is the key on the parent x-data (e.g. 'shotForm' or 'optimalForm'). */
-  function createStepper(formName) {
-    return () => ({
-      stField: '', stMin: 0, stMax: 100, stDefault: 0,
-      stInit(field, min, max, defaultWhenEmpty) {
-        this.stField = field; this.stMin = min; this.stMax = max; this.stDefault = defaultWhenEmpty;
-      },
-      stForm() { return this[formName]; },
-      stVal() {
-        const v = this.stForm()[this.stField];
-        return (v !== null && v !== undefined && v !== '') ? Number(v) : null;
-      },
-      stPlaceholder() { return this.stDefault.toString(); },
-      stInc() {
-        const cur = this.stVal();
-        this.stForm()[this.stField] = cur === null ? this.stDefault : Math.min(this.stMax, cur + 1);
-      },
-      stDec() {
-        const cur = this.stVal();
-        this.stForm()[this.stField] = cur === null ? Math.max(this.stMin, this.stDefault - 1) : Math.max(this.stMin, cur - 1);
-      },
-      stOnFocus(e) { e.target.select(); },
-      stOnInput(e) {
-        const raw = e.target.value.trim();
-        if (raw === '') { this.stForm()[this.stField] = null; return; }
-        const num = parseInt(raw, 10);
-        if (!isNaN(num)) this.stForm()[this.stField] = Math.max(this.stMin, Math.min(this.stMax, num));
-      }
-    });
-  }
-  Alpine.data('stepper', createStepper('shotForm'));
-  Alpine.data('optimalStepper', createStepper('optimalForm'));
+  /** Reusable numeric stepper component for the shot form. */
+  Alpine.data('stepper', () => ({
+    stField: '', stMin: 0, stMax: 100, stDefault: 0,
+    stInit(field, min, max, defaultWhenEmpty) {
+      this.stField = field; this.stMin = min; this.stMax = max; this.stDefault = defaultWhenEmpty;
+    },
+    stVal() {
+      const v = this.shotForm[this.stField];
+      return (v !== null && v !== undefined && v !== '') ? Number(v) : null;
+    },
+    stPlaceholder() { return this.stDefault.toString(); },
+    stInc() {
+      const cur = this.stVal();
+      this.shotForm[this.stField] = cur === null ? this.stDefault : Math.min(this.stMax, cur + 1);
+    },
+    stDec() {
+      const cur = this.stVal();
+      this.shotForm[this.stField] = cur === null ? Math.max(this.stMin, this.stDefault - 1) : Math.max(this.stMin, cur - 1);
+    },
+    stOnFocus(e) { e.target.select(); },
+    stOnInput(e) {
+      const raw = e.target.value.trim();
+      if (raw === '') { this.shotForm[this.stField] = null; return; }
+      const num = parseInt(raw, 10);
+      if (!isNaN(num)) this.shotForm[this.stField] = Math.max(this.stMin, Math.min(this.stMax, num));
+    }
+  }));
 
   /** Custom date picker: x-if (no x-show) + document close listener to avoid flicker from @click.outside. */
   Alpine.data('datePicker', () => ({
@@ -2723,10 +2590,8 @@ function app() {
     showBackupPanel: false,
     dailySelectedBeanId: '', dailyLastShot: null,
     _pendingDuplicateBean: null,
-    editingOptimalBeanId: null,
-    optimalForm: { grindSize: null, doseIn: null, yieldOut: null, extractionTime: null },
     beanForm: { name: '', roaster: '', roastDate: '', notes: '' },
-    shotForm: { grindSize: null, doseIn: null, yieldOut: null, extractionTime: null, rating: null, notes: '', shotDate: '', saveAsBestDialIn: false },
+    shotForm: { grindSize: null, doseIn: null, yieldOut: null, extractionTime: null, rating: null, notes: '', shotDate: '' },
     backupLastExportedAt: '',
     backupLastImportedAt: '',
     backupNoticeType: '',
@@ -2744,19 +2609,6 @@ function app() {
 
         // Migrate: ensure isArchived field exists on all beans
         this.beans.forEach(b => { if (b.isArchived === undefined) b.isArchived = false; });
-
-        // Migrate: seed optimal settings from first shot if not yet set
-        this.beans.forEach(b => {
-          if (b.optimalGrindSize === undefined && b.optimalDoseIn === undefined && b.optimalYieldOut === undefined) {
-            const firstShot = this.shots.find(s => s.beanId === b.id);
-            if (firstShot) {
-              b.optimalGrindSize = firstShot.grindSize;
-              b.optimalDoseIn = firstShot.doseIn;
-              b.optimalYieldOut = firstShot.yieldOut;
-              b.optimalExtractionTime = firstShot.extractionTime ?? null;
-            }
-          }
-        });
 
         // Migrate: convert legacy numeric ratings and normalize shot numeric fields
         let shotsDirty = false;
@@ -2836,10 +2688,6 @@ function app() {
         rating: this.normalizeImportedBeanRating(rawBean.rating),
         notes: typeof rawBean.notes === 'string' ? rawBean.notes : '',
         isArchived: !!rawBean.isArchived,
-        optimalGrindSize: this.toNullableOneDecimal(rawBean.optimalGrindSize),
-        optimalDoseIn: this.toNullableOneDecimal(rawBean.optimalDoseIn),
-        optimalYieldOut: this.toNullableOneDecimal(rawBean.optimalYieldOut),
-        optimalExtractionTime: this.toNullableOneDecimal(rawBean.optimalExtractionTime),
         createdAt: this.normalizeIsoDateTime(rawBean.createdAt) || new Date().toISOString()
       };
     },
@@ -3089,16 +2937,8 @@ function app() {
         rating: source.rating,
         notes: source.notes ?? '',
         isArchived: false,
-        optimalGrindSize: source.optimalGrindSize,
-        optimalDoseIn: source.optimalDoseIn,
-        optimalYieldOut: source.optimalYieldOut,
-        optimalExtractionTime: source.optimalExtractionTime,
         createdAt: new Date().toISOString()
       };
-    },
-
-    beanHasOptimalSettings(bean) {
-      return bean?.optimalGrindSize != null || bean?.optimalDoseIn != null || bean?.optimalYieldOut != null || bean?.optimalExtractionTime != null;
     },
 
     beanSourceDateValue(bean) {
@@ -3111,11 +2951,6 @@ function app() {
       const parsed = Number(value);
       if (!Number.isFinite(parsed)) return null;
       return Math.round(parsed);
-    },
-
-    toNullableOneDecimal(value) {
-      const parsed = parseFloat(value);
-      return value === '' || value == null || isNaN(parsed) ? null : Math.round(parsed * 10) / 10;
     },
 
     isTouchTabSwipeAvailable() {
@@ -3428,24 +3263,14 @@ function app() {
         };
       });
     },
-    getBeanReferenceDefaults(beanId) {
-      const bean = this.getBeanById(beanId);
-      return {
-        grindSize: bean?.optimalGrindSize ?? SHOT_DEFAULTS.grindSize,
-        doseIn: bean?.optimalDoseIn ?? SHOT_DEFAULTS.doseIn,
-        yieldOut: bean?.optimalYieldOut ?? SHOT_DEFAULTS.yieldOut,
-        extractionTime: bean?.optimalExtractionTime ?? SHOT_DEFAULTS.extractionTime
-      };
-    },
-    getShotDialInDefaults(beanId) {
-      const reference = this.getBeanReferenceDefaults(beanId);
+    getShotNumericDefaults(beanId) {
       const lastShot = this.getLastShot(beanId);
-      if (!lastShot) return reference;
+      if (!lastShot) return { ...SHOT_DEFAULTS };
       return {
-        grindSize: lastShot.grindSize ?? reference.grindSize,
-        doseIn: lastShot.doseIn ?? reference.doseIn,
-        yieldOut: lastShot.yieldOut ?? reference.yieldOut,
-        extractionTime: lastShot.extractionTime ?? reference.extractionTime
+        grindSize: lastShot.grindSize ?? SHOT_DEFAULTS.grindSize,
+        doseIn: lastShot.doseIn ?? SHOT_DEFAULTS.doseIn,
+        yieldOut: lastShot.yieldOut ?? SHOT_DEFAULTS.yieldOut,
+        extractionTime: lastShot.extractionTime ?? SHOT_DEFAULTS.extractionTime
       };
     },
     getDailyGuidance(beanId) {
@@ -3456,18 +3281,17 @@ function app() {
         return {
           type: 'last-shot',
           label: 'Last shot',
-          recipe: this.getShotDialInDefaults(beanId),
+          recipe: this.getShotNumericDefaults(beanId),
           sourceShot: lastShot,
           assessment: this.getShotAssessment(lastShot),
           notes: lastShot.notes || '',
           date: lastShot.shotDate || lastShot.createdAt || ''
         };
       }
-      const hasReference = this.beanHasOptimalSettings(bean);
       return {
-        type: hasReference ? 'best-dial-in' : 'app-defaults',
-        label: hasReference ? 'Best dial-in' : 'App defaults',
-        recipe: this.getBeanReferenceDefaults(beanId),
+        type: 'app-defaults',
+        label: 'App defaults',
+        recipe: { ...SHOT_DEFAULTS },
         sourceShot: null,
         assessment: null,
         notes: '',
@@ -3504,9 +3328,8 @@ function app() {
         .sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
     },
 
-    // De-duplicated list of beans for "fill from previous" picker
-    // Groups by name+roaster (case-insensitive), picks best representative:
-    // prefer bean with optimal settings filled in, then most recent
+    // De-duplicated list of beans for "fill from previous" picker.
+    // Groups by name+roaster (case-insensitive) and picks the most recent identity record.
     getUniqueBeanSources(options = {}) {
       const archivedOnly = options.archivedOnly === true;
       const groups = new Map();
@@ -3516,12 +3339,6 @@ function app() {
         const current = groups.get(key);
         if (!current) {
           groups.set(key, bean);
-          continue;
-        }
-        const beanHasSettings = this.beanHasOptimalSettings(bean);
-        const currentHasSettings = this.beanHasOptimalSettings(current);
-        if (beanHasSettings !== currentHasSettings) {
-          if (beanHasSettings) groups.set(key, bean);
           continue;
         }
         if (this.beanSourceDateValue(bean) > this.beanSourceDateValue(current)) {
@@ -3635,7 +3452,7 @@ function app() {
           savedBeanId = updated.id;
         }
       } else if (this._pendingDuplicateBean) {
-        // Duplicating from archive — preserve optimal settings
+        // Duplicating from archive preserves bean identity, not shot history.
         const pending = this._pendingDuplicateBean;
         const duplicatedBean = {
           ...pending,
@@ -3710,7 +3527,6 @@ function app() {
     },
 
     selectBean(id) {
-      this.editingOptimalBeanId = null;
       this.selectedBeanId = id;
       this.beansView = 'detail';
       this.scrollContentToTop();
@@ -3754,8 +3570,7 @@ function app() {
         doseIn: null,
         yieldOut: null,
         extractionTime: null,
-        rating: null, notes: '', shotDate: today,
-        saveAsBestDialIn: false
+        rating: null, notes: '', shotDate: today
       };
       this.showShotForm = true;
     },
@@ -3773,34 +3588,10 @@ function app() {
         extractionTime: shot.extractionTime ?? null,
         rating: normalizeRating(shot.rating),
         notes: shot.notes ?? '',
-        shotDate: shotDate,
-        saveAsBestDialIn: false
+        shotDate: shotDate
       };
       this.showShotForm = true;
     },
-
-    startEditingOptimal() {
-      this.editingOptimalBeanId = this.selectedBeanId;
-      const b = this.selectedBean;
-      this.optimalForm = {
-        grindSize: b?.optimalGrindSize ?? null,
-        doseIn: b?.optimalDoseIn ?? null,
-        yieldOut: b?.optimalYieldOut ?? null,
-        extractionTime: b?.optimalExtractionTime ?? null
-      };
-    },
-    saveOptimalSettings() {
-      const bean = this.getBeanById(this.selectedBeanId);
-      if (!bean) return;
-      const resolveOptimalValue = (field) => this.toNullableOneDecimal(this.optimalForm[field]) ?? SHOT_DEFAULTS[field];
-      bean.optimalGrindSize = resolveOptimalValue('grindSize');
-      bean.optimalDoseIn = resolveOptimalValue('doseIn');
-      bean.optimalYieldOut = resolveOptimalValue('yieldOut');
-      bean.optimalExtractionTime = resolveOptimalValue('extractionTime');
-      this.saveBeans();
-      this.editingOptimalBeanId = null;
-    },
-    cancelEditingOptimal() { this.editingOptimalBeanId = null; },
 
     openShotFormFromDaily() {
       if (!this.dailySelectedBeanId) return;
@@ -3818,42 +3609,16 @@ function app() {
 
     /** Get default value for shot form field:
      * editing => edited values
-     * new shot numeric fields => last shot, then bean best dial-in, then app defaults */
+     * new shot numeric fields => last shot, then app defaults */
     getShotFormDefault(field) {
       // When editing, use the shotForm values that were populated in openShotFormForEdit
       if (this.editingShotId && this.shotForm[field] != null) {
         return this.shotForm[field];
       }
       if (field === 'grindSize' || field === 'doseIn' || field === 'yieldOut' || field === 'extractionTime') {
-        return this.getShotDialInDefaults(this.shotFormBeanId)[field];
+        return this.getShotNumericDefaults(this.shotFormBeanId)[field];
       }
       return SHOT_DEFAULTS[field];
-    },
-
-    getShotFormBestDialInComparison() {
-      const bean = this.getBeanById(this.shotFormBeanId);
-      const current = {
-        grindSize: bean?.optimalGrindSize ?? null,
-        doseIn: bean?.optimalDoseIn ?? null,
-        yieldOut: bean?.optimalYieldOut ?? null,
-        extractionTime: bean?.optimalExtractionTime ?? null
-      };
-      const isEditing = !!this.editingShotId;
-      const resolveNext = (field) => {
-        const parsed = this.toNullableInt(this.shotForm[field]);
-        if (parsed != null || isEditing) return parsed;
-        return this.toNullableInt(this.getShotFormDefault(field));
-      };
-      const next = {
-        grindSize: resolveNext('grindSize'),
-        doseIn: resolveNext('doseIn'),
-        yieldOut: resolveNext('yieldOut'),
-        extractionTime: resolveNext('extractionTime')
-      };
-      const allSame = ['grindSize', 'doseIn', 'yieldOut', 'extractionTime'].every(
-        f => current[f] === next[f]
-      );
-      return { current, next, allSame };
     },
 
     saveShot() {
@@ -3889,16 +3654,6 @@ function app() {
         });
       }
       this.saveShots();
-      if (this.shotForm.saveAsBestDialIn) {
-        const bean = this.getBeanById(this.shotFormBeanId);
-        if (bean) {
-          bean.optimalGrindSize = shotData.grindSize;
-          bean.optimalDoseIn = shotData.doseIn;
-          bean.optimalYieldOut = shotData.yieldOut;
-          bean.optimalExtractionTime = shotData.extractionTime;
-          this.saveBeans();
-        }
-      }
       this.showShotForm = false;
       if (this.shotFormReturnTo === 'today') {
         this.resetDailySelection();

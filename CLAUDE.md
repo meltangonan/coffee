@@ -51,7 +51,7 @@ brainstorms/        — Design docs and decision records
 
 | Abstraction | What it represents | What it owns |
 |-------------|-------------------|--------------|
-| **Bean** | A coffee bean bag/batch | name, roaster, roastDate, rating, notes, isArchived, optimal settings |
+| **Bean** | A coffee bean bag/batch | name, roaster, roastDate, rating, notes, isArchived |
 | **Shot** | A single espresso pull | beanId (foreign key), grindSize, doseIn, yieldOut, extractionTime, rating, notes, shotDate, createdAt |
 | **Freshness** | Bean age status | Derived from roastDate: resting/optimal/past |
 | **Tab** | Navigation state | today/beans/calendar/stats (swipeable on touch devices) |
@@ -85,12 +85,11 @@ const STATS_ZONES_MIN_SHOTS = 10;      // extraction zones need this many timed 
 
 - **Bean Management**: `saveBean`, `deleteBean`, `selectBean`, `updateBeanRating`, `archiveBean`, `unarchiveBean`, `duplicateFromArchive`, `duplicateBean` (pre-fill form from existing bean; used by "Fill from previous bean" and duplicate-from-detail), `fillBeanFormFrom` (fill form fields in modal context without navigating)
 - **Bean Validation**: `normalizeBeanName` (trim + lowercase), `beanNameExists` (checks for duplicate names among active beans, used in Today picker flow)
-- **Bean Form Context**: `openBeanForm` (supports `context` option: `'beans'` for Beans tab, `'today-picker'` for modal from Today), `openAddBeanFromToday` (opens modal form from daily picker), `cancelBeanForm` (handles cleanup for both contexts), `showBeanFormModal` (boolean for overlay display), `_pendingDuplicateBean` (temporary state carrying optimal settings through the duplicate flow)
+- **Bean Form Context**: `openBeanForm` (supports `context` option: `'beans'` for Beans tab, `'today-picker'` for modal from Today), `openAddBeanFromToday` (opens modal form from daily picker), `cancelBeanForm` (handles cleanup for both contexts), `showBeanFormModal` (boolean for overlay display), `_pendingDuplicateBean` (temporary state carrying copied identity fields through the duplicate flow)
 - **Delete Confirmation**: `openDeleteBeanDialog`, `closeDeleteBeanDialog`, `confirmDeleteBean` — two-step confirmation via modal dialog before deleting a bean and its shots
-- **Shot Logging**: `saveShot`, `deleteShot`, `openShotForm`, `openShotFormForEdit`, `closeShotForm`, `getShotFormDefault`, `getShotFormBestDialInComparison`, `getShotsForBean`, `getLastShot`; shot form includes optional `shotDate` (date picker) for backdating and `saveAsBestDialIn` checkbox to promote shot values to bean optimal settings
+- **Shot Logging**: `saveShot`, `deleteShot`, `openShotForm`, `openShotFormForEdit`, `closeShotForm`, `getShotFormDefault`, `getShotsForBean`, `getLastShot`; shot form includes optional `shotDate` (date picker) for backdating
 - **Daily Tracking**: `onDailyBeanSelect`, `openShotFormFromDaily`, `openShotFormFromBean`
 - **Helpers**: `getBeanById`, `getBeanOccurrence` (occurrence count for beans with same name+roaster), `shotQualityLabel`, `shotQualityClass`, `normalizeRating` (converts legacy numeric ratings to string labels), `getShotAssessment` (returns `{ status, label }` — evaluates shot against espresso standards for extraction time and brew ratio)
-- **Optimal Settings**: `startEditingOptimal`, `saveOptimalSettings`, `cancelEditingOptimal`
 - **Freshness**: `getFreshness` — returns `{ status, label, detail }`
 - **Tab Navigation**: `activateTab` (switches tab, resets beans view to list, scrolls to top), `tabPaneStyle` (controls visibility and swipe animation transforms)
 - **Tab Swipe (Touch)**: `onTabSwipeStart`, `onTabSwipeMove`, `onTabSwipeEnd`, `resetTabSwipe` — edge-initiated horizontal swipe gesture to navigate between tabs on touch devices. Includes axis lock (horizontal vs vertical), boundary resistance, and blocked-target detection (inputs, modals, existing swipe containers).
@@ -112,13 +111,11 @@ Stored in localStorage under keys `coffee_beans` and `coffee_shots`.
   rating: number|null,     // 1-5 stars or null
   notes: string,
   isArchived: boolean,
-  optimalGrindSize: number|null,
-  optimalDoseIn: number|null,
-  optimalYieldOut: number|null,
-  optimalExtractionTime: number|null, // seconds
   createdAt: string        // ISO timestamp
 }
 ```
+
+Legacy localStorage/backups may contain `optimalGrindSize`, `optimalDoseIn`, `optimalYieldOut`, or `optimalExtractionTime`; current app behavior ignores them.
 
 **Shot Schema:**
 ```javascript
@@ -140,7 +137,7 @@ Stored in localStorage under keys `coffee_beans` and `coffee_shots`.
 
 **Boundaries:**
 - `app()` owns all state; Alpine components access via `this`
-- Steppers access their form via `stForm()` which returns `this.shotForm` or `this.optimalForm`
+- Steppers access `this.shotForm`
 - DatePicker accesses its model via `dpValue()`/`dpSetValue()` using dot-notation path
 - Bean form can render in two contexts: inline (Beans tab, `beansView = 'form'`) or modal overlay (Today tab, `showBeanFormModal = true`)
 
@@ -159,10 +156,9 @@ Stored in localStorage under keys `coffee_beans` and `coffee_shots`.
 | Component | Purpose | Form it uses |
 |-----------|---------|--------------|
 | `stepper()` | Numeric +/- input for shot form | `shotForm` |
-| `optimalStepper()` | Numeric +/- input for optimal settings | `optimalForm` |
 | `datePicker()` | Calendar date selector (roast date, shot date) | Dynamic via `dpModelKey` (e.g. `beanForm.roastDate`, `shotForm.shotDate`) |
 
-Both `stepper` and `optimalStepper` are created by `createStepper(formName)` — a factory that parameterizes which form object the stepper reads/writes. The date picker uses a capture-phase document click listener for outside-click dismissal (avoids conflicts with `@click.stop` in modals).
+The date picker uses a capture-phase document click listener for outside-click dismissal (avoids conflicts with `@click.stop` in modals).
 
 ### UI Patterns
 
@@ -244,15 +240,10 @@ Calendar bar colors are defined in JS `BAR_COLORS` array. Spacing utilities (`.m
 ### When Editing Shot Form Logic
 - Use `getShotFormDefault(field)` to get initial values — it handles both new shots and edits
 - For new shots, numeric form values start as `null` and render fallback values via stepper placeholders
-- New shot defaults for `grindSize`/`doseIn`/`yieldOut`/`extractionTime` use bean best dial-in, then app defaults
+- New shot defaults for `grindSize`/`doseIn`/`yieldOut`/`extractionTime` use the bean's most recent shot, then app defaults
 - `saveShot()` resolves untouched `null` numeric fields to `getShotFormDefault(field)` so placeholder defaults are persisted
 - Shot form includes `shotDate` (defaults to today for new shots; existing shots use `shotDate || createdAt` for display/filtering)
 - Always call `closeShotForm()` to close — it handles cleanup for both tabs
-
-### When Editing Best Dial-In Settings
-- `startEditingOptimal()` keeps missing fields as `null` so placeholders show app defaults without mutating data
-- `saveOptimalSettings()` treats untouched `null` values as explicit defaults and persists app defaults
-- `cancelEditingOptimal()` exits edit mode without changing persisted optimal settings
 
 ### When Adding New Freshness-Related Logic
 - Use `FRESHNESS_RESTING_DAYS` and `FRESHNESS_OPTIMAL_DAYS` constants
@@ -276,7 +267,7 @@ Calendar bar colors are defined in JS `BAR_COLORS` array. Spacing utilities (`.m
 ### When Adding Extraction Time / New Shot Fields
 - Shot form defaults: grindSize=5, doseIn=18, yieldOut=36, extractionTime=25
 - All four numeric shot fields (grindSize, doseIn, yieldOut, extractionTime) are required and always > 0 — new/edit shot saves resolve empty values to valid numbers, and imports backfill legacy missing values while rejecting explicit invalid numeric inputs
-- `init()` runs migrations on load to backfill new fields on existing data (e.g. `optimalExtractionTime` seeded from first shot)
+- `init()` runs migrations on load to normalize new shot fields on existing data
 
 ### When Modifying Tab Navigation
 - Tab swipe state is tracked across multiple properties (`tabSwipeTracking`, `tabSwipeAxis`, `tabSwipeOffsetX`, etc.)
@@ -294,7 +285,6 @@ Calendar bar colors are defined in JS `BAR_COLORS` array. Spacing utilities (`.m
 - `brainstorms/2026-02-06-today-add-bean-modal-brainstorm.md` — Add Bean modal from Today tab
 - `brainstorms/2026-02-06-cross-device-sync-code-brainstorm.md` — Cross-device sync (code approach)
 - `brainstorms/2026-02-06-cross-device-auth-brainstorm.md` — Cross-device auth considerations
-- `brainstorms/2026-02-20-save-shot-as-best-dial-in-brainstorm.md` — Save shot as best dial-in
 - `brainstorms/2026-06-09-wrapped-stats-spec.md` — Wrapped-style stats spec (closed; shipped June 2026 with post-ship revisions recorded in its header)
 
 ## Testing

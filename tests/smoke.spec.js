@@ -12,10 +12,6 @@ async function seedCoffeeData(page, { shots = [] } = {}) {
       rating: null,
       notes: '',
       isArchived: false,
-      optimalGrindSize: 5,
-      optimalDoseIn: 18,
-      optimalYieldOut: 36,
-      optimalExtractionTime: 27,
       createdAt: new Date().toISOString()
     }]));
     localStorage.setItem('coffee_shots', JSON.stringify(seed.shots.map(shot => ({
@@ -66,8 +62,8 @@ test('shot visualizer and assessment chips render in daily log and shot form', a
   await page.reload();
 
   const dailyShot = page.locator('.today-shot-item').first();
-  await expect(dailyShot.locator('.shot-visualizer-fill')).toHaveCount(2);
-  await expect(dailyShot.locator('.shot-visualizer-point')).toHaveCount(2);
+  await expect(dailyShot.locator('.shot-visualizer-fill')).toHaveCount(3);
+  await expect(dailyShot.locator('.shot-visualizer-point')).toHaveCount(3);
   await expect(dailyShot.locator('.shot-visualizer-point').first()).toHaveAttribute('style', /left: /);
   await expect(dailyShot.locator('.shot-assessment-chip')).toContainText('Well-extracted');
 
@@ -82,8 +78,8 @@ test('shot visualizer and assessment chips render in daily log and shot form', a
 
   const shotForm = page.locator('.panel');
   await expect(shotForm.getByRole('heading', { name: 'Log Shot' })).toBeVisible();
-  await expect(shotForm.locator('.shot-visualizer-fill')).toHaveCount(2);
-  await expect(shotForm.locator('.shot-visualizer-point')).toHaveCount(2);
+  await expect(shotForm.locator('.shot-visualizer-fill')).toHaveCount(3);
+  await expect(shotForm.locator('.shot-visualizer-point')).toHaveCount(3);
   await expect(shotForm.locator('.shot-assessment-chip')).toContainText('Well-extracted');
 });
 

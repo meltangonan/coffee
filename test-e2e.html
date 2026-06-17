@@ -116,10 +116,6 @@ function seedTestFixture() {
       rating: 4,
       notes: 'Active test bean',
       isArchived: false,
-      optimalGrindSize: 6,
-      optimalDoseIn: 18,
-      optimalYieldOut: 36,
-      optimalExtractionTime: 25,
       createdAt: now
     },
     {
@@ -130,10 +126,6 @@ function seedTestFixture() {
       rating: 3,
       notes: 'Archived test bean',
       isArchived: true,
-      optimalGrindSize: 7,
-      optimalDoseIn: 18,
-      optimalYieldOut: 36,
-      optimalExtractionTime: 27,
       createdAt: now
     }
   ];
@@ -203,10 +195,6 @@ async function runTests() {
         rating: 3,
         notes: '',
         isArchived: true,
-        optimalGrindSize: 7,
-        optimalDoseIn: 18,
-        optimalYieldOut: 36,
-        optimalExtractionTime: 27,
         createdAt: '2026-01-01T08:00:00.000Z'
       },
       {
@@ -217,10 +205,6 @@ async function runTests() {
         rating: 3,
         notes: '',
         isArchived: true,
-        optimalGrindSize: 7,
-        optimalDoseIn: 18,
-        optimalYieldOut: 36,
-        optimalExtractionTime: 27,
         createdAt: '2026-02-01T08:00:00.000Z'
       }
     ];
@@ -234,6 +218,50 @@ async function runTests() {
       );
     } finally {
       app.beans = app.beans.filter(b => !testBeans.some(testBean => testBean.id === b.id));
+    }
+  });
+
+  await test('duplicate source selection uses latest identity and does not copy legacy dial-in', async () => {
+    const older = {
+      id: 'e2e-duplicate-source-old',
+      name: 'E2E Duplicate Source',
+      roaster: 'E2E Roaster',
+      roastDate: '2026-01-01',
+      rating: 3,
+      notes: 'Older identity',
+      isArchived: true,
+      optimalGrindSize: 3,
+      optimalDoseIn: 19,
+      optimalYieldOut: 38,
+      optimalExtractionTime: 26,
+      createdAt: '2026-01-01T08:00:00.000Z'
+    };
+    const newer = {
+      id: 'e2e-duplicate-source-new',
+      name: 'E2E Duplicate Source',
+      roaster: 'E2E Roaster',
+      roastDate: '2026-02-01',
+      rating: 4,
+      notes: 'Newer identity',
+      isArchived: false,
+      createdAt: '2026-02-01T08:00:00.000Z'
+    };
+
+    app.beans.push(older, newer);
+    try {
+      const source = app.getUniqueBeanSources().find(b => b.name === 'E2E Duplicate Source');
+      assertEqual(source.id, newer.id);
+
+      const duplicate = app.createDuplicateBean(older);
+      assertEqual(duplicate.name, older.name);
+      assertEqual(duplicate.roaster, older.roaster);
+      assertEqual(duplicate.notes, older.notes);
+      assertEqual(duplicate.optimalGrindSize, undefined);
+      assertEqual(duplicate.optimalDoseIn, undefined);
+      assertEqual(duplicate.optimalYieldOut, undefined);
+      assertEqual(duplicate.optimalExtractionTime, undefined);
+    } finally {
+      app.beans = app.beans.filter(b => b.id !== older.id && b.id !== newer.id);
     }
   });
 
@@ -850,7 +878,7 @@ async function runTests() {
     assertEqual(app.editingShotId, null);
   });
 
-  await test('openShotForm defaults to the most recent shot before best dial-in', async () => {
+  await test('openShotForm defaults to the most recent shot and ignores legacy best dial-in', async () => {
     const beanName = 'Prefill Last Shot Bean ' + Date.now() + '-' + Math.floor(Math.random() * 1000);
     app.openBeanForm(null);
     app.beanForm.name = beanName;
@@ -883,7 +911,7 @@ async function runTests() {
     app.closeShotForm();
   });
 
-  await test('openShotForm uses app defaults when last shot and best dial-in are missing', async () => {
+  await test('openShotForm uses app defaults when no prior shot exists', async () => {
     const beanName = 'Prefill Default Bean ' + Date.now() + '-' + Math.floor(Math.random() * 1000);
     app.openBeanForm(null);
     app.beanForm.name = beanName;
@@ -902,8 +930,8 @@ async function runTests() {
     app.closeShotForm();
   });
 
-  await test('openShotForm uses per-field fallback defaults for partial best dial-in', async () => {
-    const beanName = 'Prefill Partial Bean ' + Date.now() + '-' + Math.floor(Math.random() * 1000);
+  await test('openShotForm ignores legacy best dial-in values when no prior shot exists', async () => {
+    const beanName = 'Prefill Legacy Bean ' + Date.now() + '-' + Math.floor(Math.random() * 1000);
     app.openBeanForm(null);
     app.beanForm.name = beanName;
     app.beanForm.roaster = 'E2E Test Roaster';
@@ -911,9 +939,10 @@ async function runTests() {
     const bean = app.beans.find(b => b.name === beanName);
     assert(bean, 'Bean should exist');
 
-    bean.optimalGrindSize = null;
+    bean.optimalGrindSize = 9;
     bean.optimalDoseIn = 20;
-    bean.optimalYieldOut = null;
+    bean.optimalYieldOut = 44;
+    bean.optimalExtractionTime = 31;
     app.saveBeans();
 
     app.openShotForm(bean.id);
@@ -921,12 +950,13 @@ async function runTests() {
     assertEqual(app.shotForm.doseIn, null);
     assertEqual(app.shotForm.yieldOut, null);
     assertEqual(app.getShotFormDefault('grindSize'), 5);
-    assertEqual(app.getShotFormDefault('doseIn'), 20);
+    assertEqual(app.getShotFormDefault('doseIn'), 18);
     assertEqual(app.getShotFormDefault('yieldOut'), 36);
+    assertEqual(app.getShotFormDefault('extractionTime'), 25);
     app.closeShotForm();
   });
 
-  await test('extraction time default falls back to app default when best dial-in is missing', async () => {
+  await test('extraction time default falls back to app default when no prior shot exists', async () => {
     const beanName = 'Extraction Default Bean ' + Date.now() + '-' + Math.floor(Math.random() * 1000);
     app.openBeanForm(null);
     app.beanForm.name = beanName;
@@ -960,8 +990,8 @@ async function runTests() {
     assertEqual(savedShot.extractionTime, 25);
   });
 
-  await test('saveShot untouched uses bean dial-in defaults for all numeric fields', async () => {
-    const beanName = 'Untouched Save Prefill Bean ' + Date.now() + '-' + Math.floor(Math.random() * 1000);
+  await test('saveShot untouched ignores legacy best dial-in defaults', async () => {
+    const beanName = 'Untouched Save Legacy Bean ' + Date.now() + '-' + Math.floor(Math.random() * 1000);
     app.openBeanForm(null);
     app.beanForm.name = beanName;
     app.beanForm.roaster = 'E2E Test Roaster';
@@ -979,13 +1009,13 @@ async function runTests() {
     app.saveShot();
     const savedShot = app.getLastShot(bean.id);
     assert(savedShot, 'Shot should be saved');
-    assertEqual(savedShot.grindSize, 4);
-    assertEqual(savedShot.doseIn, 19);
-    assertEqual(savedShot.yieldOut, 38);
-    assertEqual(savedShot.extractionTime, 30);
+    assertEqual(savedShot.grindSize, 5);
+    assertEqual(savedShot.doseIn, 18);
+    assertEqual(savedShot.yieldOut, 36);
+    assertEqual(savedShot.extractionTime, 25);
   });
 
-  await test('saveShot untouched uses most recent shot defaults before bean dial-in', async () => {
+  await test('saveShot untouched uses most recent shot defaults', async () => {
     const beanName = 'Untouched Save Last Shot Bean ' + Date.now() + '-' + Math.floor(Math.random() * 1000);
     app.openBeanForm(null);
     app.beanForm.name = beanName;
@@ -1018,61 +1048,18 @@ async function runTests() {
     assertEqual(savedShot.extractionTime, 24);
   });
 
-  await test('startEditingOptimal keeps new-bean form values null until save', async () => {
-    const beanName = 'Optimal Editor Baseline Bean ' + Date.now() + '-' + Math.floor(Math.random() * 1000);
-    app.openBeanForm(null);
-    app.beanForm.name = beanName;
-    app.beanForm.roaster = 'E2E Test Roaster';
-    app.saveBean();
-    const bean = app.beans.find(b => b.name === beanName);
+  await test('bean detail and app state omit best dial-in controls', async () => {
+    const bean = app.beans.find(b => !b.isArchived);
     assert(bean, 'Bean should exist');
 
     app.selectBean(bean.id);
-    app.startEditingOptimal();
-    assertEqual(app.optimalForm.grindSize, null);
-    assertEqual(app.optimalForm.doseIn, null);
-    assertEqual(app.optimalForm.yieldOut, null);
-    assertEqual(app.optimalForm.extractionTime, null);
-  });
+    await wait(50);
 
-  await test('saveOptimalSettings persists defaults when untouched', async () => {
-    const beanName = 'Optimal Save Default Bean ' + Date.now() + '-' + Math.floor(Math.random() * 1000);
-    app.openBeanForm(null);
-    app.beanForm.name = beanName;
-    app.beanForm.roaster = 'E2E Test Roaster';
-    app.saveBean();
-    const bean = app.beans.find(b => b.name === beanName);
-    assert(bean, 'Bean should exist');
-
-    app.selectBean(bean.id);
-    app.startEditingOptimal();
-    app.saveOptimalSettings();
-
-    const updated = app.getBeanById(bean.id);
-    assertEqual(updated.optimalGrindSize, 5);
-    assertEqual(updated.optimalDoseIn, 18);
-    assertEqual(updated.optimalYieldOut, 36);
-    assertEqual(updated.optimalExtractionTime, 25);
-  });
-
-  await test('cancelEditingOptimal does not persist defaults', async () => {
-    const beanName = 'Optimal Cancel Bean ' + Date.now() + '-' + Math.floor(Math.random() * 1000);
-    app.openBeanForm(null);
-    app.beanForm.name = beanName;
-    app.beanForm.roaster = 'E2E Test Roaster';
-    app.saveBean();
-    const bean = app.beans.find(b => b.name === beanName);
-    assert(bean, 'Bean should exist');
-
-    app.selectBean(bean.id);
-    app.startEditingOptimal();
-    app.cancelEditingOptimal();
-
-    const unchanged = app.getBeanById(bean.id);
-    assert(unchanged.optimalGrindSize == null, 'Grind should remain empty');
-    assert(unchanged.optimalDoseIn == null, 'Dose should remain empty');
-    assert(unchanged.optimalYieldOut == null, 'Yield should remain empty');
-    assert(unchanged.optimalExtractionTime == null, 'Extraction should remain empty');
+    const bodyText = appWindow.document.body.textContent.toLowerCase();
+    assert(!bodyText.includes('best dial-in'), 'Best dial-in copy should not render');
+    assertEqual(typeof app.startEditingOptimal, 'undefined');
+    assertEqual(typeof app.saveOptimalSettings, 'undefined');
+    assertEqual(typeof app.getShotFormBestDialInComparison, 'undefined');
   });
 
   await test('closeShotForm resets form state', async () => {
@@ -1120,8 +1107,8 @@ async function runTests() {
     assertEqual(app.formatShotRecipe(guidance.recipe), 'Grind 6 \u00b7 18g -> 36g (1:2.0) \u00b7 24s');
   });
 
-  await test('Today guidance falls back to best dial-in, then app defaults', async () => {
-    const bestBeanName = 'Today Guidance Best Bean ' + Date.now() + '-' + Math.floor(Math.random() * 1000);
+  await test('Today guidance uses app defaults when no prior shot exists, ignoring legacy best dial-in', async () => {
+    const bestBeanName = 'Today Guidance Legacy Bean ' + Date.now() + '-' + Math.floor(Math.random() * 1000);
     app.openBeanForm(null);
     app.beanForm.name = bestBeanName;
     app.beanForm.roaster = 'E2E Test Roaster';
@@ -1135,24 +1122,11 @@ async function runTests() {
     app.saveBeans();
 
     const bestGuidance = app.getDailyGuidance(bestBean.id);
-    assertEqual(bestGuidance.type, 'best-dial-in');
-    assertEqual(bestGuidance.recipe.grindSize, 4);
-    assertEqual(bestGuidance.recipe.extractionTime, 27);
-
-    const defaultBeanName = 'Today Guidance Default Bean ' + Date.now() + '-' + Math.floor(Math.random() * 1000);
-    app.openBeanForm(null);
-    app.beanForm.name = defaultBeanName;
-    app.beanForm.roaster = 'E2E Test Roaster';
-    app.saveBean();
-    const defaultBean = app.beans.find(b => b.name === defaultBeanName);
-    assert(defaultBean, 'Default bean should exist');
-
-    const defaultGuidance = app.getDailyGuidance(defaultBean.id);
-    assertEqual(defaultGuidance.type, 'app-defaults');
-    assertEqual(defaultGuidance.recipe.grindSize, 5);
-    assertEqual(defaultGuidance.recipe.doseIn, 18);
-    assertEqual(defaultGuidance.recipe.yieldOut, 36);
-    assertEqual(defaultGuidance.recipe.extractionTime, 25);
+    assertEqual(bestGuidance.type, 'app-defaults');
+    assertEqual(bestGuidance.recipe.grindSize, 5);
+    assertEqual(bestGuidance.recipe.doseIn, 18);
+    assertEqual(bestGuidance.recipe.yieldOut, 36);
+    assertEqual(bestGuidance.recipe.extractionTime, 25);
   });
 
   await test('getShotFormDefault returns shot values when editing', async () => {
