@@ -1107,6 +1107,81 @@ async function runTests() {
     assertEqual(app.formatShotRecipe(guidance.recipe), 'Grind 6 \u00b7 18g -> 36g (1:2.0) \u00b7 24s');
   });
 
+  await test('Today shot history shortcut appears at two shots and opens bean detail', async () => {
+    const beanName = 'Today Shot History Bean ' + Date.now() + '-' + Math.floor(Math.random() * 1000);
+    app.openBeanForm(null);
+    app.beanForm.name = beanName;
+    app.beanForm.roaster = 'E2E Test Roaster';
+    app.saveBean();
+    const bean = app.beans.find(b => b.name === beanName);
+    assert(bean, 'Bean should exist');
+
+    app.currentTab = 'today';
+    app.dailySelectedBeanId = bean.id;
+    app.onDailyBeanSelect();
+    await wait(50);
+
+    const historyButton = appWindow.document.querySelector('[data-testid="daily-view-shot-history"]');
+    const actionGroup = appWindow.document.querySelector('[data-testid="daily-guidance-actions"]');
+    const logShotButton = appWindow.document.querySelector('[data-testid="daily-log-shot"]');
+    assert(historyButton, 'Shot history button should render in the guidance card');
+    assertEqual(appWindow.getComputedStyle(historyButton).display, 'none', 'Button should be hidden with no shots');
+    assertEqual(
+      Math.round(logShotButton.getBoundingClientRect().width),
+      Math.round(actionGroup.getBoundingClientRect().width),
+      'Log Shot should use the full action width with fewer than two shots'
+    );
+
+    const shotBase = {
+      beanId: bean.id,
+      grindSize: 6,
+      doseIn: 18,
+      yieldOut: 36,
+      extractionTime: 25,
+      rating: 'okay',
+      shotDate: localDateStr()
+    };
+    app.shots.push({
+      ...shotBase,
+      id: crypto.randomUUID(),
+      notes: 'First history reference shot',
+      createdAt: new Date(Date.now() - 1000).toISOString()
+    });
+    app.saveShots();
+    await wait(50);
+
+    assertEqual(appWindow.getComputedStyle(historyButton).display, 'none', 'Button should be hidden with one shot');
+    app.openDailyBeanHistory();
+    assertEqual(app.currentTab, 'today', 'Guard should prevent navigation with fewer than two shots');
+
+    app.shots.push({
+      ...shotBase,
+      id: crypto.randomUUID(),
+      notes: 'Second history reference shot',
+      createdAt: new Date().toISOString()
+    });
+    app.saveShots();
+    await wait(50);
+
+    assert(appWindow.getComputedStyle(historyButton).display !== 'none', 'Button should be visible with two shots');
+    const logShotBounds = logShotButton.getBoundingClientRect();
+    const historyBounds = historyButton.getBoundingClientRect();
+    assert(historyBounds.left >= logShotBounds.right, 'Shot history button should be to the right of Log Shot');
+    const contentArea = appWindow.document.querySelector('.content-area');
+    contentArea.scrollTop = 100;
+    historyButton.click();
+    await wait(50);
+
+    assertEqual(app.currentTab, 'beans');
+    assertEqual(app.beansView, 'detail');
+    assertEqual(app.selectedBeanId, bean.id);
+    assertEqual(app.dailySelectedBeanId, bean.id, 'Today selection should be preserved');
+    assertEqual(contentArea.scrollTop, 0);
+    const shotHistory = appWindow.document.querySelector('[data-testid="bean-shot-history"]');
+    assert(shotHistory.textContent.includes('First history reference shot'), 'Bean history should render the first shot');
+    assert(shotHistory.textContent.includes('Second history reference shot'), 'Bean history should render the second shot');
+  });
+
   await test('Today guidance uses app defaults when no prior shot exists, ignoring legacy best dial-in', async () => {
     const bestBeanName = 'Today Guidance Legacy Bean ' + Date.now() + '-' + Math.floor(Math.random() * 1000);
     app.openBeanForm(null);

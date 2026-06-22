@@ -273,6 +273,8 @@ textarea.form-input { min-height: 80px; resize: vertical; line-height: 1.5; }
 .daily-guidance-meta { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
 .daily-guidance-recipe { font-size: 14px; color: var(--text-secondary); line-height: 1.45; margin-top: 12px; }
 .daily-guidance-notes { color: var(--text-muted); font-size: 13px; font-style: italic; line-height: 1.45; margin-top: 6px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.daily-guidance-actions { display: grid; grid-template-columns: minmax(0, 1fr); gap: 8px; }
+.daily-guidance-actions.has-history { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 .daily-guidance-action { width: 100%; min-height: 38px; padding: 8px 14px; font-size: 14px; }
 
 /* Shot rating row: inline rating buttons + date picker */
@@ -779,7 +781,20 @@ textarea.form-input { min-height: 80px; resize: vertical; line-height: 1.5; }
                   <div class="daily-guidance-title" x-text="getBeanById(dailySelectedBeanId)?.name"></div>
                   <div x-show="guidance.date" class="daily-guidance-meta" x-text="formatDate(guidance.date)"></div>
                 </div>
-                <button type="button" class="btn btn-amber daily-guidance-action" @click="openShotFormFromDaily()">Log Shot</button>
+                <div
+                  class="daily-guidance-actions"
+                  :class="{ 'has-history': getShotsForBean(dailySelectedBeanId).length >= 2 }"
+                  data-testid="daily-guidance-actions"
+                >
+                  <button type="button" class="btn btn-amber daily-guidance-action" data-testid="daily-log-shot" @click="openShotFormFromDaily()">Log Shot</button>
+                  <button
+                    x-show="getShotsForBean(dailySelectedBeanId).length >= 2"
+                    type="button"
+                    class="btn btn-secondary-solid daily-guidance-action"
+                    data-testid="daily-view-shot-history"
+                    @click="openDailyBeanHistory()"
+                  >View Shot History</button>
+                </div>
               </div>
               <div class="daily-guidance-recipe" x-text="formatShotRecipe(guidance.recipe)"></div>
               <div x-show="guidance.sourceShot && getShotAssessmentChips(guidance.sourceShot).length" class="shot-assessment-chips">
@@ -999,7 +1014,7 @@ textarea.form-input { min-height: 80px; resize: vertical; line-height: 1.5; }
         </div>
 
         <!-- Shot History -->
-        <div class="mb-20" x-data="{ showAllShots: false }">
+        <div class="mb-20" x-data="{ showAllShots: false }" data-testid="bean-shot-history">
           <div style="display: flex; align-items: center; justify-content: space-between;" class="mb-12">
             <h3 class="heading-md">Shot History</h3>
             <button x-show="!selectedBean?.isArchived" class="btn btn-amber" style="padding: 8px 16px; font-size: 14px;" @click="openShotFormFromBean()">+ Log Shot</button>
@@ -3596,6 +3611,12 @@ function app() {
     openShotFormFromDaily() {
       if (!this.dailySelectedBeanId) return;
       this.openShotForm(this.dailySelectedBeanId);
+    },
+    openDailyBeanHistory() {
+      const beanId = this.dailySelectedBeanId;
+      if (!this.getBeanById(beanId) || this.getShotsForBean(beanId).length < 2) return;
+      this.currentTab = 'beans';
+      this.selectBean(beanId);
     },
     openShotFormFromBean() { this.openShotForm(this.selectedBeanId); },
 
