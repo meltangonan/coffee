@@ -26,6 +26,7 @@ async function seedCoffeeData(page, { shots = [] } = {}) {
       shotDate: todayStr,
       createdAt: new Date().toISOString()
     }))));
+    localStorage.setItem('coffee_portafilters', '[]');
   }, { shots });
 }
 
@@ -81,6 +82,30 @@ test('shot visualizer and assessment chips render in daily log and shot form', a
   await expect(shotForm.locator('.shot-visualizer-fill')).toHaveCount(3);
   await expect(shotForm.locator('.shot-visualizer-point')).toHaveCount(3);
   await expect(shotForm.locator('.shot-assessment-chip')).toContainText('Well-extracted');
+});
+
+test('portafilter can be created while logging and appears on the saved shot', async ({ page }) => {
+  const pageErrors = [];
+  page.on('pageerror', error => pageErrors.push(error.message));
+
+  await page.goto('/');
+  await seedCoffeeData(page);
+  await page.reload();
+
+  await page.locator('.bean-picker-trigger').click();
+  await page.locator('.bean-picker-option').filter({ hasText: 'Ethiopia Guji' }).first().click();
+  await page.getByTestId('daily-log-shot').click();
+
+  await page.getByTestId('portafilter-manage').click();
+  await page.getByTestId('portafilter-add').click();
+  await page.getByTestId('portafilter-name').fill('Breville Stock');
+  await page.getByTestId('portafilter-save').click();
+
+  await expect(page.getByTestId('portafilter-select')).toHaveValue(/.+/);
+  await expect(page.getByTestId('portafilter-trigger')).toContainText('Breville Stock');
+  await page.getByRole('button', { name: 'Save Shot' }).click();
+  await expect(page.locator('.today-shot-item').first().locator('.shot-portafilter-label')).toHaveText('Breville Stock');
+  expect(pageErrors).toEqual([]);
 });
 
 for (const testPage of ['tests.html', 'test-e2e.html']) {

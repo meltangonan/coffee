@@ -210,10 +210,10 @@ RLS is the only authorization mechanism. No service-key reads happen from the cl
 
 ## Migration From Current App
 
-Existing users have data in localStorage (`coffee_beans`, `coffee_shots`). On first sign-in:
+Existing users have data in localStorage (`coffee_beans`, `coffee_shots`, `coffee_portafilters`). On first sign-in:
 
 1. JS shim detects existing localStorage data
-2. Prompt: *"We found your existing beans and shots. Import?"*
+2. Prompt: *"We found your existing beans, shots, and portafilters. Import?"*
 3. On accept:
    - Match each local bean to `beans_catalog` by fuzzy `(roaster, name)` match; suggest but don't force
    - Insert into `beans` with `catalog_id` if matched
@@ -299,7 +299,7 @@ Aligned with the PRD roadmap.
 1. Create Supabase project; write schema + RLS as migrations
 2. Add Astro shell; mount the existing app at `/app`
 3. Wire Supabase Auth (magic link)
-4. Port `coffee_beans` and `coffee_shots` flows from localStorage to Supabase tables; keep the UI identical
+4. Port `coffee_beans`, `coffee_shots`, and `coffee_portafilters` flows from localStorage to Supabase tables; keep the UI identical
 5. Build localStorage → Supabase import flow
 
 **Phase 2 — Catalog (weeks 7-9)**

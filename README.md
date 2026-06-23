@@ -123,7 +123,7 @@ All data is stored locally in your browser using **localStorage**.
 
 Your data persists on the same device and browser. It does not sync across devices.
 
-If you need to move data manually, you can copy the `coffee_beans` and `coffee_shots` keys from localStorage using browser dev tools.
+If you need to move data manually, you can copy the `coffee_beans`, `coffee_shots`, and `coffee_portafilters` keys from localStorage using browser dev tools.
 
 ---
 
@@ -132,6 +132,7 @@ If you need to move data manually, you can copy the `coffee_beans` and `coffee_s
 * Tap a bean to see its full shot history.
 * Archive beans instead of deleting them so the history stays available.
 * When logging a shot, numeric fields show placeholder defaults from that bean's most recent shot, or app defaults (5 / 18g / 36g / 25s) when there is no history. Saving without touching those fields still logs those default values.
+* Portafilters are optional shot context. You can add or rename them from the shot form, and selecting one does not change shot defaults.
 * Backdate shots if you forgot to log them when pulling.
 * Shot cards show ratio (1:X.X) and notes inline so you can compare at a glance.
 * Swipe from the edge of the screen to quickly navigate between tabs.

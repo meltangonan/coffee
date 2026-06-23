@@ -169,6 +169,24 @@ body {
 .form-input:focus { outline: none; border-color: var(--amber); box-shadow: 0 0 0 3px rgba(212,165,116,0.15); }
 .form-input::placeholder { color: var(--text-muted); }
 textarea.form-input { min-height: 80px; resize: vertical; line-height: 1.5; }
+.form-label-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 6px; }
+.form-label-row .form-label { margin-bottom: 0; }
+.form-label-action { border: none; background: none; color: var(--amber-dark); font-family: var(--font-body); font-size: 13px; font-weight: 600; cursor: pointer; padding: 4px 0; }
+.portafilter-picker { position: relative; }
+.portafilter-picker-trigger { border-width: 1.5px; padding: 12px 14px; min-height: 46px; }
+.portafilter-picker-dropdown { z-index: 120; max-height: 240px; }
+.portafilter-manager { margin-top: 12px; padding: 14px; border: 1.5px solid rgba(44,24,16,0.1); border-radius: var(--radius-lg); background: #FFFCF7; box-shadow: var(--shadow); }
+.portafilter-manager-header { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 12px; }
+.portafilter-manager-title { font-size: 14px; font-weight: 700; color: var(--espresso); }
+.portafilter-manager-list { display: flex; flex-direction: column; gap: 6px; }
+.portafilter-manager-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 44px; padding: 9px 10px; border: 1px solid rgba(44,24,16,0.07); border-radius: var(--radius); background: white; }
+.portafilter-manager-name { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 14px; font-weight: 500; color: var(--text-primary); }
+.portafilter-manager-empty { padding: 12px; border: 1px dashed rgba(44,24,16,0.12); border-radius: var(--radius); background: rgba(255,255,255,0.55); color: var(--text-muted); font-size: 13px; line-height: 1.4; }
+.portafilter-editor { display: flex; flex-direction: column; gap: 10px; }
+.portafilter-editor-actions { display: flex; justify-content: flex-end; gap: 8px; }
+.portafilter-editor-actions .btn, .portafilter-manager-row .btn, .portafilter-add-btn { min-height: 34px; padding: 6px 10px; font-size: 12px; }
+.portafilter-form-error { color: var(--freshness-past); font-size: 13px; }
+.shot-portafilter-label { display: inline-flex; align-items: center; width: fit-content; margin-top: 4px; padding: 2px 7px; border-radius: 999px; background: rgba(212,165,116,0.16); color: var(--espresso); font-size: 11px; font-weight: 600; }
 
 /* Custom date picker */
 .date-picker-group { position: relative; }
@@ -777,9 +795,10 @@ textarea.form-input { min-height: 80px; resize: vertical; line-height: 1.5; }
             <div class="daily-guidance-card fade-in" x-data="{ get guidance() { return getDailyGuidance(dailySelectedBeanId) } }">
               <div class="daily-guidance-header">
                 <div>
-                  <div class="daily-guidance-label" x-text="guidance.label"></div>
+                  <div class="daily-guidance-label" x-text="guidance?.label || ''"></div>
                   <div class="daily-guidance-title" x-text="getBeanById(dailySelectedBeanId)?.name"></div>
-                  <div x-show="guidance.date" class="daily-guidance-meta" x-text="formatDate(guidance.date)"></div>
+                  <div x-show="guidance?.date" class="daily-guidance-meta" x-text="formatDate(guidance?.date)"></div>
+                  <div x-show="guidance?.sourceShot && getPortafilterLabel(guidance.sourceShot.portafilterId)" class="shot-portafilter-label" x-text="getPortafilterLabel(guidance?.sourceShot?.portafilterId)"></div>
                 </div>
                 <div
                   class="daily-guidance-actions"
@@ -796,13 +815,13 @@ textarea.form-input { min-height: 80px; resize: vertical; line-height: 1.5; }
                   >View Shot History</button>
                 </div>
               </div>
-              <div class="daily-guidance-recipe" x-text="formatShotRecipe(guidance.recipe)"></div>
-              <div x-show="guidance.sourceShot && getShotAssessmentChips(guidance.sourceShot).length" class="shot-assessment-chips">
-                <template x-for="chip in getShotAssessmentChips(guidance.sourceShot)" :key="chip.label">
+              <div class="daily-guidance-recipe" x-text="formatShotRecipe(guidance?.recipe || {})"></div>
+              <div x-show="guidance?.sourceShot && getShotAssessmentChips(guidance.sourceShot).length" class="shot-assessment-chips">
+                <template x-for="chip in getShotAssessmentChips(guidance?.sourceShot)" :key="chip.label">
                   <span class="shot-assessment-chip" :class="chip.className" x-text="chip.label"></span>
                 </template>
               </div>
-              <div x-show="guidance.notes" class="daily-guidance-notes" x-text="guidance.notes"></div>
+              <div x-show="guidance?.notes" class="daily-guidance-notes" x-text="guidance?.notes || ''"></div>
             </div>
           </template>
 
@@ -827,6 +846,7 @@ textarea.form-input { min-height: 80px; resize: vertical; line-height: 1.5; }
                         <span x-show="shot.yieldOut"> &#8594; <span x-text="shot.yieldOut + 'g'"></span></span>
                         <span x-show="shot.extractionTime"><span x-show="shot.grindSize || shot.doseIn || shot.yieldOut"> &middot; </span><span x-text="shot.extractionTime + 's'"></span></span>
                       </div>
+                      <div x-show="getPortafilterLabel(shot.portafilterId)" class="shot-portafilter-label" x-text="getPortafilterLabel(shot.portafilterId)"></div>
                       <div x-show="getShotMetrics(shot)" class="shot-visualizer compact">
                         <div class="shot-visualizer-row">
                           <span class="shot-visualizer-label">Ratio</span>
@@ -1042,6 +1062,7 @@ textarea.form-input { min-height: 80px; resize: vertical; line-height: 1.5; }
                       <span x-show="shot.extractionTime"><span x-show="shot.grindSize || shot.doseIn || shot.yieldOut"> &middot; </span><span x-text="shot.extractionTime + 's'"></span></span>
                     </div>
                     <div class="shot-date" x-text="formatDate(shot.shotDate || shot.createdAt)"></div>
+                    <div x-show="getPortafilterLabel(shot.portafilterId)" class="shot-portafilter-label" x-text="getPortafilterLabel(shot.portafilterId)"></div>
                     <div x-show="getShotMetrics(shot)" class="shot-visualizer compact">
                       <div class="shot-visualizer-row">
                         <span class="shot-visualizer-label">Ratio</span>
@@ -1524,6 +1545,78 @@ textarea.form-input { min-height: 80px; resize: vertical; line-height: 1.5; }
         <button class="back-btn" @click="closeShotForm()">&#8592;</button>
         <h3 class="heading-lg" x-text="editingShotId ? 'Edit Shot' : 'Log Shot'"></h3>
       </div>
+      <div class="form-group" data-testid="portafilter-field" x-data="{ pickerOpen: false }" @click.outside="pickerOpen = false" @keydown.escape.window="pickerOpen = false">
+        <div class="form-label-row">
+          <label class="form-label" for="shot-portafilter">Portafilter</label>
+          <button type="button" class="form-label-action" data-testid="portafilter-manage" @click="pickerOpen = false; showPortafilterManager ? closePortafilterManager() : openPortafilterManager()" x-text="showPortafilterManager ? 'Done' : 'Manage'"></button>
+        </div>
+        <div class="portafilter-picker">
+          <input type="hidden" data-testid="portafilter-select" x-model="shotForm.portafilterId">
+          <button id="shot-portafilter" type="button" class="bean-picker-trigger portafilter-picker-trigger" data-testid="portafilter-trigger" :class="{ open: pickerOpen }" @click="pickerOpen = !pickerOpen" @keydown.enter.prevent="pickerOpen = !pickerOpen" @keydown.space.prevent="pickerOpen = !pickerOpen" role="combobox" aria-haspopup="listbox" :aria-expanded="pickerOpen">
+            <template x-if="!shotForm.portafilterId || !getPortafilterById(shotForm.portafilterId)">
+              <span class="picker-selected">
+                <span class="picker-selected-name">None</span>
+              </span>
+            </template>
+            <template x-if="shotForm.portafilterId && getPortafilterById(shotForm.portafilterId)">
+              <span class="picker-selected">
+                <span class="picker-selected-name" x-text="getPortafilterLabel(shotForm.portafilterId)"></span>
+              </span>
+            </template>
+            <svg class="bean-picker-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>
+          </button>
+          <div class="bean-picker-dropdown portafilter-picker-dropdown" :class="{ show: pickerOpen }" role="listbox">
+            <div class="bean-picker-option" :class="{ selected: !shotForm.portafilterId }" @click="shotForm.portafilterId = ''; pickerOpen = false" role="option" :aria-selected="!shotForm.portafilterId" tabindex="0" @keydown.enter.prevent="shotForm.portafilterId = ''; pickerOpen = false">
+              <span class="bean-picker-info">
+                <span class="bean-picker-name">None</span>
+              </span>
+            </div>
+            <template x-for="portafilter in portafilters" :key="portafilter.id">
+              <div class="bean-picker-option" :class="{ selected: shotForm.portafilterId === portafilter.id }" @click="shotForm.portafilterId = portafilter.id; pickerOpen = false" role="option" :aria-selected="shotForm.portafilterId === portafilter.id" tabindex="0" @keydown.enter.prevent="shotForm.portafilterId = portafilter.id; pickerOpen = false">
+                <span class="bean-picker-info">
+                  <span class="bean-picker-name" x-text="portafilter.name"></span>
+                </span>
+              </div>
+            </template>
+            <div class="bean-picker-option add-new" @click="pickerOpen = false; openPortafilterManager(); startAddingPortafilter()" role="option" aria-selected="false" tabindex="0" @keydown.enter.prevent="pickerOpen = false; openPortafilterManager(); startAddingPortafilter()">
+              <span class="bean-picker-add-icon">+</span>
+              <span class="bean-picker-info">
+                <span class="bean-picker-name">Add a new portafilter</span>
+              </span>
+            </div>
+          </div>
+        </div>
+        <div x-show="showPortafilterManager" class="portafilter-manager" data-testid="portafilter-manager">
+          <div class="portafilter-manager-header">
+            <span class="portafilter-manager-title">Manage Portafilters</span>
+            <button x-show="editingPortafilterId === null" type="button" class="btn btn-secondary-solid portafilter-add-btn" data-testid="portafilter-add" @click="startAddingPortafilter()">+ Add</button>
+          </div>
+          <template x-if="editingPortafilterId === null">
+            <div>
+              <div x-show="portafilters.length === 0" class="portafilter-manager-empty">No portafilters added yet.</div>
+              <div class="portafilter-manager-list">
+                <template x-for="portafilter in portafilters" :key="portafilter.id">
+                  <div class="portafilter-manager-row">
+                    <span class="portafilter-manager-name" x-text="portafilter.name"></span>
+                    <button type="button" class="btn btn-ghost" :aria-label="'Edit ' + portafilter.name" @click="startEditingPortafilter(portafilter.id)">Edit</button>
+                  </div>
+                </template>
+              </div>
+            </div>
+          </template>
+          <template x-if="editingPortafilterId !== null">
+            <div class="portafilter-editor">
+              <label class="form-label" for="portafilter-name" x-text="editingPortafilterId ? 'Rename Portafilter' : 'New Portafilter'"></label>
+              <input id="portafilter-name" type="text" class="form-input" data-testid="portafilter-name" placeholder="Portafilter name" x-model="portafilterNameDraft" @keydown.enter.prevent="saveManagedPortafilter()">
+              <div x-show="portafilterFormError" class="portafilter-form-error" x-text="portafilterFormError"></div>
+              <div class="portafilter-editor-actions">
+                <button type="button" class="btn btn-ghost" @click="cancelPortafilterEdit()">Cancel</button>
+                <button type="button" class="btn btn-primary" data-testid="portafilter-save" @click="saveManagedPortafilter()">Save</button>
+              </div>
+            </div>
+          </template>
+        </div>
+      </div>
       <div class="form-group" x-data="stepper()" x-init="stInit('grindSize', 1, 30, getShotFormDefault('grindSize'))">
         <label class="form-label">Grind Size</label>
         <div class="stepper">
@@ -1782,6 +1875,10 @@ textarea.form-input { min-height: 80px; resize: vertical; line-height: 1.5; }
               <div class="backup-preview-kv-value" x-text="backupImportPreview.newShots"></div>
             </div>
             <div class="backup-preview-kv">
+              <div class="backup-preview-kv-label">New Portafilters</div>
+              <div class="backup-preview-kv-value" x-text="backupImportPreview.newPortafilters"></div>
+            </div>
+            <div class="backup-preview-kv">
               <div class="backup-preview-kv-label">Skipped Existing</div>
               <div class="backup-preview-kv-value" x-text="backupImportPreview.skippedExisting"></div>
             </div>
@@ -1830,7 +1927,7 @@ textarea.form-input { min-height: 80px; resize: vertical; line-height: 1.5; }
               <span class="backup-step-num">2</span>
               <span class="backup-step-title">Check the preview</span>
             </div>
-            <p class="backup-step-copy">Confirm the “New Beans” and “New Shots” counts before importing.</p>
+            <p class="backup-step-copy">Confirm the “New Beans,” “New Shots,” and “New Portafilters” counts before importing.</p>
           </div>
           <div class="backup-step">
             <div class="backup-step-head">
@@ -2586,13 +2683,13 @@ function normalizeRating(r) {
 const TAB_ORDER = ['today', 'beans', 'calendar', 'stats'];
 const FRESHNESS_SORT_ORDER = { optimal: 0, resting: 1, past: 2, unknown: 3 };
 const SHOT_DEFAULTS = { grindSize: 5, doseIn: 18, yieldOut: 36, extractionTime: 25 };
-const BACKUP_FORMAT_VERSION = 1;
+const BACKUP_FORMAT_VERSION = 2;
 const BACKUP_LAST_EXPORTED_KEY = 'coffee_backup_last_exported_at';
 const BACKUP_LAST_IMPORTED_KEY = 'coffee_backup_last_imported_at';
 
 function app() {
   return {
-    beans: [], shots: [],
+    beans: [], shots: [], portafilters: [],
     currentTab: 'today', beansView: 'list',
     touchTabSwipeEnabled: false,
     tabSwipeStartX: 0, tabSwipeStartY: 0,
@@ -2600,13 +2697,15 @@ function app() {
     tabSwipeOffsetX: 0, tabSwipeWidth: 0, tabSwipeAdjacentTab: '',
     selectedBeanId: null, editingBeanId: null,
     showShotForm: false, shotFormBeanId: null, shotFormReturnTo: null, editingShotId: null,
+    showPortafilterManager: false, editingPortafilterId: null,
+    portafilterNameDraft: '', portafilterFormError: '',
     showBeanFormModal: false, beanFormContext: 'beans', beanFormError: '',
     showDeleteBeanDialog: false,
     showBackupPanel: false,
     dailySelectedBeanId: '', dailyLastShot: null,
     _pendingDuplicateBean: null,
     beanForm: { name: '', roaster: '', roastDate: '', notes: '' },
-    shotForm: { grindSize: null, doseIn: null, yieldOut: null, extractionTime: null, rating: null, notes: '', shotDate: '' },
+    shotForm: { grindSize: null, doseIn: null, yieldOut: null, extractionTime: null, rating: null, notes: '', shotDate: '', portafilterId: '' },
     backupLastExportedAt: '',
     backupLastImportedAt: '',
     backupNoticeType: '',
@@ -2617,7 +2716,9 @@ function app() {
     init() {
       const savedBeans = localStorage.getItem('coffee_beans');
       const savedShots = localStorage.getItem('coffee_shots');
+      const savedPortafilters = localStorage.getItem('coffee_portafilters');
       this.touchTabSwipeEnabled = this.isTouchTabSwipeAvailable();
+      this.portafilters = savedPortafilters ? JSON.parse(savedPortafilters) : [];
       if (savedBeans) {
         this.beans = JSON.parse(savedBeans);
         this.shots = savedShots ? JSON.parse(savedShots) : [];
@@ -2646,6 +2747,7 @@ function app() {
         this.saveBeans();
         this.saveShots();
       }
+      if (!savedPortafilters) this.savePortafilters();
       this.backupLastExportedAt = localStorage.getItem(BACKUP_LAST_EXPORTED_KEY) || '';
       this.backupLastImportedAt = localStorage.getItem(BACKUP_LAST_IMPORTED_KEY) || '';
     },
@@ -2707,6 +2809,18 @@ function app() {
       };
     },
 
+    normalizeImportedPortafilter(rawPortafilter) {
+      if (!rawPortafilter || typeof rawPortafilter !== 'object') return null;
+      const id = typeof rawPortafilter.id === 'string' ? rawPortafilter.id.trim() : '';
+      const name = this.normalizePortafilterName(rawPortafilter.name);
+      if (!id || !name) return null;
+      return {
+        id,
+        name,
+        createdAt: this.normalizeIsoDateTime(rawPortafilter.createdAt) || new Date().toISOString()
+      };
+    },
+
     normalizeImportedShot(rawShot) {
       if (!rawShot || typeof rawShot !== 'object') return null;
       const id = typeof rawShot.id === 'string' ? rawShot.id.trim() : '';
@@ -2737,6 +2851,7 @@ function app() {
         rating: normalizeRating(rawShot.rating),
         notes: typeof rawShot.notes === 'string' ? rawShot.notes : '',
         shotDate: this.normalizeIsoDateOnly(rawShot.shotDate) || createdAt.slice(0, 10),
+        portafilterId: typeof rawShot.portafilterId === 'string' ? rawShot.portafilterId.trim() : '',
         createdAt
       };
     },
@@ -2749,7 +2864,7 @@ function app() {
       if (!Array.isArray(source.beans) || !Array.isArray(source.shots)) {
         throw new Error('This backup file is missing beans or shots.');
       }
-      return source;
+      return { ...source, portafilters: Array.isArray(source.portafilters) ? source.portafilters : [] };
     },
 
     prepareBackupImportPreview(jsonText, fileName) {
@@ -2763,18 +2878,63 @@ function app() {
       const payload = this.extractBackupPayload(parsed);
       const importedBeans = [];
       const importedShots = [];
+      const importedPortafilters = [];
       let invalidBeans = 0;
       let invalidShots = 0;
+      let invalidPortafilters = 0;
       let duplicateBeansInFile = 0;
       let duplicateShotsInFile = 0;
+      let duplicatePortafiltersInFile = 0;
       let orphanShots = 0;
       let skippedExistingBeans = 0;
       let skippedExistingShots = 0;
+      let skippedExistingPortafilters = 0;
 
       const existingBeanIds = new Set(this.beans.map(bean => bean.id));
       const existingShotIds = new Set(this.shots.map(shot => shot.id));
+      const existingPortafilterIds = new Set(this.portafilters.map(portafilter => portafilter.id));
+      const existingPortafilterByName = new Map(this.portafilters.map(portafilter => [
+        this.normalizePortafilterName(portafilter.name).toLowerCase(), portafilter.id
+      ]));
       const seenBeanIdsInFile = new Set();
       const seenShotIdsInFile = new Set();
+      const seenPortafilterIdsInFile = new Set();
+      const seenPortafilterNamesInFile = new Map();
+      const portafilterIdMap = new Map();
+
+      for (const rawPortafilter of payload.portafilters) {
+        const portafilter = this.normalizeImportedPortafilter(rawPortafilter);
+        if (!portafilter) {
+          invalidPortafilters++;
+          continue;
+        }
+        const normalizedName = portafilter.name.toLowerCase();
+        if (seenPortafilterIdsInFile.has(portafilter.id)) {
+          duplicatePortafiltersInFile++;
+          continue;
+        }
+        seenPortafilterIdsInFile.add(portafilter.id);
+        if (existingPortafilterIds.has(portafilter.id)) {
+          portafilterIdMap.set(portafilter.id, portafilter.id);
+          skippedExistingPortafilters++;
+          continue;
+        }
+        const existingIdForName = existingPortafilterByName.get(normalizedName);
+        if (existingIdForName) {
+          portafilterIdMap.set(portafilter.id, existingIdForName);
+          skippedExistingPortafilters++;
+          continue;
+        }
+        const importedIdForName = seenPortafilterNamesInFile.get(normalizedName);
+        if (importedIdForName) {
+          portafilterIdMap.set(portafilter.id, importedIdForName);
+          duplicatePortafiltersInFile++;
+          continue;
+        }
+        seenPortafilterNamesInFile.set(normalizedName, portafilter.id);
+        portafilterIdMap.set(portafilter.id, portafilter.id);
+        importedPortafilters.push(portafilter);
+      }
 
       for (const rawBean of payload.beans) {
         const bean = this.normalizeImportedBean(rawBean);
@@ -2814,6 +2974,10 @@ function app() {
           orphanShots++;
           continue;
         }
+        if (shot.portafilterId) {
+          shot.portafilterId = portafilterIdMap.get(shot.portafilterId)
+            || (existingPortafilterIds.has(shot.portafilterId) ? shot.portafilterId : '');
+        }
         importedShots.push(shot);
       }
 
@@ -2821,10 +2985,13 @@ function app() {
         fileName: fileName || 'backup.json',
         newBeans: importedBeans.length,
         newShots: importedShots.length,
-        skippedExisting: skippedExistingBeans + skippedExistingShots,
-        invalidOrSkipped: invalidBeans + invalidShots + duplicateBeansInFile + duplicateShotsInFile + orphanShots,
+        newPortafilters: importedPortafilters.length,
+        skippedExisting: skippedExistingBeans + skippedExistingShots + skippedExistingPortafilters,
+        invalidOrSkipped: invalidBeans + invalidShots + invalidPortafilters + duplicateBeansInFile
+          + duplicateShotsInFile + duplicatePortafiltersInFile + orphanShots,
         beansToImport: importedBeans,
-        shotsToImport: importedShots
+        shotsToImport: importedShots,
+        portafiltersToImport: importedPortafilters
       };
     },
 
@@ -2849,10 +3016,10 @@ function app() {
         const text = await file.text();
         const preview = this.prepareBackupImportPreview(text, file.name);
         this.backupImportPreview = preview;
-        if (preview.newBeans === 0 && preview.newShots === 0) {
+        if (preview.newBeans === 0 && preview.newShots === 0 && preview.newPortafilters === 0) {
           this.setBackupNotice('info', 'Backup is valid, but there is nothing new to import.');
         } else {
-          this.setBackupNotice('info', `Review and confirm import. This will add ${preview.newBeans} beans and ${preview.newShots} shots.`);
+          this.setBackupNotice('info', `Review and confirm import. This will add ${preview.newBeans} beans, ${preview.newShots} shots, and ${preview.newPortafilters} portafilters.`);
         }
       } catch (error) {
         this.setBackupNotice('error', error?.message || 'Could not import this file.');
@@ -2866,7 +3033,7 @@ function app() {
         return;
       }
 
-      if (preview.newBeans === 0 && preview.newShots === 0) {
+      if (preview.newBeans === 0 && preview.newShots === 0 && preview.newPortafilters === 0) {
         this.setBackupNotice('info', 'Nothing new to import. Existing data is unchanged.');
         this.backupImportPreview = null;
         if (this.$refs.backupImportInput) this.$refs.backupImportInput.value = '';
@@ -2874,8 +3041,10 @@ function app() {
       }
 
       this.beans = this.beans.concat(preview.beansToImport);
+      this.portafilters = this.portafilters.concat(preview.portafiltersToImport);
       this.shots = this.shots.concat(preview.shotsToImport);
       this.saveBeans();
+      this.savePortafilters();
       this.saveShots();
 
       const now = new Date().toISOString();
@@ -2884,7 +3053,7 @@ function app() {
 
       this.backupImportPreview = null;
       if (this.$refs.backupImportInput) this.$refs.backupImportInput.value = '';
-      this.setBackupNotice('success', `Import complete. Added ${preview.newBeans} beans and ${preview.newShots} shots. Existing entries were kept.`);
+      this.setBackupNotice('success', `Import complete. Added ${preview.newBeans} beans, ${preview.newShots} shots, and ${preview.newPortafilters} portafilters. Existing entries were kept.`);
     },
 
     exportBackup() {
@@ -2896,6 +3065,7 @@ function app() {
           exportedAt,
           data: {
             beans: this.beans,
+            portafilters: this.portafilters,
             shots: this.shots
           }
         };
@@ -3119,8 +3289,78 @@ function app() {
 
     saveBeans() { localStorage.setItem('coffee_beans', JSON.stringify(this.beans)); },
     saveShots() { localStorage.setItem('coffee_shots', JSON.stringify(this.shots)); },
+    savePortafilters() { localStorage.setItem('coffee_portafilters', JSON.stringify(this.portafilters)); },
 
     getBeanById(id) { return this.beans.find(b => b.id === id) || null; },
+    getPortafilterById(id) { return this.portafilters.find(portafilter => portafilter.id === id) || null; },
+    getPortafilterLabel(id) { return this.getPortafilterById(id)?.name || ''; },
+    normalizePortafilterName(value) { return typeof value === 'string' ? value.trim() : ''; },
+    portafilterNameExists(name, excludeId = '') {
+      const normalized = this.normalizePortafilterName(name).toLowerCase();
+      return !!normalized && this.portafilters.some(portafilter => (
+        portafilter.id !== excludeId
+        && this.normalizePortafilterName(portafilter.name).toLowerCase() === normalized
+      ));
+    },
+    getLastUsedPortafilterId() {
+      const validIds = new Set(this.portafilters.map(portafilter => portafilter.id));
+      const latest = this.shots
+        .map((shot, index) => ({ shot, index }))
+        .filter(({ shot }) => validIds.has(shot.portafilterId))
+        .sort((a, b) => (new Date(b.shot.createdAt) - new Date(a.shot.createdAt)) || (b.index - a.index))[0];
+      return latest?.shot.portafilterId || '';
+    },
+    openPortafilterManager() {
+      this.showPortafilterManager = true;
+      this.editingPortafilterId = null;
+      this.portafilterNameDraft = '';
+      this.portafilterFormError = '';
+    },
+    closePortafilterManager() {
+      this.showPortafilterManager = false;
+      this.editingPortafilterId = null;
+      this.portafilterNameDraft = '';
+      this.portafilterFormError = '';
+    },
+    startAddingPortafilter() {
+      this.editingPortafilterId = '';
+      this.portafilterNameDraft = '';
+      this.portafilterFormError = '';
+    },
+    startEditingPortafilter(id) {
+      const portafilter = this.getPortafilterById(id);
+      if (!portafilter) return;
+      this.editingPortafilterId = id;
+      this.portafilterNameDraft = portafilter.name;
+      this.portafilterFormError = '';
+    },
+    cancelPortafilterEdit() {
+      this.editingPortafilterId = null;
+      this.portafilterNameDraft = '';
+      this.portafilterFormError = '';
+    },
+    saveManagedPortafilter() {
+      const name = this.normalizePortafilterName(this.portafilterNameDraft);
+      if (!name) {
+        this.portafilterFormError = 'Enter a portafilter name.';
+        return;
+      }
+      if (this.portafilterNameExists(name, this.editingPortafilterId || '')) {
+        this.portafilterFormError = 'A portafilter with this name already exists.';
+        return;
+      }
+      if (this.editingPortafilterId) {
+        const portafilter = this.getPortafilterById(this.editingPortafilterId);
+        if (!portafilter) return;
+        portafilter.name = name;
+      } else {
+        const portafilter = { id: crypto.randomUUID(), name, createdAt: new Date().toISOString() };
+        this.portafilters.push(portafilter);
+        this.shotForm.portafilterId = portafilter.id;
+      }
+      this.savePortafilters();
+      this.closePortafilterManager();
+    },
     getShotsForBean(id) {
       return this.shots
         .map((shot, index) => ({ shot, index }))
@@ -3585,8 +3825,10 @@ function app() {
         doseIn: null,
         yieldOut: null,
         extractionTime: null,
-        rating: null, notes: '', shotDate: today
+        rating: null, notes: '', shotDate: today,
+        portafilterId: this.getLastUsedPortafilterId()
       };
+      this.closePortafilterManager();
       this.showShotForm = true;
     },
 
@@ -3603,8 +3845,10 @@ function app() {
         extractionTime: shot.extractionTime ?? null,
         rating: normalizeRating(shot.rating),
         notes: shot.notes ?? '',
-        shotDate: shotDate
+        shotDate: shotDate,
+        portafilterId: this.getPortafilterById(shot.portafilterId) ? shot.portafilterId : ''
       };
+      this.closePortafilterManager();
       this.showShotForm = true;
     },
 
@@ -3623,6 +3867,7 @@ function app() {
     closeShotForm() {
       this.editingShotId = null;
       this.showShotForm = false;
+      this.closePortafilterManager();
       if (this.shotFormReturnTo === 'today') {
         this.resetDailySelection();
       }
@@ -3662,7 +3907,8 @@ function app() {
         extractionTime: resolveShotValue('extractionTime'),
         rating: this.shotForm.rating,
         notes: this.shotForm.notes || '',
-        shotDate: this.shotForm.shotDate || localDateStr()
+        shotDate: this.shotForm.shotDate || localDateStr(),
+        portafilterId: this.getPortafilterById(this.shotForm.portafilterId) ? this.shotForm.portafilterId : ''
       };
       if (this.editingShotId) {
         const shot = this.shots.find(s => s.id === this.editingShotId);

@@ -97,6 +97,7 @@ async function waitForAlpine() {
 function resetApp() {
   appWindow.localStorage.removeItem('coffee_beans');
   appWindow.localStorage.removeItem('coffee_shots');
+  appWindow.localStorage.removeItem('coffee_portafilters');
   appWindow.location.reload();
 }
 
@@ -143,8 +144,10 @@ function seedTestFixture() {
       createdAt: now
     }
   ];
+  app.portafilters = [];
   app.saveBeans();
   app.saveShots();
+  app.savePortafilters();
 }
 
 async function runTests() {
@@ -1285,6 +1288,123 @@ async function runTests() {
     assertEqual(updatedShot.extractionTime, 28);
   });
 
+  await test('portafilter management creates, renames, and preserves shot defaults', async () => {
+    const bean = app.beans.find(b => !b.isArchived);
+    app.openShotForm(bean.id);
+    const defaultsBefore = {
+      grindSize: app.getShotFormDefault('grindSize'),
+      doseIn: app.getShotFormDefault('doseIn'),
+      yieldOut: app.getShotFormDefault('yieldOut'),
+      extractionTime: app.getShotFormDefault('extractionTime')
+    };
+    app.shotForm.grindSize = 11;
+    app.openPortafilterManager();
+    app.startAddingPortafilter();
+    app.portafilterNameDraft = '  Breville Stock  ';
+    app.saveManagedPortafilter();
+
+    assertEqual(app.portafilters.length, 1);
+    const portafilter = app.portafilters[0];
+    assertEqual(portafilter.name, 'Breville Stock');
+    assertEqual(app.shotForm.portafilterId, portafilter.id);
+    assertEqual(app.shotForm.grindSize, 11, 'Managing portafilters should preserve entered shot values');
+    assertEqual(app.getShotFormDefault('doseIn'), defaultsBefore.doseIn);
+    assertEqual(app.getShotFormDefault('yieldOut'), defaultsBefore.yieldOut);
+    assertEqual(app.getShotFormDefault('extractionTime'), defaultsBefore.extractionTime);
+
+    app.saveShot();
+    const savedShot = app.shots[app.shots.length - 1];
+    assertEqual(savedShot.portafilterId, portafilter.id);
+
+    app.openShotFormForEdit(savedShot);
+    app.openPortafilterManager();
+    app.startEditingPortafilter(portafilter.id);
+    app.portafilterNameDraft = 'Stock Portafilter';
+    app.saveManagedPortafilter();
+    assertEqual(app.getPortafilterLabel(savedShot.portafilterId), 'Stock Portafilter');
+    assertEqual(app.shotForm.grindSize, 11, 'Renaming should preserve the current shot form');
+    app.closeShotForm();
+  });
+
+  await test('portafilter names are required and case-insensitively unique', async () => {
+    const bean = app.beans.find(b => !b.isArchived);
+    const initialCount = app.portafilters.length;
+    app.openShotForm(bean.id);
+    app.shotForm.doseIn = 17;
+    app.openPortafilterManager();
+    app.startAddingPortafilter();
+    app.portafilterNameDraft = '   ';
+    app.saveManagedPortafilter();
+    assertEqual(app.portafilters.length, initialCount);
+    assert(app.portafilterFormError.includes('Enter'), 'Blank name should show an error');
+
+    app.portafilterNameDraft = 'stock portafilter';
+    app.saveManagedPortafilter();
+    assertEqual(app.portafilters.length, initialCount);
+    assert(app.portafilterFormError.includes('already exists'), 'Duplicate name should show an error');
+    assertEqual(app.shotForm.doseIn, 17, 'Validation should not discard shot-form work');
+    app.closeShotForm();
+  });
+
+  await test('new shots prefill the last portafilter while legacy and cleared shots remain valid', async () => {
+    const bean = app.beans.find(b => !b.isArchived);
+    const portafilter = app.portafilters[0];
+    app.openShotForm(bean.id);
+    assertEqual(app.shotForm.portafilterId, portafilter.id);
+    app.shotForm.portafilterId = '';
+    app.saveShot();
+    const clearedShot = app.shots[app.shots.length - 1];
+    assertEqual(clearedShot.portafilterId, '');
+
+    const legacyShot = app.shots.find(shot => shot.id === 'e2e-shot-1');
+    app.openShotFormForEdit(legacyShot);
+    assertEqual(app.shotForm.portafilterId, '');
+    app.saveShot();
+    assertEqual(legacyShot.portafilterId, '');
+  });
+
+  await test('backup import preserves portafilter references and supports legacy backups', async () => {
+    const importedBean = {
+      id: 'import-portafilter-bean', name: 'Imported Bean', roaster: 'Import Roaster',
+      roastDate: '2026-06-01', rating: null, notes: '', isArchived: false,
+      createdAt: '2026-06-01T08:00:00.000Z'
+    };
+    const importedShot = {
+      id: 'import-portafilter-shot', beanId: importedBean.id, grindSize: 6, doseIn: 18,
+      yieldOut: 36, extractionTime: 25, rating: 'great', notes: '', shotDate: '2026-06-01',
+      portafilterId: 'import-portafilter', createdAt: '2026-06-01T08:05:00.000Z'
+    };
+    const preview = app.prepareBackupImportPreview(JSON.stringify({
+      data: {
+        beans: [importedBean],
+        portafilters: [{ id: 'import-portafilter', name: 'Bottomless', createdAt: '2026-06-01T08:00:00.000Z' }],
+        shots: [importedShot]
+      }
+    }), 'portafilters.json');
+    assertEqual(preview.newBeans, 1);
+    assertEqual(preview.newShots, 1);
+    assertEqual(preview.newPortafilters, 1);
+    assertEqual(preview.shotsToImport[0].portafilterId, 'import-portafilter');
+
+    app.backupImportPreview = preview;
+    app.confirmBackupImport();
+    assert(app.getPortafilterById('import-portafilter'), 'Imported portafilter should be saved');
+    assertEqual(app.shots.find(shot => shot.id === importedShot.id).portafilterId, 'import-portafilter');
+
+    const legacyPreview = app.prepareBackupImportPreview(JSON.stringify({ data: {
+      beans: [{ ...importedBean, id: 'legacy-backup-bean', name: 'Legacy Backup Bean' }],
+      shots: [{ ...importedShot, id: 'legacy-backup-shot', beanId: 'legacy-backup-bean', portafilterId: undefined }]
+    } }), 'legacy.json');
+    assertEqual(legacyPreview.newPortafilters, 0);
+    assertEqual(legacyPreview.shotsToImport[0].portafilterId, '');
+
+    const unknownPreview = app.prepareBackupImportPreview(JSON.stringify({ data: {
+      beans: [{ ...importedBean, id: 'unknown-portafilter-bean', name: 'Unknown Portafilter Bean' }],
+      shots: [{ ...importedShot, id: 'unknown-portafilter-shot', beanId: 'unknown-portafilter-bean', portafilterId: 'missing-portafilter' }]
+    } }), 'unknown.json');
+    assertEqual(unknownPreview.shotsToImport[0].portafilterId, '');
+  });
+
   await test('normalizeImportedShot backfills missing legacy yield/time', async () => {
     const bean = app.beans.find(b => !b.isArchived);
     const normalized = app.normalizeImportedShot({
@@ -1403,15 +1523,19 @@ async function runTests() {
   await test('localStorage persistence works', async () => {
     const beansJson = appWindow.localStorage.getItem('coffee_beans');
     const shotsJson = appWindow.localStorage.getItem('coffee_shots');
+    const portafiltersJson = appWindow.localStorage.getItem('coffee_portafilters');
 
     assert(beansJson, 'Beans should be in localStorage');
     assert(shotsJson, 'Shots should be in localStorage');
+    assert(portafiltersJson, 'Portafilters should be in localStorage');
 
     const beans = JSON.parse(beansJson);
     const shots = JSON.parse(shotsJson);
+    const portafilters = JSON.parse(portafiltersJson);
 
     assert(Array.isArray(beans), 'Beans should be an array');
     assert(Array.isArray(shots), 'Shots should be an array');
+    assert(Array.isArray(portafilters), 'Portafilters should be an array');
   });
 
   await test('crypto.randomUUID polyfill works', async () => {

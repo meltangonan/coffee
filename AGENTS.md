@@ -82,7 +82,7 @@ const FRESHNESS_OPTIMAL_DAYS = 21;  // Days 7-21: At Peak
 
 ### Data Model
 
-Stored in localStorage under keys `coffee_beans` and `coffee_shots`.
+Stored in localStorage under keys `coffee_beans`, `coffee_shots`, and `coffee_portafilters`.
 
 **Bean Schema:**
 ```javascript
@@ -100,6 +100,15 @@ Stored in localStorage under keys `coffee_beans` and `coffee_shots`.
 
 Legacy localStorage/backups may contain `optimalGrindSize`, `optimalDoseIn`, `optimalYieldOut`, or `optimalExtractionTime`; current app behavior ignores them.
 
+**Portafilter Schema:**
+```javascript
+{
+  id: string,              // crypto.randomUUID()
+  name: string,            // required, case-insensitively unique
+  createdAt: string        // ISO timestamp
+}
+```
+
 **Shot Schema:**
 ```javascript
 {
@@ -109,9 +118,10 @@ Legacy localStorage/backups may contain `optimalGrindSize`, `optimalDoseIn`, `op
   doseIn: number,          // grams, typically 14-22
   yieldOut: number|null,   // grams, typically 28-50
   extractionTime: number|null, // seconds, typically 20-35
-  rating: string|null,     // 'bad'|'okay'|'perfect'
+  rating: string|null,     // 'bad'|'okay'|'great'|'perfect'
   notes: string,
   shotDate: string,        // ISO date "YYYY-MM-DD" — when the shot was made (defaults to today; backfill from createdAt if missing)
+  portafilterId: string,   // optional foreign key to portafilter.id; record-only, does not affect defaults
   createdAt: string        // ISO timestamp — when the record was logged
 }
 ```
@@ -130,6 +140,7 @@ Legacy localStorage/backups may contain `optimalGrindSize`, `optimalDoseIn`, `op
 - Archived beans don't appear in `currentBeans` or the daily picker
 - Archiving a bean closes any open shot form referencing it
 - Shot form defaults respect edited values when editing (via `getShotFormDefault`)
+- Portafilters are optional shot metadata; create/rename keeps stable IDs and never changes shot recipe defaults
 - Deleting a bean requires confirmation via the delete dialog modal
 - Bean names are validated for uniqueness (case-insensitive) when adding from the Today picker flow
 - Tab swipe gestures are blocked when overlays (shot form, bean modal, delete dialog) are open
@@ -226,6 +237,7 @@ Calendar bar colors are defined in JS `BAR_COLORS` array. Spacing utilities (`.m
 - New shot defaults for `grindSize`/`doseIn`/`yieldOut`/`extractionTime` use the bean's most recent shot, then app defaults
 - `saveShot()` resolves untouched `null` numeric fields to `getShotFormDefault(field)` so placeholder defaults are persisted
 - Shot form includes `shotDate` (defaults to today for new shots; existing shots use `shotDate || createdAt` for display/filtering)
+- Portafilter selection is record-only; do not route it through `getShotNumericDefaults()` or change numeric placeholders when it changes
 - Always call `closeShotForm()` to close — it handles cleanup for both tabs
 
 ### When Adding New Freshness-Related Logic
