@@ -32,7 +32,7 @@ If you don't have any beans yet, the Today tab walks you through adding your fir
 
 You can also add a new bean directly from Today without leaving the tab. The app validates the name and auto-selects the new bean so you can start logging right away.
 
-### Coffee (Beans)
+### Beans
 
 Each coffee you're working through lives here.
 
@@ -43,7 +43,7 @@ Each coffee you're working through lives here.
   Each new shot starts from the most recent shot logged for that same bag. If there is no shot history yet, the app uses the standard defaults: grind 5, 18g in, 36g out, 25s.
 
 * **Archive finished bags**
-  When a bag is done, archive it instead of deleting. You can restore or duplicate it later and keep your history.
+  Use the Current and Archive tabs to keep active bags separate from finished ones. Archive a bag instead of deleting it so you can restore or duplicate it later and keep your history.
 
 * **Duplicate beans**
   From a bean's detail page, duplicate it for a new bag of the same coffee. From the Add Bean form, you can also "Fill from previous bean" to copy identity details like name, roaster, and notes from a past entry.
@@ -80,10 +80,10 @@ These are guidelines, not rules. Taste always wins.
 If someone shared a link (for example via GitHub Pages or another static host), open it on your phone or computer.
 
 * **First time?**
-  The app starts empty. Add your first bean from the Coffee tab or directly from Today and start logging.
+  The app starts empty. Add your first bean from the Beans tab or directly from Today and start logging.
 
 * **Add a bean**
-  From the Coffee tab, or directly from Today if you have no beans yet.
+  From the Beans tab, or directly from Today if you have no beans yet.
 
 * **Log a shot**
   From Today or from a bean's detail page.
@@ -95,7 +95,7 @@ If someone shared a link (for example via GitHub Pages or another static host), 
   Swipe left on mobile, or use the delete control on desktop. The app asks you to confirm first.
 
 * **Switch tabs**
-  Tap the tab bar at the bottom, or swipe from the edge of the screen on mobile to move between Today, Coffee, and Calendar.
+  Tap the tab bar at the bottom, or swipe from the edge of the screen on mobile to move between Today, Beans, Calendar, and Stats.
 
 ---
 

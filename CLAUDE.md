@@ -55,7 +55,8 @@ brainstorms/        — Design docs and decision records
 | **Shot** | A single espresso pull | beanId (foreign key), grindSize, doseIn, yieldOut, extractionTime, rating, notes, shotDate, createdAt |
 | **Freshness** | Bean age status | Derived from roastDate: resting/optimal/past |
 | **Tab** | Navigation state | today/beans/calendar/stats (swipeable on touch devices) |
-| **View** | Sub-navigation in Beans tab | list/detail/form/archive |
+| **View** | Screen mode in Beans tab | list/detail/form |
+| **Collection** | Bean-list selection | current/archive |
 
 ### Key Constants
 
@@ -210,7 +211,7 @@ Notes: Sweet with chocolate notes...        [Perfect]
 
 **Restore from Archive (Today Tab):**
 - When no active beans exist, an expandable archive picker appears below the "Add Coffee Bean" CTA
-- Shows up to 5 archived beans; links to full archive view if more exist
+- Shows up to 5 archived beans; links to the full Archive collection if more exist
 - Uses `duplicateFromArchive` to create a new active bean from an archived one
 
 ### Design Tokens

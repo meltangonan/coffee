@@ -857,19 +857,28 @@ async function runTests() {
   await test('archiveBean sets isArchived flag', async () => {
     const bean = app.beans.find(b => !b.isArchived);
     const id = bean.id;
+    app.beansCollection = 'archive';
     app.selectBean(id);
     app.archiveBean(id);
     const archivedBean = app.getBeanById(id);
     assert(archivedBean.isArchived, 'Bean should be archived');
+    assertEqual(app.beansCollection, 'current');
+    assertEqual(app.beansView, 'list');
+    assertEqual(app.selectedBeanId, null);
   });
 
   await test('unarchiveBean clears isArchived flag', async () => {
     const bean = app.beans.find(b => b.isArchived);
     if (bean) {
       const id = bean.id;
+      app.beansCollection = 'current';
+      app.selectBean(id);
       app.unarchiveBean(id);
       const unarchivedBean = app.getBeanById(id);
       assert(!unarchivedBean.isArchived, 'Bean should not be archived');
+      assertEqual(app.beansCollection, 'archive');
+      assertEqual(app.beansView, 'list');
+      assertEqual(app.selectedBeanId, null);
     }
   });
 
