@@ -30,6 +30,41 @@ async function seedCoffeeData(page, { shots = [] } = {}) {
   }, { shots });
 }
 
+async function seedBeanCollections(page, { active = 1, archived = 1 } = {}) {
+  await page.evaluate(({ activeCount, archivedCount }) => {
+    const today = new Date();
+    const todayStr = today.getFullYear() + '-' + String(today.getMonth() + 1).padStart(2, '0') + '-' + String(today.getDate()).padStart(2, '0');
+    const beans = [];
+    for (let index = 0; index < activeCount; index++) {
+      beans.push({
+        id: `active-${index + 1}`,
+        name: `Active Bean ${index + 1}`,
+        roaster: 'Current Roaster',
+        roastDate: todayStr,
+        rating: null,
+        notes: '',
+        isArchived: false,
+        createdAt: new Date(Date.now() - index * 1000).toISOString()
+      });
+    }
+    for (let index = 0; index < archivedCount; index++) {
+      beans.push({
+        id: `archived-${index + 1}`,
+        name: `Archived Bean ${index + 1}`,
+        roaster: 'Archive Roaster',
+        roastDate: todayStr,
+        rating: null,
+        notes: '',
+        isArchived: true,
+        createdAt: new Date(Date.now() - (activeCount + index) * 1000).toISOString()
+      });
+    }
+    localStorage.setItem('coffee_beans', JSON.stringify(beans));
+    localStorage.setItem('coffee_shots', '[]');
+    localStorage.setItem('coffee_portafilters', '[]');
+  }, { activeCount: active, archivedCount: archived });
+}
+
 test('app shell loads without runtime errors', async ({ page }) => {
   const pageErrors = [];
   page.on('pageerror', error => pageErrors.push(error.message));
@@ -40,12 +75,113 @@ test('app shell loads without runtime errors', async ({ page }) => {
   await expect(page.locator('.app-shell')).toBeVisible();
   const tabBar = page.locator('.tab-bar');
   await expect(tabBar.getByRole('button', { name: /Today/ })).toBeVisible();
-  await expect(tabBar.getByRole('button', { name: /Coffee/ })).toBeVisible();
+  await expect(tabBar.getByRole('button', { name: /Beans/ })).toBeVisible();
+  await expect(tabBar.getByRole('button', { name: /Coffee/ })).toHaveCount(0);
+  await expect(tabBar.getByRole('button', { name: /Beans/ }).locator('[data-testid="beans-tab-icon"]')).toBeVisible();
   await expect(tabBar.getByRole('button', { name: /Calendar/ })).toBeVisible();
   await expect(tabBar.getByRole('button', { name: /Stats/ })).toBeVisible();
   await tabBar.getByRole('button', { name: /Stats/ }).click();
   await expect(page.getByText('No stats yet')).toBeVisible();
   expect(pageErrors).toEqual([]);
+});
+
+test('Beans separates current and archive collections with stable return behavior', async ({ page }) => {
+  await page.goto('/');
+  await seedBeanCollections(page);
+  await page.reload();
+
+  await page.locator('.tab-bar').getByRole('button', { name: 'Beans' }).click();
+  await expect(page.getByRole('heading', { name: 'Beans', exact: true })).toBeVisible();
+
+  const currentTab = page.getByRole('tab', { name: 'Current' });
+  const archiveTab = page.getByRole('tab', { name: 'Archive' });
+  const currentPanel = page.locator('#current-beans-panel');
+  await expect(currentTab).toHaveAttribute('aria-selected', 'true');
+  await expect(currentPanel.getByText('Active Bean 1')).toBeVisible();
+  await expect(currentPanel.getByText('Archived Bean 1')).toHaveCount(0);
+
+  await archiveTab.press('Enter');
+  const archivePanel = page.locator('#archive-beans-panel');
+  await expect(archiveTab).toHaveAttribute('aria-selected', 'true');
+  await expect(archivePanel.getByText('Archived Bean 1')).toBeVisible();
+  await expect(archivePanel.getByText('Active Bean 1')).toHaveCount(0);
+  await expect(archivePanel.locator('.bean-card.archived')).toHaveCount(0);
+  await expect(archivePanel.getByText('Archived', { exact: true })).toHaveCount(0);
+  await expect(page.getByRole('button', { name: 'Add Bean' })).toHaveCount(0);
+
+  await archivePanel.getByText('Archived Bean 1').click();
+  await page.getByTestId('bean-detail').getByRole('button', { name: 'Back to Beans' }).click();
+  await expect(archiveTab).toHaveAttribute('aria-selected', 'true');
+
+  await currentTab.click();
+  await page.locator('#current-beans-panel').getByText('Active Bean 1').click();
+  await page.getByRole('button', { name: 'Archive Bean' }).click();
+  await expect(currentTab).toHaveAttribute('aria-selected', 'true');
+  await expect(page.locator('#current-beans-panel').getByText('Active Bean 1')).toHaveCount(0);
+
+  await archiveTab.click();
+  await page.locator('#archive-beans-panel').getByText('Archived Bean 1').click();
+  await page.getByRole('button', { name: 'Bring Back Bean' }).click();
+  await expect(archiveTab).toHaveAttribute('aria-selected', 'true');
+  await expect(page.locator('#archive-beans-panel').getByText('Archived Bean 1')).toHaveCount(0);
+
+  await page.locator('.tab-bar').getByRole('button', { name: 'Calendar' }).click();
+  await page.locator('.tab-bar').getByRole('button', { name: 'Beans' }).click();
+  await expect(currentTab).toHaveAttribute('aria-selected', 'true');
+});
+
+test('Beans collection empty states and Today archive entry stay reachable', async ({ page }) => {
+  await page.goto('/');
+  await seedBeanCollections(page, { active: 0, archived: 5 });
+  await page.reload();
+
+  await page.getByRole('button', { name: /Or restore from archive/ }).click();
+  await page.getByRole('button', { name: /View all 5 archived beans/ }).click();
+  await expect(page.getByRole('tab', { name: 'Archive' })).toHaveAttribute('aria-selected', 'true');
+  await expect(page.locator('#archive-beans-panel').getByText('Archived Bean 1')).toBeVisible();
+  await expect(page.locator('#archive-beans-panel').getByText('Archived Bean 5')).toBeVisible();
+  await expect(page.locator('#archive-beans-panel .bean-card')).toHaveCount(5);
+
+  await page.getByRole('tab', { name: 'Current' }).click();
+  await expect(page.getByText('No current beans')).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Add Bean' })).toBeVisible();
+
+  await seedBeanCollections(page, { active: 1, archived: 0 });
+  await page.reload();
+  await page.locator('.tab-bar').getByRole('button', { name: 'Beans' }).click();
+  await page.getByRole('tab', { name: 'Archive' }).click();
+  await expect(page.getByText('No archived beans')).toBeVisible();
+  await expect(page.locator('.bean-card')).toHaveCount(0);
+});
+
+test('freshness stages live below Calendar and remain visible without beans', async ({ page }) => {
+  await page.goto('/');
+  await page.evaluate(() => {
+    localStorage.setItem('coffee_beans', '[]');
+    localStorage.setItem('coffee_shots', '[]');
+    localStorage.setItem('coffee_portafilters', '[]');
+  });
+  await page.reload();
+
+  await page.locator('.tab-bar').getByRole('button', { name: 'Calendar' }).click();
+  const freshnessGuide = page.locator('[data-testid="calendar-freshness-stages"]');
+  await expect(freshnessGuide).toBeVisible();
+  await expect(freshnessGuide).toContainText('Resting');
+  await expect(freshnessGuide).toContainText('0–6 days post-roast');
+  await expect(freshnessGuide).toContainText('At Peak');
+  await expect(freshnessGuide).toContainText('7–21 days post-roast');
+  await expect(freshnessGuide).toContainText('Past Peak');
+  await expect(freshnessGuide).toContainText('22+ days post-roast');
+  await expect(freshnessGuide).toContainText('Extraction can be gassy and less consistent.');
+  await expect(freshnessGuide).toContainText('Best balance of stable extraction and vibrant flavor.');
+  await expect(freshnessGuide).toContainText('Flavor and aromatics may fade. Still brewable, but expect less pop.');
+  await expect(freshnessGuide.locator('.freshness-legend-dot.resting')).toBeVisible();
+  await expect(freshnessGuide.locator('.freshness-legend-dot.at-peak')).toBeVisible();
+  await expect(freshnessGuide.locator('.freshness-legend-dot.past-peak')).toBeVisible();
+  await expect(page.locator('.calendar-note')).toHaveCount(0);
+
+  await page.locator('.tab-bar').getByRole('button', { name: 'Beans' }).click();
+  await expect(page.locator('#current-beans-panel').getByText('Freshness Stages')).toHaveCount(0);
 });
 
 test('backup panel opens with valid quick-step copy', async ({ page }) => {
