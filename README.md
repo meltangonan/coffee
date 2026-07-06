@@ -22,15 +22,17 @@ There's no sign-up and nothing to install. Open it in a browser on your phone or
 
 ## What It Does
 
-### Today
+### Home
 
-Your daily shot log.
+Your starting point at the machine.
 
-Pick the coffee you're pulling and log the shot: grind, dose, yield, extraction time, and how it tasted. Each shot card shows the ratio and notes at a glance. You can backdate shots if you forgot to log them earlier. The Today view shows everything pulled on that date so you can quickly edit or delete.
+Home opens with your all-time shot count and current brew-day streak. Pick the coffee you're pulling and log the shot: grind, dose, yield, extraction time, and how it tasted.
 
-If you don't have any beans yet, the Today tab walks you through adding your first one or restoring a previously archived bean.
+Recent Shots shows the latest three pulls across all beans, including the date each was pulled. Each card keeps the ratio, notes, assessment, portafilter, edit, and delete details close at hand. You can backdate shots if you forgot to log them earlier.
 
-You can also add a new bean directly from Today without leaving the tab. The app validates the name and auto-selects the new bean so you can start logging right away.
+If you don't have any beans yet, Home walks you through adding your first one or restoring a previously archived bean.
+
+You can also add a new bean directly from Home without leaving the tab. The app validates the name and auto-selects the new bean so you can start logging right away.
 
 ### Beans
 
@@ -80,13 +82,13 @@ These are guidelines, not rules. Taste always wins.
 If someone shared a link (for example via GitHub Pages or another static host), open it on your phone or computer.
 
 * **First time?**
-  The app starts empty. Add your first bean from the Beans tab or directly from Today and start logging.
+  The app starts empty. Add your first bean from the Beans tab or directly from Home and start logging.
 
 * **Add a bean**
-  From the Beans tab, or directly from Today if you have no beans yet.
+  From the Beans tab, or directly from Home if you have no beans yet.
 
 * **Log a shot**
-  From Today or from a bean's detail page.
+  From Home or from a bean's detail page.
 
 * **Edit a shot**
   Tap any shot card to reopen the form with its values pre-filled.
@@ -95,7 +97,7 @@ If someone shared a link (for example via GitHub Pages or another static host), 
   Swipe left on mobile, or use the delete control on desktop. The app asks you to confirm first.
 
 * **Switch tabs**
-  Tap the tab bar at the bottom, or swipe from the edge of the screen on mobile to move between Today, Beans, Calendar, and Stats.
+  Tap the tab bar at the bottom, or swipe from the edge of the screen on mobile to move between Home, Beans, Calendar, and Stats.
 
 ---
 

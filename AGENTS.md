@@ -33,7 +33,7 @@ Serve the directory and open:
 The entire application lives in `index.html` (~2,300 lines) with three inline sections:
 
 1. **CSS** (lines ~31-498): Design system with CSS variables, component styles, responsive layout, and spacing utilities. Uses "Warm Industrial Cafe" aesthetic with Playfair Display (headings) and DM Sans (body) fonts.
-2. **HTML** (lines ~500-1330): Alpine.js template directives. Root element uses `x-data="app()" x-init="init()"`. Tab-based navigation (Today, Beans, Calendar) with no routing library.
+2. **HTML** (lines ~500-1330): Alpine.js template directives. Root element uses `x-data="app()" x-init="init()"`. Tab-based navigation (Home, Beans, Calendar, Stats) with no routing library.
 3. **JavaScript** (lines ~1332-2301): Alpine components, helper functions, and main `app()` object.
 
 ### File Structure
@@ -54,7 +54,7 @@ brainstorms/        — Design docs and decision records
 | **Bean** | A coffee bean bag/batch | name, roaster, roastDate, rating, notes, isArchived |
 | **Shot** | A single espresso pull | beanId (foreign key), grindSize, doseIn, yieldOut, extractionTime, rating, notes, shotDate, createdAt |
 | **Freshness** | Bean age status | Derived from roastDate: resting/optimal/past |
-| **Tab** | Navigation state | today/beans/calendar (swipeable on touch devices) |
+| **Tab** | Navigation state | `today` (shown as Home)/beans/calendar/stats (swipeable on touch devices) |
 | **View** | Screen mode in Beans tab | list/detail/form |
 | **Collection** | Bean-list selection | current/archive |
 
@@ -69,17 +69,17 @@ const FRESHNESS_OPTIMAL_DAYS = 21;  // Days 7-21: At Peak
 ### Key Functional Modules (all methods on the `app()` object)
 
 - **Bean Management**: `saveBean`, `deleteBean`, `selectBean`, `updateBeanRating`, `archiveBean`, `unarchiveBean`, `duplicateFromArchive`, `duplicateBean` (pre-fill form from existing bean; used by "Fill from previous bean" and duplicate-from-detail), `fillBeanFormFrom` (fill form fields in modal context without navigating)
-- **Bean Validation**: `normalizeBeanName` (trim + lowercase), `beanNameExists` (checks for duplicate names among active beans, used in Today picker flow)
-- **Bean Form Context**: `openBeanForm` (supports `context` option: `'beans'` for Beans tab, `'today-picker'` for modal from Today), `openAddBeanFromToday` (opens modal form from daily picker), `cancelBeanForm` (handles cleanup for both contexts), `showBeanFormModal` (boolean for overlay display), `_pendingDuplicateBean` (temporary state carrying copied identity fields through the duplicate flow)
+- **Bean Validation**: `normalizeBeanName` (trim + lowercase), `beanNameExists` (checks for duplicate names among active beans, used in the Home picker flow)
+- **Bean Form Context**: `openBeanForm` (supports `context` option: `'beans'` for Beans tab, `'today-picker'` for the modal from Home), `openAddBeanFromToday` (opens the modal form from Home), `cancelBeanForm` (handles cleanup for both contexts), `showBeanFormModal` (boolean for overlay display), `_pendingDuplicateBean` (temporary state carrying copied identity fields through the duplicate flow)
 - **Delete Confirmation**: `openDeleteBeanDialog`, `closeDeleteBeanDialog`, `confirmDeleteBean` — two-step confirmation via modal dialog before deleting a bean and its shots
 - **Shot Logging**: `saveShot`, `deleteShot`, `openShotForm`, `openShotFormForEdit`, `closeShotForm`, `getShotFormDefault`, `getShotsForBean`, `getLastShot`; shot form includes optional `shotDate` (date picker) for backdating
-- **Daily Tracking**: `onDailyBeanSelect`, `openShotFormFromDaily`, `openShotFormFromBean`
+- **Home / Daily Tracking**: `onDailyBeanSelect`, `openShotFormFromDaily`, `openShotFormFromBean`
 - **Helpers**: `getBeanById`, `getBeanOccurrence` (occurrence count for beans with same name+roaster), `shotQualityLabel`, `shotQualityClass`, `normalizeRating` (converts legacy numeric ratings to string labels)
 - **Freshness**: `getFreshness` — returns `{ status, label, detail }`
 - **Tab Navigation**: `activateTab` (switches tab, resets beans view to list, scrolls to top), `tabPaneStyle` (controls visibility and swipe animation transforms)
 - **Tab Swipe (Touch)**: `onTabSwipeStart`, `onTabSwipeMove`, `onTabSwipeEnd`, `resetTabSwipe` — edge-initiated horizontal swipe gesture to navigate between tabs on touch devices. Includes axis lock (horizontal vs vertical), boundary resistance, and blocked-target detection (inputs, modals, existing swipe containers).
 - **Calendar**: `calendarWeeks`, `calendarBars`, `calendarBarsUnique`, `calendarBarsForWeek`, `getRangeBandStyle`
-- **Computed Properties**: `todayShots` (filtered by `shotDate === today`), `selectedBean`, `sortedBeans`, `currentBeans`, `archivedBeans`, `todayFormatted`, `calendarMonthLabel`; `getUniqueBeanSources()` for "Fill from previous bean" picker (de-duped by name+roaster, best representative; supports `{ archivedOnly: true }` option for Today modal context)
+- **Computed Properties**: `recentShots` (latest three shots across beans, ordered by pull date), `selectedBean`, `sortedBeans`, `currentBeans`, `archivedBeans`, `todayFormatted`, `calendarMonthLabel`; `getUniqueBeanSources()` for "Fill from previous bean" picker (de-duped by name+roaster, best representative; supports `{ archivedOnly: true }` option for the Home modal context)
 
 ### Data Model
 
@@ -133,7 +133,7 @@ Legacy localStorage/backups may contain `optimalGrindSize`, `optimalDoseIn`, `op
 - `app()` owns all state; Alpine components access via `this`
 - Steppers access `this.shotForm`
 - DatePicker accesses its model via `dpValue()`/`dpSetValue()` using dot-notation path
-- Bean form can render in two contexts: inline (Beans tab, `beansView = 'form'`) or modal overlay (Today tab, `showBeanFormModal = true`)
+- Bean form can render in two contexts: inline (Beans tab, `beansView = 'form'`) or modal overlay (Home tab, `showBeanFormModal = true`)
 
 **Invariants:**
 - A bean always has `name` and `roaster` (enforced in `saveBean`)
@@ -143,7 +143,7 @@ Legacy localStorage/backups may contain `optimalGrindSize`, `optimalDoseIn`, `op
 - Shot form defaults respect edited values when editing (via `getShotFormDefault`)
 - Portafilters are optional shot metadata; create/rename keeps stable IDs and never changes shot recipe defaults
 - Deleting a bean requires confirmation via the delete dialog modal
-- Bean names are validated for uniqueness (case-insensitive) when adding from the Today picker flow
+- Bean names are validated for uniqueness (case-insensitive) when adding from the Home picker flow
 - Tab swipe gestures are blocked when overlays (shot form, bean modal, delete dialog) are open
 
 ### Alpine.js Components
@@ -171,7 +171,7 @@ The date picker uses a capture-phase document click listener for outside-click d
 - Disabled for archived beans
 
 **Confirmation Dialogs:**
-- **Shot deletion**: Local `confirmDelete` state — first tap shows "Delete?" confirmation, second tap deletes. Used in both Today and Bean detail views.
+- **Shot deletion**: Local `confirmDelete` state — first tap shows "Delete?" confirmation, second tap deletes. Used in both Home and Bean detail views.
 - **Bean deletion**: Modal dialog (`showDeleteBeanDialog`) with warning icon, bean name, shot count, Cancel/Delete buttons. Triggered from bean detail view.
 
 **Shot History Toggle:**
@@ -190,9 +190,9 @@ Notes: Sweet with chocolate notes...        [Perfect]
 
 **Bean Form — Two Contexts:**
 - **Beans tab** (`beansView = 'form'`): Inline form with "Fill from previous bean" showing all beans (current + archived)
-- **Today tab** (`showBeanFormModal = true`): Modal overlay with "Fill from previous bean" showing archived beans only. Validates bean name uniqueness. On save, auto-selects the new bean in the daily picker.
+- **Home tab** (`showBeanFormModal = true`): Modal overlay with "Fill from previous bean" showing archived beans only. Validates bean name uniqueness. On save, auto-selects the new bean in the daily picker.
 
-**Restore from Archive (Today Tab):**
+**Restore from Archive (Home Tab):**
 - When no active beans exist, an expandable archive picker appears below the "Add Coffee Bean" CTA
 - Shows up to 5 archived beans; links to the full Archive collection if more exist
 - Uses `duplicateFromArchive` to create a new active bean from an archived one

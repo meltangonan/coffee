@@ -1205,8 +1205,8 @@ async function runTests() {
     assertEqual(app.dailySelectedBeanId, '');
   });
 
-  await test('Today bean selection exposes last shot guidance without opening shot form', async () => {
-    const beanName = 'Today Guidance Last Shot Bean ' + Date.now() + '-' + Math.floor(Math.random() * 1000);
+  await test('Home bean selection exposes last shot guidance without opening shot form', async () => {
+    const beanName = 'Home Guidance Last Shot Bean ' + Date.now() + '-' + Math.floor(Math.random() * 1000);
     app.openBeanForm(null);
     app.beanForm.name = beanName;
     app.beanForm.roaster = 'E2E Test Roaster';
@@ -1239,8 +1239,8 @@ async function runTests() {
     assertEqual(app.formatShotRecipe(guidance.recipe), 'Grind 6 \u00b7 18g -> 36g (1:2.0) \u00b7 24s');
   });
 
-  await test('Today shot history shortcut appears at two shots and opens bean detail', async () => {
-    const beanName = 'Today Shot History Bean ' + Date.now() + '-' + Math.floor(Math.random() * 1000);
+  await test('Home shot history shortcut appears at two shots and opens bean detail', async () => {
+    const beanName = 'Home Shot History Bean ' + Date.now() + '-' + Math.floor(Math.random() * 1000);
     app.openBeanForm(null);
     app.beanForm.name = beanName;
     app.beanForm.roaster = 'E2E Test Roaster';
@@ -1307,15 +1307,15 @@ async function runTests() {
     assertEqual(app.currentTab, 'beans');
     assertEqual(app.beansView, 'detail');
     assertEqual(app.selectedBeanId, bean.id);
-    assertEqual(app.dailySelectedBeanId, bean.id, 'Today selection should be preserved');
+    assertEqual(app.dailySelectedBeanId, bean.id, 'Home selection should be preserved');
     assertEqual(contentArea.scrollTop, 0);
     const shotHistory = appWindow.document.querySelector('[data-testid="bean-shot-history"]');
     assert(shotHistory.textContent.includes('First history reference shot'), 'Bean history should render the first shot');
     assert(shotHistory.textContent.includes('Second history reference shot'), 'Bean history should render the second shot');
   });
 
-  await test('Today guidance uses app defaults when no prior shot exists, ignoring legacy best dial-in', async () => {
-    const bestBeanName = 'Today Guidance Legacy Bean ' + Date.now() + '-' + Math.floor(Math.random() * 1000);
+  await test('Home guidance uses app defaults when no prior shot exists, ignoring legacy best dial-in', async () => {
+    const bestBeanName = 'Home Guidance Legacy Bean ' + Date.now() + '-' + Math.floor(Math.random() * 1000);
     app.openBeanForm(null);
     app.beanForm.name = bestBeanName;
     app.beanForm.roaster = 'E2E Test Roaster';

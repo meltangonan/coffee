@@ -173,7 +173,7 @@ test('Beans separates current and archive collections with stable return behavio
   await expect(currentTab).toHaveAttribute('aria-selected', 'true');
 });
 
-test('Beans collection empty states and Today archive entry stay reachable', async ({ page }) => {
+test('Beans collection empty states and Home archive entry stay reachable', async ({ page }) => {
   await page.goto('/');
   await seedBeanCollections(page, { active: 0, archived: 5 });
   await page.reload();

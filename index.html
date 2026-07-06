@@ -419,7 +419,7 @@ textarea.form-input { min-height: 80px; resize: vertical; line-height: 1.5; }
 .trend-chart-line { fill: none; stroke: var(--amber-dark); stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; vector-effect: non-scaling-stroke; }
 .trend-chart-marks { fill: none; stroke: var(--espresso); stroke-width: 4.5; stroke-linecap: round; vector-effect: non-scaling-stroke; opacity: 0.72; }
 
-/* Today tab — no beans onboarding state */
+/* Home tab — no beans onboarding state */
 .today-no-beans-state { display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 60px 24px 48px; min-height: calc(100dvh - var(--tab-total) - var(--safe-top) - 80px); }
 .today-no-beans-icon { width: 96px; height: 96px; margin-bottom: 24px; opacity: 0.85; }
 .today-no-beans-icon svg { width: 100%; height: 100%; }
@@ -745,7 +745,7 @@ textarea.form-input { min-height: 80px; resize: vertical; line-height: 1.5; }
         </div>
       </template>
 
-      <!-- Normal Today Tab Content — shown when beans exist -->
+      <!-- Normal Home Tab Content — shown when beans exist -->
       <template x-if="currentBeans.length > 0">
         <div>
           <h1 class="heading-xl home-heading" data-testid="home-heading">Home</h1>
@@ -3674,7 +3674,7 @@ function app() {
       this.scrollContentToTop();
     },
 
-    // Legacy alias for existing "restore from archive" in Today tab
+    // Legacy alias for existing "restore from archive" in Home tab
     duplicateFromArchive(beanId) {
       this.duplicateBean(beanId);
     },
