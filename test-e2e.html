@@ -543,6 +543,8 @@ async function runTests() {
       app.dailySelectedBeanId = 'e2e-active-bean';
       app.onDailyBeanSelect();
       await wait(20);
+      assertEqual(doc.querySelector('[data-testid="home-total-shots"]').textContent.trim(), '0');
+      assertEqual(doc.querySelector('[data-testid="home-current-streak"]').textContent.trim(), '0 days');
       assert(appWindow.getComputedStyle(doc.querySelector('[data-testid="home-empty-state"]')).display !== 'none', 'Empty state should remain visible after bean selection');
     } finally {
       app.shots = originalShots;

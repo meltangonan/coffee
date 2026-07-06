@@ -126,6 +126,13 @@ test('Home shows top stats and the three most recent shots with pull dates', asy
   await page.getByTestId('home-recent-shot-home-shot-0').click();
   await expect(page.getByRole('heading', { name: 'Edit Shot' })).toBeVisible();
   await page.locator('.panel .back-btn').click();
+
+  const newestShot = page.getByTestId('home-recent-shot-home-shot-0');
+  const newestShotSwipe = newestShot.locator('xpath=ancestor::div[contains(concat(" ", normalize-space(@class), " "), " today-shot-swipe ")]');
+  await newestShotSwipe.locator('.today-shot-swipe-actions').dispatchEvent('click');
+  await expect(page.getByTestId('home-total-shots')).toHaveText('3');
+  await expect(newestShot).toHaveCount(0);
+  await expect(page.getByTestId('home-recent-shot-home-shot-3')).toBeVisible();
 });
 
 test('Beans separates current and archive collections with stable return behavior', async ({ page }) => {
