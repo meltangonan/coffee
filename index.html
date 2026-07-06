@@ -3539,14 +3539,21 @@ function app() {
       };
     },
 
-    get todayShots() {
-      const todayStr = localDateStr();
+    get recentShots() {
       return this.shots
-        .filter(s => {
-          const shotDate = s.shotDate || s.createdAt.split('T')[0];
-          return shotDate === todayStr;
-        })
-        .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+        .map((shot, index) => ({
+          shot,
+          index,
+          pullDateMs: getShotStatsDate(shot)?.getTime() || 0,
+          createdAtMs: Date.parse(shot.createdAt) || 0
+        }))
+        .sort((a, b) =>
+          (b.pullDateMs - a.pullDateMs) ||
+          (b.createdAtMs - a.createdAtMs) ||
+          (b.index - a.index)
+        )
+        .slice(0, 3)
+        .map(({ shot }) => shot);
     },
     get selectedBean() { return this.getBeanById(this.selectedBeanId); },
 

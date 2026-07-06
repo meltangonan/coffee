@@ -343,13 +343,71 @@ async function runTests() {
     assertEqual(app.getLastShot(bean.id).id, secondShot.id);
   });
 
-  await test('todayShots filters to only today', async () => {
-    const todayShots = app.todayShots;
-    const today = new Date();
-    todayShots.forEach(s => {
-      const shotDate = new Date(s.createdAt);
-      assertEqual(shotDate.toDateString(), today.toDateString());
-    });
+  await test('recentShots returns the latest three by pull date with legacy fallback', async () => {
+    const originalShots = app.shots;
+    app.shots = [
+      { id: 'recent-oldest', beanId: 'e2e-active-bean', shotDate: '2026-04-01', createdAt: '2026-07-04T12:00:00.000Z' },
+      { id: 'recent-legacy', beanId: 'e2e-archived-bean', createdAt: '2026-05-01T08:00:00.000Z' },
+      { id: 'recent-middle', beanId: 'e2e-active-bean', shotDate: '2026-06-01', createdAt: '2026-06-01T08:00:00.000Z' },
+      { id: 'recent-newest', beanId: 'e2e-archived-bean', shotDate: '2026-07-01', createdAt: '2026-07-01T08:00:00.000Z' }
+    ];
+
+    try {
+      assertEqual(app.recentShots.length, 3);
+      assertEqual(app.recentShots.map(shot => shot.id).join(','), 'recent-newest,recent-middle,recent-legacy');
+      app.shots = [];
+      assertEqual(app.recentShots.length, 0, 'Empty shot state should return an empty recent list');
+    } finally {
+      app.shots = originalShots;
+    }
+  });
+
+  await test('recentShots uses recorded time and insertion order for pull-date ties', async () => {
+    const originalShots = app.shots;
+    const tiedCreatedAt = '2026-06-01T08:00:00.000Z';
+    app.shots = [
+      { id: 'tie-first', beanId: 'e2e-active-bean', shotDate: '2026-06-01', createdAt: tiedCreatedAt },
+      { id: 'tie-second', beanId: 'e2e-archived-bean', shotDate: '2026-06-01', createdAt: tiedCreatedAt },
+      { id: 'tie-later-recorded', beanId: 'e2e-active-bean', shotDate: '2026-06-01', createdAt: '2026-06-01T09:00:00.000Z' }
+    ];
+
+    try {
+      assertEqual(app.recentShots.map(shot => shot.id).join(','), 'tie-later-recorded,tie-second,tie-first');
+    } finally {
+      app.shots = originalShots;
+    }
+  });
+
+  await test('recentShots and homepage stats react to backdating and deletion', async () => {
+    const originalShots = app.shots;
+    const day = offset => {
+      const date = new Date();
+      date.setDate(date.getDate() + offset);
+      return localDateStr(date);
+    };
+    app.shots = [
+      { id: 'reactive-today', beanId: 'e2e-active-bean', shotDate: day(0), createdAt: new Date().toISOString() },
+      { id: 'reactive-two-days', beanId: 'e2e-archived-bean', shotDate: day(-2), createdAt: new Date(Date.now() - 2000).toISOString() },
+      { id: 'reactive-four-days', beanId: 'e2e-active-bean', shotDate: day(-4), createdAt: new Date(Date.now() - 4000).toISOString() },
+      { id: 'reactive-oldest', beanId: 'e2e-active-bean', shotDate: day(-6), createdAt: new Date(Date.now() - 6000).toISOString() }
+    ];
+
+    try {
+      assertEqual(app.statsTotalShots, 4);
+      assertEqual(app.statsBrewDayRuns.current, 1);
+      assertEqual(app.recentShots[0].id, 'reactive-today');
+
+      app.shots[0].shotDate = day(-3);
+      assertEqual(app.statsBrewDayRuns.current, 0, 'Backdating the current shot should expire the run');
+      assertEqual(app.recentShots[0].id, 'reactive-two-days', 'Backdating should reorder the recent list');
+
+      app.shots = app.shots.filter(shot => shot.id !== 'reactive-two-days');
+      assertEqual(app.statsTotalShots, 3);
+      assert(!app.recentShots.some(shot => shot.id === 'reactive-two-days'), 'Deleted shot should leave the recent list');
+      assert(app.recentShots.some(shot => shot.id === 'reactive-oldest'), 'Next eligible shot should be promoted');
+    } finally {
+      app.shots = originalShots;
+    }
   });
 
   await test('Stats shot counts render from seeded shots', async () => {
