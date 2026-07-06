@@ -489,6 +489,68 @@ async function runTests() {
     }
   });
 
+  await test('Home dashboard renders stats, dated recent shots, and empty states', async () => {
+    const originalShots = app.shots;
+    const originalTab = app.currentTab;
+    const originalSelectedBeanId = app.dailySelectedBeanId;
+    const day = offset => {
+      const date = new Date();
+      date.setDate(date.getDate() + offset);
+      return localDateStr(date);
+    };
+    const makeShot = (id, beanId, offset) => ({
+      id,
+      beanId,
+      grindSize: 5,
+      doseIn: 18,
+      yieldOut: 36,
+      extractionTime: 27,
+      rating: 'great',
+      notes: id,
+      shotDate: day(offset),
+      createdAt: new Date(Date.now() + offset * 86400000).toISOString()
+    });
+
+    app.shots = [
+      makeShot('home-today', 'e2e-active-bean', 0),
+      makeShot('home-yesterday', 'e2e-archived-bean', -1),
+      makeShot('home-two-days', 'e2e-active-bean', -2),
+      makeShot('home-three-days', 'e2e-archived-bean', -3)
+    ];
+    app.currentTab = 'today';
+    app.dailySelectedBeanId = '';
+
+    try {
+      await wait(50);
+      const doc = appWindow.document;
+      assertEqual(doc.querySelector('[data-testid="home-heading"]').textContent.trim(), 'Home');
+      assertEqual(doc.querySelector('[data-testid="home-total-shots"]').textContent.trim(), '4');
+      assertEqual(doc.querySelector('[data-testid="home-current-streak"]').textContent.trim(), '4 days');
+      assertEqual(doc.querySelectorAll('[data-testid="home-recent-shot"]').length, 3);
+      assert(doc.querySelector('[data-testid="home-recent-shot-home-today"]').textContent.includes(app.formatDate(day(0))));
+      assert(doc.querySelector('[data-testid="home-recent-shot-home-yesterday"]').textContent.includes(app.formatDate(day(-1))));
+      assert(!doc.body.textContent.includes("Today's Shots"), 'Today-only heading should be removed');
+
+      app.shots = [makeShot('home-one-day', 'e2e-active-bean', 0)];
+      await wait(20);
+      assertEqual(doc.querySelector('[data-testid="home-current-streak"]').textContent.trim(), '1 day');
+
+      app.shots = [makeShot('home-expired', 'e2e-active-bean', -2)];
+      await wait(20);
+      assertEqual(doc.querySelector('[data-testid="home-current-streak"]').textContent.trim(), '0 days');
+
+      app.shots = [];
+      app.dailySelectedBeanId = 'e2e-active-bean';
+      app.onDailyBeanSelect();
+      await wait(20);
+      assert(appWindow.getComputedStyle(doc.querySelector('[data-testid="home-empty-state"]')).display !== 'none', 'Empty state should remain visible after bean selection');
+    } finally {
+      app.shots = originalShots;
+      app.currentTab = originalTab;
+      app.dailySelectedBeanId = originalSelectedBeanId;
+    }
+  });
+
   await test('Stats monthly recap renders the last completed month with deltas', async () => {
     const originalShots = app.shots;
     const monthDay = (monthOffset, day) => {

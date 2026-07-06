@@ -493,6 +493,9 @@ textarea.form-input { min-height: 80px; resize: vertical; line-height: 1.5; }
 .date-header { margin-bottom: 24px; }
 .date-header .day-name { font-family: var(--font-heading); font-size: 32px; font-weight: 700; color: var(--espresso); line-height: 1.1; }
 .date-header .date-sub { font-size: 15px; color: var(--text-secondary); margin-top: 4px; }
+.home-heading { padding-right: 88px; margin-bottom: 8px; }
+.home-stats-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; margin-bottom: 24px; }
+.home-stats-grid .stats-count-value { font-size: 24px; }
 
 .bean-card { position: relative; background: white; border-radius: var(--radius); padding: 16px; box-shadow: var(--shadow); border: 1px solid rgba(44,24,16,0.04); margin-bottom: 12px; cursor: pointer; transition: all 0.2s ease; -webkit-tap-highlight-color: transparent; }
 .bean-card:hover { box-shadow: var(--shadow-lg); transform: translateY(-1px); }
@@ -571,7 +574,8 @@ textarea.form-input { min-height: 80px; resize: vertical; line-height: 1.5; }
 .today-shot-item { position: relative; display: block; padding: 16px; background: white; border-radius: var(--radius); margin-bottom: 8px; box-shadow: var(--shadow-sm); }
 .today-shot-content { min-width: 0; cursor: pointer; }
 .today-shot-bean { font-weight: 600; font-size: 14px; color: var(--espresso); }
-.today-shot-bean, .today-shot-details { padding-right: 76px; }
+.today-shot-bean, .today-shot-date, .today-shot-details { padding-right: 76px; }
+.today-shot-date { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
 .today-shot-details { font-size: 13px; color: var(--text-secondary); margin-top: 2px; }
 .today-shot-meta { position: absolute; right: 6px; bottom: 10px; display: flex; align-items: center; justify-content: center; gap: 0; margin: 0; }
 .today-shot-delete-confirm { padding: 4px 10px; font-size: 12px; color: white; background: var(--freshness-past); border-radius: var(--radius-sm); font-weight: 500; }
@@ -689,7 +693,7 @@ textarea.form-input { min-height: 80px; resize: vertical; line-height: 1.5; }
     <div class="tab-stage">
 
     <!-- ═══════════════════════════════════════
-         TODAY TAB — Daily Log
+         HOME TAB — Daily Log
          ═══════════════════════════════════════ -->
     <div x-cloak class="tab-pane" :style="tabPaneStyle('today')">
 
@@ -744,9 +748,25 @@ textarea.form-input { min-height: 80px; resize: vertical; line-height: 1.5; }
       <!-- Normal Today Tab Content — shown when beans exist -->
       <template x-if="currentBeans.length > 0">
         <div>
+          <h1 class="heading-xl home-heading" data-testid="home-heading">Home</h1>
           <div class="date-header">
             <div class="day-name" x-text="todayFormatted.day"></div>
             <div class="date-sub" x-text="todayFormatted.date"></div>
+          </div>
+
+          <div class="home-stats-grid" data-testid="home-stats">
+            <div class="stats-count-item">
+              <span class="stats-count-label">All-time shots</span>
+              <span class="stats-count-value" data-testid="home-total-shots" x-text="statsTotalShots"></span>
+            </div>
+            <div class="stats-count-item">
+              <span class="stats-count-label">Current streak</span>
+              <span
+                class="stats-count-value"
+                data-testid="home-current-streak"
+                x-text="statsBrewDayRuns.current + ' ' + (statsBrewDayRuns.current === 1 ? 'day' : 'days')"
+              ></span>
+            </div>
           </div>
 
           <!-- Bean Selector — only current (non-archived) beans -->
@@ -822,21 +842,22 @@ textarea.form-input { min-height: 80px; resize: vertical; line-height: 1.5; }
             </div>
           </template>
 
-          <!-- Today's Shots Summary -->
-          <div x-show="todayShots.length > 0" class="mt-24">
-            <h3 class="heading-md mb-12">Today's Shots</h3>
-            <template x-for="shot in todayShots" :key="shot.id">
-              <div class="today-shot-swipe fade-in" x-data="{ swipeStart: 0, swipeX: 0, reveal: false, confirmDelete: false }"
+          <!-- Recent Shots Summary -->
+          <div x-show="recentShots.length > 0" class="mt-24" data-testid="home-recent-shots">
+            <h3 class="heading-md mb-12">Recent Shots</h3>
+            <template x-for="shot in recentShots" :key="shot.id">
+              <div class="today-shot-swipe fade-in" data-testid="home-recent-shot" x-data="{ swipeStart: 0, swipeX: 0, reveal: false, confirmDelete: false }"
                    @touchstart="swipeStart = $event.touches[0].clientX; swipeX = 0"
                    @touchmove="swipeX = Math.min(0, $event.touches[0].clientX - swipeStart)"
                    @touchend="reveal = swipeX < -36; swipeX = reveal ? -72 : 0"
                    :class="{ 'reveal': reveal }">
                 <div class="today-shot-swipe-actions" @click="deleteShot(shot.id)" role="button" tabindex="0" @keydown.enter="deleteShot(shot.id)">Delete</div>
                 <div class="today-shot-swipe-content" :style="'transform: translateX(' + (reveal ? -72 : swipeX) + 'px)'">
-                  <div class="today-shot-item" style="margin-bottom:0;">
+                  <div class="today-shot-item" style="margin-bottom:0;" :data-testid="'home-recent-shot-' + shot.id">
                     <span x-show="shotQualityLabel(shot.rating)" class="shot-quality-badge corner" :class="shotQualityClass(shot.rating)" x-text="shotQualityLabel(shot.rating)"></span>
                     <div class="today-shot-content" @click="openShotFormForEdit(shot)">
                       <div class="today-shot-bean" x-text="getBeanById(shot.beanId)?.name || 'Unknown'"></div>
+                      <div class="today-shot-date" x-text="formatDate(shot.shotDate || shot.createdAt)"></div>
                       <div class="today-shot-details">
                         <span x-show="shot.grindSize" x-text="'Grind ' + shot.grindSize"></span>
                         <span x-show="shot.doseIn"><span x-show="shot.grindSize"> &middot; </span><span x-text="shot.doseIn + 'g'"></span></span>
@@ -886,11 +907,11 @@ textarea.form-input { min-height: 80px; resize: vertical; line-height: 1.5; }
             </template>
           </div>
 
-          <!-- Empty State — has beans but no shots today -->
-          <div x-show="todayShots.length === 0 && !dailySelectedBeanId" class="empty-state">
+          <!-- Empty State — has beans but no shots -->
+          <div x-show="recentShots.length === 0" class="empty-state" data-testid="home-empty-state">
             <div class="empty-state-icon">&#9749;</div>
-            <div class="empty-state-title">No shots logged today</div>
-            <div class="empty-state-text">Select a bean above to start your morning ritual.</div>
+            <div class="empty-state-title">No shots logged yet</div>
+            <div class="empty-state-text">Select a bean above to start your next pull.</div>
           </div>
         </div>
       </template>
@@ -1944,8 +1965,14 @@ textarea.form-input { min-height: 80px; resize: vertical; line-height: 1.5; }
        ═══════════════════════════════════════ -->
   <nav class="tab-bar">
     <button class="tab-btn" :class="{ 'active': currentTab === 'today' }" @click="activateTab('today')">
-      <span class="tab-icon">&#9749;</span>
-      <span>Today</span>
+      <span class="tab-icon" aria-hidden="true">
+        <svg data-testid="home-tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M3 10.5 12 3l9 7.5"></path>
+          <path d="M5.5 9.5V21h13V9.5"></path>
+          <path d="M9.5 21v-6h5v6"></path>
+        </svg>
+      </span>
+      <span>Home</span>
     </button>
     <button class="tab-btn" :class="{ 'active': currentTab === 'beans' }" @click="activateTab('beans')">
       <span class="tab-icon" aria-hidden="true">

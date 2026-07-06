@@ -16,15 +16,15 @@ async function seedCoffeeData(page, { shots = [] } = {}) {
     }]));
     localStorage.setItem('coffee_shots', JSON.stringify(seed.shots.map(shot => ({
       id: shot.id,
-      beanId: 'bean-1',
+      beanId: shot.beanId || 'bean-1',
       grindSize: 5,
       doseIn: 18,
       yieldOut: 36,
       extractionTime: 27,
       rating: 'great',
       notes: shot.notes || '',
-      shotDate: todayStr,
-      createdAt: new Date().toISOString()
+      shotDate: shot.shotDate || todayStr,
+      createdAt: shot.createdAt || new Date().toISOString()
     }))));
     localStorage.setItem('coffee_portafilters', '[]');
   }, { shots });
@@ -74,7 +74,9 @@ test('app shell loads without runtime errors', async ({ page }) => {
   await expect(page).toHaveTitle('Coffee Journal');
   await expect(page.locator('.app-shell')).toBeVisible();
   const tabBar = page.locator('.tab-bar');
-  await expect(tabBar.getByRole('button', { name: /Today/ })).toBeVisible();
+  await expect(tabBar.getByRole('button', { name: 'Home' })).toBeVisible();
+  await expect(tabBar.getByRole('button', { name: 'Home' }).locator('[data-testid="home-tab-icon"]')).toBeVisible();
+  await expect(tabBar.getByRole('button', { name: /Today/ })).toHaveCount(0);
   await expect(tabBar.getByRole('button', { name: /Beans/ })).toBeVisible();
   await expect(tabBar.getByRole('button', { name: /Coffee/ })).toHaveCount(0);
   await expect(tabBar.getByRole('button', { name: /Beans/ }).locator('[data-testid="beans-tab-icon"]')).toBeVisible();
@@ -83,6 +85,47 @@ test('app shell loads without runtime errors', async ({ page }) => {
   await tabBar.getByRole('button', { name: /Stats/ }).click();
   await expect(page.getByText('No stats yet')).toBeVisible();
   expect(pageErrors).toEqual([]);
+});
+
+test('Home shows top stats and the three most recent shots with pull dates', async ({ page }) => {
+  await page.setViewportSize({ width: 375, height: 812 });
+  await page.goto('/');
+  const day = offset => {
+    const date = new Date();
+    date.setDate(date.getDate() + offset);
+    return date.getFullYear() + '-' + String(date.getMonth() + 1).padStart(2, '0') + '-' + String(date.getDate()).padStart(2, '0');
+  };
+  const shots = [0, -1, -2, -3].map(offset => ({
+    id: `home-shot-${Math.abs(offset)}`,
+    notes: `Shot ${offset}`,
+    shotDate: day(offset),
+    createdAt: new Date(Date.now() + offset * 86400000).toISOString()
+  }));
+  await seedCoffeeData(page, { shots });
+  await page.reload();
+
+  await expect(page.getByTestId('home-heading')).toHaveText('Home');
+  await expect(page.getByTestId('home-total-shots')).toHaveText('4');
+  await expect(page.getByTestId('home-current-streak')).toHaveText('4 days');
+  await expect(page.getByTestId('home-recent-shot')).toHaveCount(3);
+  await expect(page.getByTestId('home-recent-shot-home-shot-0')).toContainText(
+    new Date(day(0) + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+  );
+  await expect(page.getByTestId('home-recent-shot-home-shot-3')).toHaveCount(0);
+
+  const statItems = page.getByTestId('home-stats').locator('.stats-count-item');
+  await expect(statItems).toHaveCount(2);
+  const statBoxes = await statItems.evaluateAll(items => items.map(item => {
+    const rect = item.getBoundingClientRect();
+    return { left: rect.left, right: rect.right, top: rect.top };
+  }));
+  expect(Math.round(statBoxes[0].top)).toBe(Math.round(statBoxes[1].top));
+  expect(statBoxes[1].left).toBeGreaterThan(statBoxes[0].right);
+  expect(statBoxes[1].right).toBeLessThanOrEqual(375);
+
+  await page.getByTestId('home-recent-shot-home-shot-0').click();
+  await expect(page.getByRole('heading', { name: 'Edit Shot' })).toBeVisible();
+  await page.locator('.panel .back-btn').click();
 });
 
 test('Beans separates current and archive collections with stable return behavior', async ({ page }) => {
