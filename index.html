@@ -281,12 +281,6 @@ textarea.form-input { min-height: 80px; resize: vertical; line-height: 1.5; }
 .shot-visualizer-fill.good { background: var(--freshness-optimal); }
 .shot-visualizer-fill.warning { background: var(--freshness-past); }
 .shot-visualizer-point { position: absolute; top: 50%; left: 0; width: 3px; height: 10px; border-radius: 999px; background: var(--espresso); box-shadow: 0 1px 2px rgba(44,24,16,0.18); transform: translate(-50%, -50%); transition: left 0.2s ease; }
-.shot-visualizer.compact { padding: 0; margin-top: 8px; }
-.shot-visualizer.compact .shot-visualizer-row { grid-template-columns: 38px 1fr 44px; gap: 6px; }
-.shot-visualizer.compact .shot-visualizer-label { font-size: 10px; letter-spacing: 0.4px; }
-.shot-visualizer.compact .shot-visualizer-value { font-size: 11px; }
-.shot-visualizer.compact .shot-visualizer-track { height: 6px; }
-.shot-visualizer.compact .shot-visualizer-point { height: 9px; }
 
 .daily-guidance-card { background: white; border: 1px solid rgba(44,24,16,0.08); border-radius: var(--radius); padding: 16px; margin-bottom: 20px; box-shadow: var(--shadow-sm); }
 .daily-guidance-header { display: flex; flex-direction: column; gap: 10px; }
@@ -868,38 +862,10 @@ textarea.form-input { min-height: 80px; resize: vertical; line-height: 1.5; }
                         <span x-show="shot.grindSize" x-text="'Grind ' + shot.grindSize"></span>
                         <span x-show="shot.doseIn"><span x-show="shot.grindSize"> &middot; </span><span x-text="shot.doseIn + 'g'"></span></span>
                         <span x-show="shot.yieldOut"> &#8594; <span x-text="shot.yieldOut + 'g'"></span></span>
+                        <span x-show="getShotMetrics(shot)?.ratioLabel" x-text="' (' + (getShotMetrics(shot)?.ratioLabel || '') + ')'"></span>
                         <span x-show="shot.extractionTime"><span x-show="shot.grindSize || shot.doseIn || shot.yieldOut"> &middot; </span><span x-text="shot.extractionTime + 's'"></span></span>
                       </div>
                       <div x-show="getPortafilterLabel(shot.portafilterId)" class="shot-portafilter-label" x-text="getPortafilterLabel(shot.portafilterId)"></div>
-                      <div x-show="getShotMetrics(shot)" class="shot-visualizer compact">
-                        <div class="shot-visualizer-row">
-                          <span class="shot-visualizer-label">Ratio</span>
-                          <div class="shot-visualizer-track">
-                            <span class="shot-visualizer-target ratio"></span>
-                            <span class="shot-visualizer-fill" :class="getShotMetrics(shot)?.assessmentStatus" :style="'width: ' + (getShotMetrics(shot)?.ratioPct || 0) + '%'"></span>
-                            <span class="shot-visualizer-point" :style="'left: ' + (getShotMetrics(shot)?.ratioPct || 0) + '%'"></span>
-                          </div>
-                          <span class="shot-visualizer-value" x-text="getShotMetrics(shot)?.ratioLabel"></span>
-                        </div>
-                        <div class="shot-visualizer-row">
-                          <span class="shot-visualizer-label">Time</span>
-                          <div class="shot-visualizer-track">
-                            <span class="shot-visualizer-target time"></span>
-                            <span class="shot-visualizer-fill" :class="getShotMetrics(shot)?.assessmentStatus" :style="'width: ' + (getShotMetrics(shot)?.timePct || 0) + '%'"></span>
-                            <span class="shot-visualizer-point" :style="'left: ' + (getShotMetrics(shot)?.timePct || 0) + '%'"></span>
-                          </div>
-                          <span class="shot-visualizer-value" x-text="getShotMetrics(shot)?.timeLabel"></span>
-                        </div>
-                        <div class="shot-visualizer-row">
-                          <span class="shot-visualizer-label">Flow</span>
-                          <div class="shot-visualizer-track">
-                            <span class="shot-visualizer-target flow"></span>
-                            <span class="shot-visualizer-fill" :class="getShotMetrics(shot)?.assessmentStatus" :style="'width: ' + (getShotMetrics(shot)?.flowPct || 0) + '%'"></span>
-                            <span class="shot-visualizer-point" :style="'left: ' + (getShotMetrics(shot)?.flowPct || 0) + '%'"></span>
-                          </div>
-                          <span class="shot-visualizer-value" x-text="getShotMetrics(shot)?.flowLabel"></span>
-                        </div>
-                      </div>
                       <div x-show="shot.notes" class="text-muted" style="margin-top:2px; font-style:italic; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" x-text="shot.notes"></div>
                       <div x-show="getShotAssessmentChips(shot).length" class="shot-assessment-chips">
                         <template x-for="chip in getShotAssessmentChips(shot)" :key="chip.label">
@@ -1074,39 +1040,11 @@ textarea.form-input { min-height: 80px; resize: vertical; line-height: 1.5; }
                       <span x-show="shot.grindSize">Grind <span x-text="shot.grindSize"></span></span>
                       <span x-show="shot.doseIn"><span x-show="shot.grindSize"> &middot; </span><span x-text="shot.doseIn + 'g'"></span></span>
                       <span x-show="shot.yieldOut"> &#8594; <span x-text="shot.yieldOut + 'g'"></span></span>
+                      <span x-show="getShotMetrics(shot)?.ratioLabel" x-text="' (' + (getShotMetrics(shot)?.ratioLabel || '') + ')'"></span>
                       <span x-show="shot.extractionTime"><span x-show="shot.grindSize || shot.doseIn || shot.yieldOut"> &middot; </span><span x-text="shot.extractionTime + 's'"></span></span>
                     </div>
                     <div class="shot-date" x-text="formatDate(shot.shotDate || shot.createdAt)"></div>
                     <div x-show="getPortafilterLabel(shot.portafilterId)" class="shot-portafilter-label" x-text="getPortafilterLabel(shot.portafilterId)"></div>
-                    <div x-show="getShotMetrics(shot)" class="shot-visualizer compact">
-                      <div class="shot-visualizer-row">
-                        <span class="shot-visualizer-label">Ratio</span>
-                        <div class="shot-visualizer-track">
-                          <span class="shot-visualizer-target ratio"></span>
-                          <span class="shot-visualizer-fill" :class="getShotMetrics(shot)?.assessmentStatus" :style="'width: ' + (getShotMetrics(shot)?.ratioPct || 0) + '%'"></span>
-                          <span class="shot-visualizer-point" :style="'left: ' + (getShotMetrics(shot)?.ratioPct || 0) + '%'"></span>
-                        </div>
-                        <span class="shot-visualizer-value" x-text="getShotMetrics(shot)?.ratioLabel"></span>
-                      </div>
-                      <div class="shot-visualizer-row">
-                        <span class="shot-visualizer-label">Time</span>
-                        <div class="shot-visualizer-track">
-                          <span class="shot-visualizer-target time"></span>
-                          <span class="shot-visualizer-fill" :class="getShotMetrics(shot)?.assessmentStatus" :style="'width: ' + (getShotMetrics(shot)?.timePct || 0) + '%'"></span>
-                          <span class="shot-visualizer-point" :style="'left: ' + (getShotMetrics(shot)?.timePct || 0) + '%'"></span>
-                        </div>
-                        <span class="shot-visualizer-value" x-text="getShotMetrics(shot)?.timeLabel"></span>
-                      </div>
-                      <div class="shot-visualizer-row">
-                        <span class="shot-visualizer-label">Flow</span>
-                        <div class="shot-visualizer-track">
-                          <span class="shot-visualizer-target flow"></span>
-                          <span class="shot-visualizer-fill" :class="getShotMetrics(shot)?.assessmentStatus" :style="'width: ' + (getShotMetrics(shot)?.flowPct || 0) + '%'"></span>
-                          <span class="shot-visualizer-point" :style="'left: ' + (getShotMetrics(shot)?.flowPct || 0) + '%'"></span>
-                        </div>
-                        <span class="shot-visualizer-value" x-text="getShotMetrics(shot)?.flowLabel"></span>
-                      </div>
-                    </div>
                     <div x-show="shot.notes" class="text-muted" style="margin-top:2px; font-style:italic; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" x-text="shot.notes"></div>
                     <div x-show="getShotAssessmentChips(shot).length" class="shot-assessment-chips">
                       <template x-for="chip in getShotAssessmentChips(shot)" :key="chip.label">
