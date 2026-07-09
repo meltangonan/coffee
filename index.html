@@ -246,8 +246,8 @@ textarea.form-input { min-height: 80px; resize: vertical; line-height: 1.5; }
 .bean-detail-stars { padding: 12px 14px; background: var(--cream-dark); border-radius: var(--radius-sm); border: 1px solid rgba(44,24,16,0.06); }
 
 /* Shot quality: Bad / Okay / Great / Perfect */
-.shot-quality-options { display: flex; gap: 8px; flex-wrap: wrap; }
-.shot-quality-btn { padding: 10px 18px; border-radius: var(--radius); border: 1.5px solid rgba(44,24,16,0.15); background: white; font-family: var(--font-body); font-size: 14px; font-weight: 500; color: var(--text-secondary); cursor: pointer; transition: all 0.2s ease; -webkit-tap-highlight-color: transparent; }
+.shot-quality-options { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
+.shot-quality-btn { padding: 10px 4px; text-align: center; border-radius: var(--radius); border: 1.5px solid rgba(44,24,16,0.15); background: white; font-family: var(--font-body); font-size: 14px; font-weight: 500; color: var(--text-secondary); cursor: pointer; transition: all 0.2s ease; -webkit-tap-highlight-color: transparent; }
 .shot-quality-btn:hover { border-color: var(--amber); color: var(--text-primary); }
 .shot-quality-btn.active { border-color: var(--amber); background: rgba(212,165,116,0.15); color: var(--amber-dark); }
 .shot-quality-btn.bad.active { border-color: var(--freshness-past); background: var(--freshness-past-bg); color: var(--freshness-past); }
@@ -294,11 +294,9 @@ textarea.form-input { min-height: 80px; resize: vertical; line-height: 1.5; }
 .daily-guidance-actions.has-history { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 .daily-guidance-action { width: 100%; min-height: 38px; padding: 8px 14px; font-size: 14px; }
 
-/* Shot rating row: inline rating buttons + date picker */
-.shot-rating-row { display: flex; align-items: flex-start; gap: 12px; flex-wrap: wrap; }
-.shot-rating-row .shot-quality-options { flex: 1; min-width: 200px; }
-.shot-rating-row .shot-date-picker { flex: 0 0 auto; min-width: 140px; }
-.shot-date-picker .date-input-wrapper .form-input { font-size: 13px; padding: 8px 36px 8px 10px; }
+/* Shot rating section: quality buttons in one row, labeled date field beneath */
+.shot-rating-row { display: flex; flex-direction: column; align-items: stretch; gap: 14px; }
+.shot-date-picker .date-input-wrapper .form-input { font-size: 14px; padding: 10px 36px 10px 12px; min-height: 42px; }
 /* Date pickers in modals/forms: use fixed positioning centered on screen */
 .shot-date-picker .custom-datepicker,
 .panel .date-picker-group .custom-datepicker,
@@ -449,18 +447,11 @@ textarea.form-input { min-height: 80px; resize: vertical; line-height: 1.5; }
 .archive-picker-view-all { width: 100%; padding: 10px; background: none; border: 1.5px dashed rgba(44,24,16,0.15); border-radius: var(--radius-sm); font-family: var(--font-body); font-size: 13px; font-weight: 500; color: var(--text-secondary); cursor: pointer; transition: all 0.15s ease; -webkit-tap-highlight-color: transparent; }
 .archive-picker-view-all:hover { border-color: var(--amber); color: var(--amber-dark); background: rgba(212,165,116,0.08); }
 
-/* Duplicate bean button — subtle, icon-style */
-.btn-duplicate {
-  width: 36px; height: 36px; padding: 0;
-  display: flex; align-items: center; justify-content: center;
-  background: transparent; border: 1.5px solid rgba(44,24,16,0.12);
-  border-radius: var(--radius-sm); color: var(--text-muted);
-  cursor: pointer; transition: all 0.2s ease;
-  -webkit-tap-highlight-color: transparent;
-}
-.btn-duplicate:hover { border-color: var(--amber); color: var(--amber-dark); background: rgba(212,165,116,0.08); }
-.btn-duplicate:active { transform: scale(0.95); }
-.btn-duplicate svg { width: 16px; height: 16px; }
+/* Quiet circular icon buttons (bean detail header, backup) */
+.icon-btn { width: 38px; height: 38px; min-width: 38px; padding: 0; display: flex; align-items: center; justify-content: center; background: transparent; border: none; border-radius: 50%; color: var(--text-muted); cursor: pointer; transition: background 0.15s ease, color 0.15s ease; -webkit-tap-highlight-color: transparent; }
+.icon-btn:hover { background: rgba(44,24,16,0.06); color: var(--text-secondary); }
+.icon-btn:active { transform: scale(0.95); }
+.icon-btn svg { width: 18px; height: 18px; }
 
 /* Fill from previous — CTA in Add Bean form */
 .fill-from-previous { position: relative; }
@@ -994,13 +985,17 @@ textarea.form-input { min-height: 80px; resize: vertical; line-height: 1.5; }
             <div class="text-secondary" x-text="selectedBean?.roaster"></div>
             <span x-show="selectedBean?.isArchived" class="badge badge-archived" style="margin-top: 4px;">Archived</span>
           </div>
-          <button class="btn-duplicate" @click="duplicateBean(selectedBeanId)" title="Duplicate bean">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <button class="icon-btn" @click="duplicateBean(selectedBeanId)" title="Duplicate bean" aria-label="Duplicate bean">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
               <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
               <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
             </svg>
           </button>
-          <button x-show="!selectedBean?.isArchived" class="btn btn-ghost" style="padding: 8px 12px; font-size: 14px;" @click="openBeanForm(selectedBeanId)">Edit</button>
+          <button x-show="!selectedBean?.isArchived" class="icon-btn" title="Edit bean" aria-label="Edit bean" @click="openBeanForm(selectedBeanId)">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"></path>
+            </svg>
+          </button>
         </div>
 
         <!-- Days remaining (roast date is edited only in Edit Bean screen) -->
@@ -1489,78 +1484,6 @@ textarea.form-input { min-height: 80px; resize: vertical; line-height: 1.5; }
         <button class="back-btn" @click="closeShotForm()">&#8592;</button>
         <h3 class="heading-lg" x-text="editingShotId ? 'Edit Shot' : 'Log Shot'"></h3>
       </div>
-      <div class="form-group" data-testid="portafilter-field" x-data="{ pickerOpen: false }" @click.outside="pickerOpen = false" @keydown.escape.window="pickerOpen = false">
-        <div class="form-label-row">
-          <label class="form-label" for="shot-portafilter">Portafilter</label>
-          <button type="button" class="form-label-action" data-testid="portafilter-manage" @click="pickerOpen = false; showPortafilterManager ? closePortafilterManager() : openPortafilterManager()" x-text="showPortafilterManager ? 'Done' : 'Manage'"></button>
-        </div>
-        <div class="portafilter-picker">
-          <input type="hidden" data-testid="portafilter-select" x-model="shotForm.portafilterId">
-          <button id="shot-portafilter" type="button" class="bean-picker-trigger portafilter-picker-trigger" data-testid="portafilter-trigger" :class="{ open: pickerOpen }" @click="pickerOpen = !pickerOpen" @keydown.enter.prevent="pickerOpen = !pickerOpen" @keydown.space.prevent="pickerOpen = !pickerOpen" role="combobox" aria-haspopup="listbox" :aria-expanded="pickerOpen">
-            <template x-if="!shotForm.portafilterId || !getPortafilterById(shotForm.portafilterId)">
-              <span class="picker-selected">
-                <span class="picker-selected-name">None</span>
-              </span>
-            </template>
-            <template x-if="shotForm.portafilterId && getPortafilterById(shotForm.portafilterId)">
-              <span class="picker-selected">
-                <span class="picker-selected-name" x-text="getPortafilterLabel(shotForm.portafilterId)"></span>
-              </span>
-            </template>
-            <svg class="bean-picker-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>
-          </button>
-          <div class="bean-picker-dropdown portafilter-picker-dropdown" :class="{ show: pickerOpen }" role="listbox">
-            <div class="bean-picker-option" :class="{ selected: !shotForm.portafilterId }" @click="shotForm.portafilterId = ''; pickerOpen = false" role="option" :aria-selected="!shotForm.portafilterId" tabindex="0" @keydown.enter.prevent="shotForm.portafilterId = ''; pickerOpen = false">
-              <span class="bean-picker-info">
-                <span class="bean-picker-name">None</span>
-              </span>
-            </div>
-            <template x-for="portafilter in portafilters" :key="portafilter.id">
-              <div class="bean-picker-option" :class="{ selected: shotForm.portafilterId === portafilter.id }" @click="shotForm.portafilterId = portafilter.id; pickerOpen = false" role="option" :aria-selected="shotForm.portafilterId === portafilter.id" tabindex="0" @keydown.enter.prevent="shotForm.portafilterId = portafilter.id; pickerOpen = false">
-                <span class="bean-picker-info">
-                  <span class="bean-picker-name" x-text="portafilter.name"></span>
-                </span>
-              </div>
-            </template>
-            <div class="bean-picker-option add-new" @click="pickerOpen = false; openPortafilterManager(); startAddingPortafilter()" role="option" aria-selected="false" tabindex="0" @keydown.enter.prevent="pickerOpen = false; openPortafilterManager(); startAddingPortafilter()">
-              <span class="bean-picker-add-icon">+</span>
-              <span class="bean-picker-info">
-                <span class="bean-picker-name">Add a new portafilter</span>
-              </span>
-            </div>
-          </div>
-        </div>
-        <div x-show="showPortafilterManager" class="portafilter-manager" data-testid="portafilter-manager">
-          <div class="portafilter-manager-header">
-            <span class="portafilter-manager-title">Manage Portafilters</span>
-            <button x-show="editingPortafilterId === null" type="button" class="btn btn-secondary-solid portafilter-add-btn" data-testid="portafilter-add" @click="startAddingPortafilter()">+ Add</button>
-          </div>
-          <template x-if="editingPortafilterId === null">
-            <div>
-              <div x-show="portafilters.length === 0" class="portafilter-manager-empty">No portafilters added yet.</div>
-              <div class="portafilter-manager-list">
-                <template x-for="portafilter in portafilters" :key="portafilter.id">
-                  <div class="portafilter-manager-row">
-                    <span class="portafilter-manager-name" x-text="portafilter.name"></span>
-                    <button type="button" class="btn btn-ghost" :aria-label="'Edit ' + portafilter.name" @click="startEditingPortafilter(portafilter.id)">Edit</button>
-                  </div>
-                </template>
-              </div>
-            </div>
-          </template>
-          <template x-if="editingPortafilterId !== null">
-            <div class="portafilter-editor">
-              <label class="form-label" for="portafilter-name" x-text="editingPortafilterId ? 'Rename Portafilter' : 'New Portafilter'"></label>
-              <input id="portafilter-name" type="text" class="form-input" data-testid="portafilter-name" placeholder="Portafilter name" x-model="portafilterNameDraft" @keydown.enter.prevent="saveManagedPortafilter()">
-              <div x-show="portafilterFormError" class="portafilter-form-error" x-text="portafilterFormError"></div>
-              <div class="portafilter-editor-actions">
-                <button type="button" class="btn btn-ghost" @click="cancelPortafilterEdit()">Cancel</button>
-                <button type="button" class="btn btn-primary" data-testid="portafilter-save" @click="saveManagedPortafilter()">Save</button>
-              </div>
-            </div>
-          </template>
-        </div>
-      </div>
       <div class="form-group" x-data="stepper()" x-init="stInit('grindSize', 1, 30, getShotFormDefault('grindSize'))">
         <label class="form-label">Grind Size</label>
         <div class="stepper">
@@ -1639,6 +1562,7 @@ textarea.form-input { min-height: 80px; resize: vertical; line-height: 1.5; }
             <button type="button" class="shot-quality-btn perfect" :class="{ 'active': shotForm.rating === 'perfect' }" @click="shotForm.rating = (shotForm.rating === 'perfect' ? null : 'perfect')">Perfect</button>
           </div>
           <div class="shot-date-picker date-picker-group" x-data="datePicker()" x-init="dpInit('shotForm.shotDate')">
+            <label class="form-label">Shot date</label>
             <div class="date-input-wrapper" x-ref="dateInputWrapper" @click="dpToggle()">
               <input type="text" class="form-input" :value="dpDisplayValue()" placeholder="Date" readonly>
               <span class="date-input-actions">
@@ -1674,6 +1598,78 @@ textarea.form-input { min-height: 80px; resize: vertical; line-height: 1.5; }
               </div>
             </template>
           </div>
+        </div>
+      </div>
+      <div class="form-group" data-testid="portafilter-field" x-data="{ pickerOpen: false }" @click.outside="pickerOpen = false" @keydown.escape.window="pickerOpen = false">
+        <div class="form-label-row">
+          <label class="form-label" for="shot-portafilter">Portafilter</label>
+          <button type="button" class="form-label-action" data-testid="portafilter-manage" @click="pickerOpen = false; showPortafilterManager ? closePortafilterManager() : openPortafilterManager()" x-text="showPortafilterManager ? 'Done' : 'Manage'"></button>
+        </div>
+        <div class="portafilter-picker">
+          <input type="hidden" data-testid="portafilter-select" x-model="shotForm.portafilterId">
+          <button id="shot-portafilter" type="button" class="bean-picker-trigger portafilter-picker-trigger" data-testid="portafilter-trigger" :class="{ open: pickerOpen }" @click="pickerOpen = !pickerOpen" @keydown.enter.prevent="pickerOpen = !pickerOpen" @keydown.space.prevent="pickerOpen = !pickerOpen" role="combobox" aria-haspopup="listbox" :aria-expanded="pickerOpen">
+            <template x-if="!shotForm.portafilterId || !getPortafilterById(shotForm.portafilterId)">
+              <span class="picker-selected">
+                <span class="picker-selected-name">None</span>
+              </span>
+            </template>
+            <template x-if="shotForm.portafilterId && getPortafilterById(shotForm.portafilterId)">
+              <span class="picker-selected">
+                <span class="picker-selected-name" x-text="getPortafilterLabel(shotForm.portafilterId)"></span>
+              </span>
+            </template>
+            <svg class="bean-picker-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>
+          </button>
+          <div class="bean-picker-dropdown portafilter-picker-dropdown" :class="{ show: pickerOpen }" role="listbox">
+            <div class="bean-picker-option" :class="{ selected: !shotForm.portafilterId }" @click="shotForm.portafilterId = ''; pickerOpen = false" role="option" :aria-selected="!shotForm.portafilterId" tabindex="0" @keydown.enter.prevent="shotForm.portafilterId = ''; pickerOpen = false">
+              <span class="bean-picker-info">
+                <span class="bean-picker-name">None</span>
+              </span>
+            </div>
+            <template x-for="portafilter in portafilters" :key="portafilter.id">
+              <div class="bean-picker-option" :class="{ selected: shotForm.portafilterId === portafilter.id }" @click="shotForm.portafilterId = portafilter.id; pickerOpen = false" role="option" :aria-selected="shotForm.portafilterId === portafilter.id" tabindex="0" @keydown.enter.prevent="shotForm.portafilterId = portafilter.id; pickerOpen = false">
+                <span class="bean-picker-info">
+                  <span class="bean-picker-name" x-text="portafilter.name"></span>
+                </span>
+              </div>
+            </template>
+            <div class="bean-picker-option add-new" @click="pickerOpen = false; openPortafilterManager(); startAddingPortafilter()" role="option" aria-selected="false" tabindex="0" @keydown.enter.prevent="pickerOpen = false; openPortafilterManager(); startAddingPortafilter()">
+              <span class="bean-picker-add-icon">+</span>
+              <span class="bean-picker-info">
+                <span class="bean-picker-name">Add a new portafilter</span>
+              </span>
+            </div>
+          </div>
+        </div>
+        <div x-show="showPortafilterManager" class="portafilter-manager" data-testid="portafilter-manager">
+          <div class="portafilter-manager-header">
+            <span class="portafilter-manager-title">Manage Portafilters</span>
+            <button x-show="editingPortafilterId === null" type="button" class="btn btn-secondary-solid portafilter-add-btn" data-testid="portafilter-add" @click="startAddingPortafilter()">+ Add</button>
+          </div>
+          <template x-if="editingPortafilterId === null">
+            <div>
+              <div x-show="portafilters.length === 0" class="portafilter-manager-empty">No portafilters added yet.</div>
+              <div class="portafilter-manager-list">
+                <template x-for="portafilter in portafilters" :key="portafilter.id">
+                  <div class="portafilter-manager-row">
+                    <span class="portafilter-manager-name" x-text="portafilter.name"></span>
+                    <button type="button" class="btn btn-ghost" :aria-label="'Edit ' + portafilter.name" @click="startEditingPortafilter(portafilter.id)">Edit</button>
+                  </div>
+                </template>
+              </div>
+            </div>
+          </template>
+          <template x-if="editingPortafilterId !== null">
+            <div class="portafilter-editor">
+              <label class="form-label" for="portafilter-name" x-text="editingPortafilterId ? 'Rename Portafilter' : 'New Portafilter'"></label>
+              <input id="portafilter-name" type="text" class="form-input" data-testid="portafilter-name" placeholder="Portafilter name" x-model="portafilterNameDraft" @keydown.enter.prevent="saveManagedPortafilter()">
+              <div x-show="portafilterFormError" class="portafilter-form-error" x-text="portafilterFormError"></div>
+              <div class="portafilter-editor-actions">
+                <button type="button" class="btn btn-ghost" @click="cancelPortafilterEdit()">Cancel</button>
+                <button type="button" class="btn btn-primary" data-testid="portafilter-save" @click="saveManagedPortafilter()">Save</button>
+              </div>
+            </div>
+          </template>
         </div>
       </div>
       <div class="form-group">
