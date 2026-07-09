@@ -598,7 +598,7 @@ textarea.form-input { min-height: 80px; resize: vertical; line-height: 1.5; }
 .calendar-cell.empty { color: transparent; }
 .calendar-cell.today span { font-weight: 600; color: white; background: var(--amber-dark); }
 .calendar-range-bands { position: absolute; left: 0; right: 0; top: 0; bottom: 0; z-index: 1; pointer-events: none; }
-.calendar-range-band { position: absolute; top: 0; bottom: 0; z-index: 1; }
+.calendar-range-band { position: absolute; height: 5px; border-radius: 999px; z-index: 1; }
 .calendar-legend { display: flex; flex-wrap: wrap; gap: 14px; margin-top: 18px; padding-top: 16px; border-top: 1px solid var(--cream-dark); }
 .calendar-empty-state { margin-top: 18px; padding-top: 16px !important; border-top: 1px solid var(--cream-dark); }
 .calendar-freshness-stages { max-width: 460px; margin: 20px auto 0; }
@@ -1230,7 +1230,7 @@ textarea.form-input { min-height: 80px; resize: vertical; line-height: 1.5; }
             <div class="calendar-row">
               <div class="calendar-range-bands">
                 <template x-for="(bar, bi) in calendarBarsForWeek(wi)" :key="bar.beanId + '-' + calendarYear + '-' + calendarMonth + '-' + wi">
-                  <div class="calendar-range-band" :style="getRangeBandStyle(bar, wi)"></div>
+                  <div class="calendar-range-band" :style="getRangeBandStyle(bar, wi, bi)"></div>
                 </template>
               </div>
               <template x-for="(day, di) in week" :key="calendarYear + '-' + calendarMonth + '-' + wi + '-' + di">
@@ -4196,8 +4196,8 @@ function app() {
       );
     },
 
-    /** Style for a smooth full-height band spanning the bar's days in this week (no gaps between cells). */
-    getRangeBandStyle(bar, weekIndex) {
+    /** Style for a slim full-color ribbon spanning the bar's days in this week; overlapping beans stack upward. */
+    getRangeBandStyle(bar, weekIndex, barIndex = 0) {
       const week = this.calendarWeeks[weekIndex];
       let startCol = 0, endCol = 6;
       for (let i = 0; i < 7; i++) {
@@ -4208,7 +4208,7 @@ function app() {
       }
       const left = (startCol / 7 * 100).toFixed(2);
       const width = ((endCol - startCol + 1) / 7 * 100).toFixed(2);
-      return `left:${left}%;width:${width}%;background:${hexToRgba(bar.color, 0.22)};`;
+      return `left:${left}%;width:${width}%;bottom:${3 + barIndex * 7}px;background:${hexToRgba(bar.color, 0.85)};`;
     },
   };
 }
