@@ -523,7 +523,8 @@ async function runTests() {
     try {
       await wait(50);
       const doc = appWindow.document;
-      assertEqual(doc.querySelector('[data-testid="home-heading"]').textContent.trim(), 'Home');
+      // Home header now leads with the current weekday instead of a static "Home" label
+      assertEqual(doc.querySelector('[data-testid="home-heading"]').textContent.trim(), new Date().toLocaleDateString('en-US', { weekday: 'long' }));
       assertEqual(doc.querySelector('[data-testid="home-total-shots"]').textContent.trim(), '4');
       assertEqual(doc.querySelector('[data-testid="home-current-streak"]').textContent.trim(), '4 days');
       assertEqual(doc.querySelectorAll('[data-testid="home-recent-shot"]').length, 3);

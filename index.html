@@ -53,6 +53,8 @@ if (typeof crypto !== 'undefined' && !crypto.randomUUID) {
   --freshness-optimal-bg: rgba(123,160,91,0.12);
   --freshness-past: #A0695B;
   --freshness-past-bg: rgba(160,105,91,0.12);
+  --quality-perfect: #4A7040;
+  --quality-perfect-bg: rgba(74,112,64,0.14);
   /* Bar colors are defined in JS BAR_COLORS array */
   --radius: 10px;
   --radius-sm: 6px;
@@ -97,7 +99,9 @@ body {
 .content-area { flex: 1; position: relative; overflow-y: auto; overflow-x: hidden; padding: 20px 16px; padding-bottom: calc(var(--tab-total) + 24px); -webkit-overflow-scrolling: touch; }
 .tab-stage { position: relative; }
 .content-top-actions { position: absolute; top: 20px; right: 16px; z-index: 40; display: flex; justify-content: flex-end; pointer-events: none; }
-.backup-launch-btn { pointer-events: auto; min-height: 36px; padding: 8px 12px; font-size: 13px; }
+.backup-launch-btn { pointer-events: auto; width: 38px; height: 38px; display: flex; align-items: center; justify-content: center; border: none; border-radius: 50%; background: transparent; color: var(--text-muted); cursor: pointer; transition: background 0.15s ease, color 0.15s ease; -webkit-tap-highlight-color: transparent; }
+.backup-launch-btn:hover { background: rgba(44,24,16,0.06); color: var(--text-secondary); }
+.backup-launch-btn svg { width: 20px; height: 20px; }
 
 .tab-bar { position: fixed; bottom: 0; left: 0; right: 0; width: 100%; max-width: 600px; margin: 0 auto; height: var(--tab-total); padding-bottom: var(--safe-bottom); background: var(--espresso); display: flex; align-items: flex-start; justify-content: space-around; z-index: 100; box-shadow: 0 -2px 20px rgba(44,24,16,0.15); }
 .tab-btn { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; padding: 8px 16px; min-width: 64px; height: var(--tab-height); background: none; border: none; color: rgba(245,240,232,0.5); font-family: var(--font-body); font-size: 11px; font-weight: 500; letter-spacing: 0.3px; cursor: pointer; transition: color 0.2s ease; -webkit-tap-highlight-color: transparent; }
@@ -248,14 +252,14 @@ textarea.form-input { min-height: 80px; resize: vertical; line-height: 1.5; }
 .shot-quality-btn.active { border-color: var(--amber); background: rgba(212,165,116,0.15); color: var(--amber-dark); }
 .shot-quality-btn.bad.active { border-color: var(--freshness-past); background: var(--freshness-past-bg); color: var(--freshness-past); }
 .shot-quality-btn.okay.active { border-color: var(--amber-dark); background: rgba(212,165,116,0.18); color: var(--amber-dark); }
-.shot-quality-btn.great.active { border-color: #4F6FA5; background: rgba(79,111,165,0.14); color: #3F5A86; }
-.shot-quality-btn.perfect.active { border-color: var(--freshness-optimal); background: var(--freshness-optimal-bg); color: var(--freshness-optimal); }
+.shot-quality-btn.great.active { border-color: var(--freshness-optimal); background: var(--freshness-optimal-bg); color: var(--freshness-optimal); }
+.shot-quality-btn.perfect.active { border-color: var(--quality-perfect); background: var(--quality-perfect-bg); color: var(--quality-perfect); }
 .shot-quality-badge { display: inline-block; padding: 4px 10px; border-radius: 20px; font-size: 12px; font-weight: 500; }
 .shot-quality-badge.corner { position: absolute; top: 14px; right: 16px; z-index: 2; }
 .shot-quality-badge.bad { background: var(--freshness-past-bg); color: var(--freshness-past); }
 .shot-quality-badge.okay { background: rgba(212,165,116,0.18); color: var(--amber-dark); }
-.shot-quality-badge.great { background: rgba(79,111,165,0.14); color: #3F5A86; }
-.shot-quality-badge.perfect { background: var(--freshness-optimal-bg); color: var(--freshness-optimal); }
+.shot-quality-badge.great { background: var(--freshness-optimal-bg); color: var(--freshness-optimal); }
+.shot-quality-badge.perfect { background: var(--quality-perfect-bg); color: var(--quality-perfect); }
 .shot-assessment-chips { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 6px; }
 .shot-assessment-chip { display: inline-flex; align-items: center; padding: 4px 8px; border-radius: 999px; font-size: 11px; font-weight: 600; line-height: 1.2; }
 .shot-assessment-chip.good { background: var(--freshness-optimal-bg); color: var(--freshness-optimal); }
@@ -326,7 +330,9 @@ textarea.form-input { min-height: 80px; resize: vertical; line-height: 1.5; }
 .divider { height: 1px; background: rgba(44,24,16,0.08); margin: 16px 0; }
 
 .empty-state { text-align: center; padding: 48px 24px; }
-.empty-state-icon { font-size: 48px; margin-bottom: 16px; opacity: 0.6; }
+.empty-state-icon { display: flex; justify-content: center; margin-bottom: 16px; color: var(--amber-dark); opacity: 0.75; }
+.empty-state-icon svg { width: 44px; height: 44px; }
+.section-title { display: block; font-family: var(--font-heading); font-size: 18px; font-weight: 600; color: var(--espresso); margin-bottom: 10px; }
 .empty-state-title { font-family: var(--font-heading); font-size: 20px; color: var(--text-secondary); margin-bottom: 8px; }
 .empty-state-text { color: var(--text-muted); font-size: 14px; margin-bottom: 20px; line-height: 1.5; }
 
@@ -350,8 +356,8 @@ textarea.form-input { min-height: 80px; resize: vertical; line-height: 1.5; }
 .stats-quality-fill { display: block; height: 100%; border-radius: inherit; background: var(--amber-dark); }
 .stats-quality-fill.bad { background: var(--freshness-past); }
 .stats-quality-fill.okay { background: var(--amber-dark); }
-.stats-quality-fill.great { background: #4F6FA5; }
-.stats-quality-fill.perfect { background: var(--freshness-optimal); }
+.stats-quality-fill.great { background: var(--freshness-optimal); }
+.stats-quality-fill.perfect { background: var(--quality-perfect); }
 .stats-quality-count { font-size: 12px; font-weight: 700; color: var(--espresso); text-align: right; white-space: nowrap; }
 .stats-heatmap { margin-bottom: 12px; }
 .stats-heatmap-months { display: grid; grid-template-columns: 14px repeat(13, minmax(0, 1fr)); gap: 3px; margin-bottom: 4px; }
@@ -430,7 +436,8 @@ textarea.form-input { min-height: 80px; resize: vertical; line-height: 1.5; }
 .restore-from-archive { margin-top: 20px; width: 100%; max-width: 300px; }
 .restore-toggle { display: inline-flex; align-items: center; gap: 8px; background: none; border: none; color: var(--text-muted); font-family: var(--font-body); font-size: 14px; cursor: pointer; padding: 8px 16px; border-radius: var(--radius); transition: color 0.2s ease, background 0.2s ease; -webkit-tap-highlight-color: transparent; }
 .restore-toggle:hover { color: var(--text-secondary); background: rgba(44,24,16,0.04); }
-.restore-toggle-icon { font-size: 16px; }
+.restore-toggle-icon { display: inline-flex; }
+.restore-toggle-icon svg { width: 15px; height: 15px; }
 .archive-picker { background: white; border-radius: var(--radius-lg); box-shadow: var(--shadow-lg); border: 1px solid rgba(44,24,16,0.08); overflow: hidden; animation: archiveSlideIn 0.2s ease-out; }
 @keyframes archiveSlideIn { from { opacity: 0; transform: translateY(-8px); } to { opacity: 1; transform: translateY(0); } }
 .archive-picker-header { display: flex; align-items: center; justify-content: space-between; padding: 14px 16px; border-bottom: 1px solid rgba(44,24,16,0.06); background: var(--cream-dark); }
@@ -490,14 +497,17 @@ textarea.form-input { min-height: 80px; resize: vertical; line-height: 1.5; }
   animation: archiveSlideIn 0.2s ease-out;
 }
 
-.date-header { margin-bottom: 24px; }
-.date-header .day-name { font-family: var(--font-heading); font-size: 32px; font-weight: 700; color: var(--espresso); line-height: 1.1; }
+.date-header { margin-bottom: 10px; }
+.date-header .home-heading { font-size: 32px; line-height: 1.1; margin-bottom: 0; }
 .date-header .date-sub { font-size: 15px; color: var(--text-secondary); margin-top: 4px; }
+.home-stats-line { font-size: 14px; color: var(--text-secondary); margin: 0 0 24px; }
+.home-stats-line .home-stats-strong { font-weight: 600; color: var(--text-primary); }
+.home-stats-sep { margin: 0 6px; color: var(--text-muted); }
 .home-heading { padding-right: 88px; margin-bottom: 8px; }
 .home-stats-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; margin-bottom: 24px; }
 .home-stats-grid .stats-count-value { font-size: 24px; }
 
-.bean-card { position: relative; background: white; border-radius: var(--radius); padding: 16px; box-shadow: var(--shadow); border: 1px solid rgba(44,24,16,0.04); margin-bottom: 12px; cursor: pointer; transition: all 0.2s ease; -webkit-tap-highlight-color: transparent; }
+.bean-card { position: relative; background: white; border-radius: var(--radius); padding: 16px; box-shadow: var(--shadow-sm); border: 1px solid rgba(44,24,16,0.07); margin-bottom: 12px; cursor: pointer; transition: all 0.2s ease; -webkit-tap-highlight-color: transparent; }
 .bean-card:hover { box-shadow: var(--shadow-lg); transform: translateY(-1px); }
 .bean-card:active { transform: translateY(0); }
 .bean-card-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 4px; }
@@ -673,7 +683,7 @@ textarea.form-input { min-height: 80px; resize: vertical; line-height: 1.5; }
   .content-area { padding: 28px 24px; padding-bottom: calc(var(--tab-total) + 32px); }
   .content-top-actions { top: 28px; right: 24px; }
   .heading-xl { font-size: 34px; }
-  .date-header .day-name { font-size: 38px; }
+  .date-header .home-heading { font-size: 38px; }
 }
 
 </style>
@@ -688,7 +698,9 @@ textarea.form-input { min-height: 80px; resize: vertical; line-height: 1.5; }
        @touchend="onTabSwipeEnd($event)"
        @touchcancel="resetTabSwipe()">
     <div class="content-top-actions">
-      <button x-show="currentTab === 'today' && !showBackupPanel" class="btn btn-secondary-solid backup-launch-btn" @click="openBackupPanel()">Backup</button>
+      <button x-show="currentTab === 'today' && !showBackupPanel" class="backup-launch-btn" @click="openBackupPanel()" aria-label="Backup &amp; restore" title="Backup &amp; restore">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3.5v10"/><path d="M8 9.5l4 4 4-4"/><path d="M4.5 15.5V18a2.5 2.5 0 0 0 2.5 2.5h10a2.5 2.5 0 0 0 2.5-2.5v-2.5"/></svg>
+      </button>
     </div>
     <div class="tab-stage">
 
@@ -719,7 +731,7 @@ textarea.form-input { min-height: 80px; resize: vertical; line-height: 1.5; }
           <template x-if="archivedBeans.length > 0">
             <div class="restore-from-archive">
               <button x-show="!showArchive" class="restore-toggle" @click="showArchive = true">
-                <span class="restore-toggle-icon">&#128230;</span> Or restore from archive
+                <span class="restore-toggle-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="4.5" width="17" height="4" rx="1"/><path d="M5.5 8.5V18a2 2 0 0 0 2 2h9a2 2 0 0 0 2-2V8.5"/><path d="M10 12.5h4"/></svg></span> Or restore from archive
               </button>
               <div x-show="showArchive" x-cloak class="archive-picker">
                 <div class="archive-picker-header">
@@ -748,30 +760,24 @@ textarea.form-input { min-height: 80px; resize: vertical; line-height: 1.5; }
       <!-- Normal Home Tab Content — shown when beans exist -->
       <template x-if="currentBeans.length > 0">
         <div>
-          <h1 class="heading-xl home-heading" data-testid="home-heading">Home</h1>
-          <div class="date-header">
-            <div class="day-name" x-text="todayFormatted.day"></div>
+          <header class="date-header">
+            <h1 class="heading-xl home-heading" data-testid="home-heading" x-text="todayFormatted.day"></h1>
             <div class="date-sub" x-text="todayFormatted.date"></div>
-          </div>
+          </header>
 
-          <div class="home-stats-grid" data-testid="home-stats">
-            <div class="stats-count-item">
-              <span class="stats-count-label">All-time shots</span>
-              <span class="stats-count-value" data-testid="home-total-shots" x-text="statsTotalShots"></span>
-            </div>
-            <div class="stats-count-item">
-              <span class="stats-count-label">Current streak</span>
-              <span
-                class="stats-count-value"
-                data-testid="home-current-streak"
-                x-text="statsBrewDayRuns.current + ' ' + (statsBrewDayRuns.current === 1 ? 'day' : 'days')"
-              ></span>
-            </div>
-          </div>
+          <p class="home-stats-line" data-testid="home-stats">
+            <span class="home-stats-strong" data-testid="home-total-shots" x-text="statsTotalShots"></span> shots all-time
+            <span class="home-stats-sep">&middot;</span>
+            <span
+              class="home-stats-strong"
+              data-testid="home-current-streak"
+              x-text="statsBrewDayRuns.current + ' ' + (statsBrewDayRuns.current === 1 ? 'day' : 'days')"
+            ></span> streak
+          </p>
 
           <!-- Bean Selector — only current (non-archived) beans -->
           <div class="daily-bean-selector" x-data="{ pickerOpen: false }" @click.outside="pickerOpen = false" @keydown.escape.window="pickerOpen = false">
-            <label class="form-label">What are you pulling?</label>
+            <label class="section-title">What are you pulling?</label>
             <div class="bean-picker-trigger" :class="{ open: pickerOpen }" @click="pickerOpen = !pickerOpen" tabindex="0" @keydown.enter.prevent="pickerOpen = !pickerOpen" @keydown.space.prevent="pickerOpen = !pickerOpen" role="combobox" aria-haspopup="listbox" :aria-expanded="pickerOpen">
               <template x-if="!dailySelectedBeanId">
                 <span class="picker-placeholder">Choose a coffee bean...</span>
@@ -909,7 +915,7 @@ textarea.form-input { min-height: 80px; resize: vertical; line-height: 1.5; }
 
           <!-- Empty State — has beans but no shots -->
           <div x-show="recentShots.length === 0" class="empty-state" data-testid="home-empty-state">
-            <div class="empty-state-icon">&#9749;</div>
+            <div class="empty-state-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4.5 9h11v5.5a5 5 0 0 1-5 5h-1a5 5 0 0 1-5-5V9z"/><path d="M15.5 10h1.75a2.75 2.75 0 1 1 0 5.5H15.5"/><path d="M8 5.5c0-1 .9-1.4.9-2.5M12 5.5c0-1 .9-1.4.9-2.5"/></svg></div>
             <div class="empty-state-title">No shots logged yet</div>
             <div class="empty-state-text">Select a bean above to start your next pull.</div>
           </div>
@@ -953,7 +959,7 @@ textarea.form-input { min-height: 80px; resize: vertical; line-height: 1.5; }
           <div id="current-beans-panel" role="tabpanel" aria-labelledby="current-beans-tab">
             <template x-for="bean in currentBeans" :key="bean.id">
               <div class="bean-card" @click="selectBean(bean.id)">
-                <span class="bean-card-occurrence" x-text="getBeanOccurrence(bean)"></span>
+                <span class="bean-card-occurrence" x-show="beanOccurrenceCount(bean) > 1" x-text="'Bag ' + getBeanOccurrence(bean)"></span>
                 <div class="bean-card-header">
                   <div>
                     <div class="bean-card-name" x-text="bean.name"></div>
@@ -976,7 +982,7 @@ textarea.form-input { min-height: 80px; resize: vertical; line-height: 1.5; }
             </template>
 
             <div x-show="currentBeans.length === 0" class="empty-state">
-              <div class="empty-state-icon">&#127793;</div>
+              <div class="empty-state-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20.5v-8"/><path d="M12 12.5c0-4 2.8-6.5 7-6.5 0 4-2.8 6.5-7 6.5z"/><path d="M12 12.5c0-3.2-2.2-5-5.5-5 0 3.2 2.2 5 5.5 5z"/></svg></div>
               <div class="empty-state-title" x-text="beans.length === 0 ? 'Add your first bean' : 'No current beans'"></div>
               <div class="empty-state-text" x-text="beans.length === 0 ? 'Start tracking your espresso beans and dial in the perfect shot.' : 'Add a new bag when you are ready to start dialing in again.'"></div>
               <button class="btn btn-amber" @click="openBeanForm(null)">Add Bean</button>
@@ -987,14 +993,14 @@ textarea.form-input { min-height: 80px; resize: vertical; line-height: 1.5; }
         <template x-if="beansCollection === 'archive'">
           <div id="archive-beans-panel" role="tabpanel" aria-labelledby="archive-beans-tab">
             <div x-show="archivedBeans.length === 0" class="empty-state">
-              <div class="empty-state-icon">&#128230;</div>
+              <div class="empty-state-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="4.5" width="17" height="4" rx="1"/><path d="M5.5 8.5V18a2 2 0 0 0 2 2h9a2 2 0 0 0 2-2V8.5"/><path d="M10 12.5h4"/></svg></div>
               <div class="empty-state-title">No archived beans</div>
               <div class="empty-state-text">Beans you've finished will appear here.</div>
             </div>
 
             <template x-for="bean in archivedBeans" :key="bean.id">
               <div class="bean-card" @click="selectBean(bean.id)">
-                <span class="bean-card-occurrence" x-text="getBeanOccurrence(bean)"></span>
+                <span class="bean-card-occurrence" x-show="beanOccurrenceCount(bean) > 1" x-text="'Bag ' + getBeanOccurrence(bean)"></span>
                 <div class="bean-card-header">
                   <div>
                     <div class="bean-card-name" x-text="bean.name"></div>
@@ -1050,7 +1056,7 @@ textarea.form-input { min-height: 80px; resize: vertical; line-height: 1.5; }
           </div>
 
           <div x-show="getShotsForBean(selectedBeanId).length === 0" class="empty-state" style="padding: 24px;">
-            <div class="empty-state-icon" style="font-size: 32px;">&#9749;</div>
+            <div class="empty-state-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="width: 30px; height: 30px;"><path d="M4.5 9h11v5.5a5 5 0 0 1-5 5h-1a5 5 0 0 1-5-5V9z"/><path d="M15.5 10h1.75a2.75 2.75 0 1 1 0 5.5H15.5"/><path d="M8 5.5c0-1 .9-1.4.9-2.5M12 5.5c0-1 .9-1.4.9-2.5"/></svg></div>
             <div class="empty-state-text">Log your first shot to start dialing in.</div>
           </div>
           <template x-for="shot in (showAllShots ? getShotsForBean(selectedBeanId) : getShotsForBean(selectedBeanId).slice(0, 5))" :key="shot.id">
@@ -1317,7 +1323,7 @@ textarea.form-input { min-height: 80px; resize: vertical; line-height: 1.5; }
           </template>
         </div>
         <div x-show="calendarBars.length === 0" class="empty-state calendar-empty-state" style="padding: 32px 0 8px;">
-          <div class="empty-state-icon">&#128197;</div>
+          <div class="empty-state-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="5" width="17" height="15.5" rx="2.5"/><path d="M3.5 9.5h17M8 3v3.5M16 3v3.5"/></svg></div>
           <div class="empty-state-title">No beans in window</div>
           <div class="empty-state-text">No beans have their peak freshness window this month.</div>
         </div>
@@ -1361,7 +1367,7 @@ textarea.form-input { min-height: 80px; resize: vertical; line-height: 1.5; }
       <h1 class="heading-xl mb-12">Brewing Stats</h1>
 
       <div x-show="!statsHasData" class="empty-state">
-        <div class="empty-state-icon">&#128202;</div>
+        <div class="empty-state-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 20v-8M12 20V5M19 20v-5"/><path d="M3.5 20.5h17"/></svg></div>
         <div class="empty-state-title">No stats yet</div>
         <div class="empty-state-text">Log a few shots to see your brewing patterns over time.</div>
       </div>
@@ -1686,7 +1692,7 @@ textarea.form-input { min-height: 80px; resize: vertical; line-height: 1.5; }
         </div>
       </div>
       <div class="form-group">
-        <label class="form-label">How was this shot?</label>
+        <label class="section-title">How was this shot?</label>
         <div class="shot-rating-row">
           <div class="shot-quality-options">
             <button type="button" class="shot-quality-btn bad" :class="{ 'active': shotForm.rating === 'bad' }" @click="shotForm.rating = (shotForm.rating === 'bad' ? null : 'bad')">Bad</button>
@@ -1984,11 +1990,15 @@ textarea.form-input { min-height: 80px; resize: vertical; line-height: 1.5; }
       <span>Beans</span>
     </button>
     <button class="tab-btn" :class="{ 'active': currentTab === 'calendar' }" @click="activateTab('calendar')">
-      <span class="tab-icon">&#128197;</span>
+      <span class="tab-icon" aria-hidden="true">
+        <svg data-testid="calendar-tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="5" width="17" height="15.5" rx="2.5"/><path d="M3.5 9.5h17M8 3v3.5M16 3v3.5"/></svg>
+      </span>
       <span>Calendar</span>
     </button>
     <button class="tab-btn" :class="{ 'active': currentTab === 'stats' }" @click="activateTab('stats')">
-      <span class="tab-icon">&#128202;</span>
+      <span class="tab-icon" aria-hidden="true">
+        <svg data-testid="stats-tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 20v-8M12 20V5M19 20v-5"/><path d="M3.5 20.5h17"/></svg>
+      </span>
       <span>Stats</span>
     </button>
   </nav>
@@ -4035,6 +4045,10 @@ function app() {
         return bKey === key;
       }).sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
       return allMatching.findIndex(b => b.id === bean.id) + 1;
+    },
+    beanOccurrenceCount(bean) {
+      const key = (bean.name || '').toLowerCase().trim() + '|' + (bean.roaster || '').toLowerCase().trim();
+      return this.beans.filter(b => ((b.name || '').toLowerCase().trim() + '|' + (b.roaster || '').toLowerCase().trim()) === key).length;
     },
 
     shotQualityLabel(r) {
