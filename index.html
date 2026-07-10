@@ -53,8 +53,6 @@ if (typeof crypto !== 'undefined' && !crypto.randomUUID) {
   --freshness-optimal-bg: rgba(123,160,91,0.12);
   --freshness-past: #A0695B;
   --freshness-past-bg: rgba(160,105,91,0.12);
-  --quality-perfect: #4A7040;
-  --quality-perfect-bg: rgba(74,112,64,0.14);
   /* Bar colors are defined in JS BAR_COLORS array */
   --radius: 10px;
   --radius-sm: 6px;
@@ -252,14 +250,14 @@ textarea.form-input { min-height: 80px; resize: vertical; line-height: 1.5; }
 .shot-quality-btn.active { border-color: var(--amber); background: rgba(212,165,116,0.15); color: var(--amber-dark); }
 .shot-quality-btn.bad.active { border-color: var(--freshness-past); background: var(--freshness-past-bg); color: var(--freshness-past); }
 .shot-quality-btn.okay.active { border-color: var(--amber-dark); background: rgba(212,165,116,0.18); color: var(--amber-dark); }
-.shot-quality-btn.great.active { border-color: var(--freshness-optimal); background: var(--freshness-optimal-bg); color: var(--freshness-optimal); }
-.shot-quality-btn.perfect.active { border-color: var(--quality-perfect); background: var(--quality-perfect-bg); color: var(--quality-perfect); }
+.shot-quality-btn.great.active { border-color: #4F6FA5; background: rgba(79,111,165,0.14); color: #3F5A86; }
+.shot-quality-btn.perfect.active { border-color: var(--freshness-optimal); background: var(--freshness-optimal-bg); color: var(--freshness-optimal); }
 .shot-quality-badge { display: inline-block; padding: 4px 10px; border-radius: 20px; font-size: 12px; font-weight: 500; }
 .shot-quality-badge.corner { position: absolute; top: 14px; right: 16px; z-index: 2; }
 .shot-quality-badge.bad { background: var(--freshness-past-bg); color: var(--freshness-past); }
 .shot-quality-badge.okay { background: rgba(212,165,116,0.18); color: var(--amber-dark); }
-.shot-quality-badge.great { background: var(--freshness-optimal-bg); color: var(--freshness-optimal); }
-.shot-quality-badge.perfect { background: var(--quality-perfect-bg); color: var(--quality-perfect); }
+.shot-quality-badge.great { background: rgba(79,111,165,0.14); color: #3F5A86; }
+.shot-quality-badge.perfect { background: var(--freshness-optimal-bg); color: var(--freshness-optimal); }
 .shot-assessment-chips { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 6px; }
 .shot-assessment-chip { display: inline-flex; align-items: center; padding: 4px 8px; border-radius: 999px; font-size: 11px; font-weight: 600; line-height: 1.2; }
 .shot-assessment-chip.good { background: var(--freshness-optimal-bg); color: var(--freshness-optimal); }
@@ -281,6 +279,12 @@ textarea.form-input { min-height: 80px; resize: vertical; line-height: 1.5; }
 .shot-visualizer-fill.good { background: var(--freshness-optimal); }
 .shot-visualizer-fill.warning { background: var(--freshness-past); }
 .shot-visualizer-point { position: absolute; top: 50%; left: 0; width: 3px; height: 10px; border-radius: 999px; background: var(--espresso); box-shadow: 0 1px 2px rgba(44,24,16,0.18); transform: translate(-50%, -50%); transition: left 0.2s ease; }
+.shot-visualizer.compact { padding: 0; margin-top: 8px; }
+.shot-visualizer.compact .shot-visualizer-row { grid-template-columns: 38px 1fr 44px; gap: 6px; }
+.shot-visualizer.compact .shot-visualizer-label { font-size: 10px; letter-spacing: 0.4px; }
+.shot-visualizer.compact .shot-visualizer-value { font-size: 11px; }
+.shot-visualizer.compact .shot-visualizer-track { height: 6px; }
+.shot-visualizer.compact .shot-visualizer-point { height: 9px; }
 
 .daily-guidance-card { background: white; border: 1px solid rgba(44,24,16,0.08); border-radius: var(--radius); padding: 16px; margin-bottom: 20px; box-shadow: var(--shadow-sm); }
 .daily-guidance-header { display: flex; flex-direction: column; gap: 10px; }
@@ -348,8 +352,8 @@ textarea.form-input { min-height: 80px; resize: vertical; line-height: 1.5; }
 .stats-quality-fill { display: block; height: 100%; border-radius: inherit; background: var(--amber-dark); }
 .stats-quality-fill.bad { background: var(--freshness-past); }
 .stats-quality-fill.okay { background: var(--amber-dark); }
-.stats-quality-fill.great { background: var(--freshness-optimal); }
-.stats-quality-fill.perfect { background: var(--quality-perfect); }
+.stats-quality-fill.great { background: #4F6FA5; }
+.stats-quality-fill.perfect { background: var(--freshness-optimal); }
 .stats-quality-count { font-size: 12px; font-weight: 700; color: var(--espresso); text-align: right; white-space: nowrap; }
 .stats-heatmap { margin-bottom: 12px; }
 .stats-heatmap-months { display: grid; grid-template-columns: 14px repeat(13, minmax(0, 1fr)); gap: 3px; margin-bottom: 4px; }
@@ -482,12 +486,9 @@ textarea.form-input { min-height: 80px; resize: vertical; line-height: 1.5; }
   animation: archiveSlideIn 0.2s ease-out;
 }
 
-.date-header { margin-bottom: 10px; }
+.date-header { margin-bottom: 20px; }
 .date-header .home-heading { font-size: 32px; line-height: 1.1; margin-bottom: 0; }
 .date-header .date-sub { font-size: 15px; color: var(--text-secondary); margin-top: 4px; }
-.home-stats-line { font-size: 14px; color: var(--text-secondary); margin: 0 0 24px; }
-.home-stats-line .home-stats-strong { font-weight: 600; color: var(--text-primary); }
-.home-stats-sep { margin: 0 6px; color: var(--text-muted); }
 .home-heading { padding-right: 88px; margin-bottom: 8px; }
 .home-stats-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; margin-bottom: 24px; }
 .home-stats-grid .stats-count-value { font-size: 24px; }
@@ -750,15 +751,20 @@ textarea.form-input { min-height: 80px; resize: vertical; line-height: 1.5; }
             <div class="date-sub" x-text="todayFormatted.date"></div>
           </header>
 
-          <p class="home-stats-line" data-testid="home-stats">
-            <span class="home-stats-strong" data-testid="home-total-shots" x-text="statsTotalShots"></span> shots all-time
-            <span class="home-stats-sep">&middot;</span>
-            <span
-              class="home-stats-strong"
-              data-testid="home-current-streak"
-              x-text="statsBrewDayRuns.current + ' ' + (statsBrewDayRuns.current === 1 ? 'day' : 'days')"
-            ></span> streak
-          </p>
+          <div class="home-stats-grid" data-testid="home-stats">
+            <div class="stats-count-item">
+              <span class="stats-count-label">All-time shots</span>
+              <span class="stats-count-value" data-testid="home-total-shots" x-text="statsTotalShots"></span>
+            </div>
+            <div class="stats-count-item">
+              <span class="stats-count-label">Current streak</span>
+              <span
+                class="stats-count-value"
+                data-testid="home-current-streak"
+                x-text="statsBrewDayRuns.current + ' ' + (statsBrewDayRuns.current === 1 ? 'day' : 'days')"
+              ></span>
+            </div>
+          </div>
 
           <!-- Bean Selector — only current (non-archived) beans -->
           <div class="daily-bean-selector" x-data="{ pickerOpen: false }" @click.outside="pickerOpen = false" @keydown.escape.window="pickerOpen = false">
@@ -853,10 +859,38 @@ textarea.form-input { min-height: 80px; resize: vertical; line-height: 1.5; }
                         <span x-show="shot.grindSize" x-text="'Grind ' + shot.grindSize"></span>
                         <span x-show="shot.doseIn"><span x-show="shot.grindSize"> &middot; </span><span x-text="shot.doseIn + 'g'"></span></span>
                         <span x-show="shot.yieldOut"> &#8594; <span x-text="shot.yieldOut + 'g'"></span></span>
-                        <span x-show="getShotMetrics(shot)?.ratioLabel" x-text="' (' + (getShotMetrics(shot)?.ratioLabel || '') + ')'"></span>
                         <span x-show="shot.extractionTime"><span x-show="shot.grindSize || shot.doseIn || shot.yieldOut"> &middot; </span><span x-text="shot.extractionTime + 's'"></span></span>
                       </div>
                       <div x-show="getPortafilterLabel(shot.portafilterId)" class="shot-portafilter-label" x-text="getPortafilterLabel(shot.portafilterId)"></div>
+                      <div x-show="getShotMetrics(shot)" class="shot-visualizer compact">
+                        <div class="shot-visualizer-row">
+                          <span class="shot-visualizer-label">Ratio</span>
+                          <div class="shot-visualizer-track">
+                            <span class="shot-visualizer-target ratio"></span>
+                            <span class="shot-visualizer-fill" :class="getShotMetrics(shot)?.assessmentStatus" :style="'width: ' + (getShotMetrics(shot)?.ratioPct || 0) + '%'"></span>
+                            <span class="shot-visualizer-point" :style="'left: ' + (getShotMetrics(shot)?.ratioPct || 0) + '%'"></span>
+                          </div>
+                          <span class="shot-visualizer-value" x-text="getShotMetrics(shot)?.ratioLabel"></span>
+                        </div>
+                        <div class="shot-visualizer-row">
+                          <span class="shot-visualizer-label">Time</span>
+                          <div class="shot-visualizer-track">
+                            <span class="shot-visualizer-target time"></span>
+                            <span class="shot-visualizer-fill" :class="getShotMetrics(shot)?.assessmentStatus" :style="'width: ' + (getShotMetrics(shot)?.timePct || 0) + '%'"></span>
+                            <span class="shot-visualizer-point" :style="'left: ' + (getShotMetrics(shot)?.timePct || 0) + '%'"></span>
+                          </div>
+                          <span class="shot-visualizer-value" x-text="getShotMetrics(shot)?.timeLabel"></span>
+                        </div>
+                        <div class="shot-visualizer-row">
+                          <span class="shot-visualizer-label">Flow</span>
+                          <div class="shot-visualizer-track">
+                            <span class="shot-visualizer-target flow"></span>
+                            <span class="shot-visualizer-fill" :class="getShotMetrics(shot)?.assessmentStatus" :style="'width: ' + (getShotMetrics(shot)?.flowPct || 0) + '%'"></span>
+                            <span class="shot-visualizer-point" :style="'left: ' + (getShotMetrics(shot)?.flowPct || 0) + '%'"></span>
+                          </div>
+                          <span class="shot-visualizer-value" x-text="getShotMetrics(shot)?.flowLabel"></span>
+                        </div>
+                      </div>
                       <div x-show="shot.notes" class="text-muted" style="margin-top:2px; font-style:italic; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" x-text="shot.notes"></div>
                       <div x-show="getShotAssessmentChips(shot).length" class="shot-assessment-chips">
                         <template x-for="chip in getShotAssessmentChips(shot)" :key="chip.label">
@@ -1035,11 +1069,39 @@ textarea.form-input { min-height: 80px; resize: vertical; line-height: 1.5; }
                       <span x-show="shot.grindSize">Grind <span x-text="shot.grindSize"></span></span>
                       <span x-show="shot.doseIn"><span x-show="shot.grindSize"> &middot; </span><span x-text="shot.doseIn + 'g'"></span></span>
                       <span x-show="shot.yieldOut"> &#8594; <span x-text="shot.yieldOut + 'g'"></span></span>
-                      <span x-show="getShotMetrics(shot)?.ratioLabel" x-text="' (' + (getShotMetrics(shot)?.ratioLabel || '') + ')'"></span>
                       <span x-show="shot.extractionTime"><span x-show="shot.grindSize || shot.doseIn || shot.yieldOut"> &middot; </span><span x-text="shot.extractionTime + 's'"></span></span>
                     </div>
                     <div class="shot-date" x-text="formatDate(shot.shotDate || shot.createdAt)"></div>
                     <div x-show="getPortafilterLabel(shot.portafilterId)" class="shot-portafilter-label" x-text="getPortafilterLabel(shot.portafilterId)"></div>
+                    <div x-show="getShotMetrics(shot)" class="shot-visualizer compact">
+                      <div class="shot-visualizer-row">
+                        <span class="shot-visualizer-label">Ratio</span>
+                        <div class="shot-visualizer-track">
+                          <span class="shot-visualizer-target ratio"></span>
+                          <span class="shot-visualizer-fill" :class="getShotMetrics(shot)?.assessmentStatus" :style="'width: ' + (getShotMetrics(shot)?.ratioPct || 0) + '%'"></span>
+                          <span class="shot-visualizer-point" :style="'left: ' + (getShotMetrics(shot)?.ratioPct || 0) + '%'"></span>
+                        </div>
+                        <span class="shot-visualizer-value" x-text="getShotMetrics(shot)?.ratioLabel"></span>
+                      </div>
+                      <div class="shot-visualizer-row">
+                        <span class="shot-visualizer-label">Time</span>
+                        <div class="shot-visualizer-track">
+                          <span class="shot-visualizer-target time"></span>
+                          <span class="shot-visualizer-fill" :class="getShotMetrics(shot)?.assessmentStatus" :style="'width: ' + (getShotMetrics(shot)?.timePct || 0) + '%'"></span>
+                          <span class="shot-visualizer-point" :style="'left: ' + (getShotMetrics(shot)?.timePct || 0) + '%'"></span>
+                        </div>
+                        <span class="shot-visualizer-value" x-text="getShotMetrics(shot)?.timeLabel"></span>
+                      </div>
+                      <div class="shot-visualizer-row">
+                        <span class="shot-visualizer-label">Flow</span>
+                        <div class="shot-visualizer-track">
+                          <span class="shot-visualizer-target flow"></span>
+                          <span class="shot-visualizer-fill" :class="getShotMetrics(shot)?.assessmentStatus" :style="'width: ' + (getShotMetrics(shot)?.flowPct || 0) + '%'"></span>
+                          <span class="shot-visualizer-point" :style="'left: ' + (getShotMetrics(shot)?.flowPct || 0) + '%'"></span>
+                        </div>
+                        <span class="shot-visualizer-value" x-text="getShotMetrics(shot)?.flowLabel"></span>
+                      </div>
+                    </div>
                     <div x-show="shot.notes" class="text-muted" style="margin-top:2px; font-style:italic; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" x-text="shot.notes"></div>
                     <div x-show="getShotAssessmentChips(shot).length" class="shot-assessment-chips">
                       <template x-for="chip in getShotAssessmentChips(shot)" :key="chip.label">
@@ -1484,6 +1546,78 @@ textarea.form-input { min-height: 80px; resize: vertical; line-height: 1.5; }
         <button class="back-btn" @click="closeShotForm()">&#8592;</button>
         <h3 class="heading-lg" x-text="editingShotId ? 'Edit Shot' : 'Log Shot'"></h3>
       </div>
+      <div class="form-group" data-testid="portafilter-field" x-data="{ pickerOpen: false }" @click.outside="pickerOpen = false" @keydown.escape.window="pickerOpen = false">
+        <div class="form-label-row">
+          <label class="form-label" for="shot-portafilter">Portafilter</label>
+          <button type="button" class="form-label-action" data-testid="portafilter-manage" @click="pickerOpen = false; showPortafilterManager ? closePortafilterManager() : openPortafilterManager()" x-text="showPortafilterManager ? 'Done' : 'Manage'"></button>
+        </div>
+        <div class="portafilter-picker">
+          <input type="hidden" data-testid="portafilter-select" x-model="shotForm.portafilterId">
+          <button id="shot-portafilter" type="button" class="bean-picker-trigger portafilter-picker-trigger" data-testid="portafilter-trigger" :class="{ open: pickerOpen }" @click="pickerOpen = !pickerOpen" @keydown.enter.prevent="pickerOpen = !pickerOpen" @keydown.space.prevent="pickerOpen = !pickerOpen" role="combobox" aria-haspopup="listbox" :aria-expanded="pickerOpen">
+            <template x-if="!shotForm.portafilterId || !getPortafilterById(shotForm.portafilterId)">
+              <span class="picker-selected">
+                <span class="picker-selected-name">None</span>
+              </span>
+            </template>
+            <template x-if="shotForm.portafilterId && getPortafilterById(shotForm.portafilterId)">
+              <span class="picker-selected">
+                <span class="picker-selected-name" x-text="getPortafilterLabel(shotForm.portafilterId)"></span>
+              </span>
+            </template>
+            <svg class="bean-picker-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>
+          </button>
+          <div class="bean-picker-dropdown portafilter-picker-dropdown" :class="{ show: pickerOpen }" role="listbox">
+            <div class="bean-picker-option" :class="{ selected: !shotForm.portafilterId }" @click="shotForm.portafilterId = ''; pickerOpen = false" role="option" :aria-selected="!shotForm.portafilterId" tabindex="0" @keydown.enter.prevent="shotForm.portafilterId = ''; pickerOpen = false">
+              <span class="bean-picker-info">
+                <span class="bean-picker-name">None</span>
+              </span>
+            </div>
+            <template x-for="portafilter in portafilters" :key="portafilter.id">
+              <div class="bean-picker-option" :class="{ selected: shotForm.portafilterId === portafilter.id }" @click="shotForm.portafilterId = portafilter.id; pickerOpen = false" role="option" :aria-selected="shotForm.portafilterId === portafilter.id" tabindex="0" @keydown.enter.prevent="shotForm.portafilterId = portafilter.id; pickerOpen = false">
+                <span class="bean-picker-info">
+                  <span class="bean-picker-name" x-text="portafilter.name"></span>
+                </span>
+              </div>
+            </template>
+            <div class="bean-picker-option add-new" @click="pickerOpen = false; openPortafilterManager(); startAddingPortafilter()" role="option" aria-selected="false" tabindex="0" @keydown.enter.prevent="pickerOpen = false; openPortafilterManager(); startAddingPortafilter()">
+              <span class="bean-picker-add-icon">+</span>
+              <span class="bean-picker-info">
+                <span class="bean-picker-name">Add a new portafilter</span>
+              </span>
+            </div>
+          </div>
+        </div>
+        <div x-show="showPortafilterManager" class="portafilter-manager" data-testid="portafilter-manager">
+          <div class="portafilter-manager-header">
+            <span class="portafilter-manager-title">Manage Portafilters</span>
+            <button x-show="editingPortafilterId === null" type="button" class="btn btn-secondary-solid portafilter-add-btn" data-testid="portafilter-add" @click="startAddingPortafilter()">+ Add</button>
+          </div>
+          <template x-if="editingPortafilterId === null">
+            <div>
+              <div x-show="portafilters.length === 0" class="portafilter-manager-empty">No portafilters added yet.</div>
+              <div class="portafilter-manager-list">
+                <template x-for="portafilter in portafilters" :key="portafilter.id">
+                  <div class="portafilter-manager-row">
+                    <span class="portafilter-manager-name" x-text="portafilter.name"></span>
+                    <button type="button" class="btn btn-ghost" :aria-label="'Edit ' + portafilter.name" @click="startEditingPortafilter(portafilter.id)">Edit</button>
+                  </div>
+                </template>
+              </div>
+            </div>
+          </template>
+          <template x-if="editingPortafilterId !== null">
+            <div class="portafilter-editor">
+              <label class="form-label" for="portafilter-name" x-text="editingPortafilterId ? 'Rename Portafilter' : 'New Portafilter'"></label>
+              <input id="portafilter-name" type="text" class="form-input" data-testid="portafilter-name" placeholder="Portafilter name" x-model="portafilterNameDraft" @keydown.enter.prevent="saveManagedPortafilter()">
+              <div x-show="portafilterFormError" class="portafilter-form-error" x-text="portafilterFormError"></div>
+              <div class="portafilter-editor-actions">
+                <button type="button" class="btn btn-ghost" @click="cancelPortafilterEdit()">Cancel</button>
+                <button type="button" class="btn btn-primary" data-testid="portafilter-save" @click="saveManagedPortafilter()">Save</button>
+              </div>
+            </div>
+          </template>
+        </div>
+      </div>
       <div class="form-group" x-data="stepper()" x-init="stInit('grindSize', 1, 30, getShotFormDefault('grindSize'))">
         <label class="form-label">Grind Size</label>
         <div class="stepper">
@@ -1598,78 +1732,6 @@ textarea.form-input { min-height: 80px; resize: vertical; line-height: 1.5; }
               </div>
             </template>
           </div>
-        </div>
-      </div>
-      <div class="form-group" data-testid="portafilter-field" x-data="{ pickerOpen: false }" @click.outside="pickerOpen = false" @keydown.escape.window="pickerOpen = false">
-        <div class="form-label-row">
-          <label class="form-label" for="shot-portafilter">Portafilter</label>
-          <button type="button" class="form-label-action" data-testid="portafilter-manage" @click="pickerOpen = false; showPortafilterManager ? closePortafilterManager() : openPortafilterManager()" x-text="showPortafilterManager ? 'Done' : 'Manage'"></button>
-        </div>
-        <div class="portafilter-picker">
-          <input type="hidden" data-testid="portafilter-select" x-model="shotForm.portafilterId">
-          <button id="shot-portafilter" type="button" class="bean-picker-trigger portafilter-picker-trigger" data-testid="portafilter-trigger" :class="{ open: pickerOpen }" @click="pickerOpen = !pickerOpen" @keydown.enter.prevent="pickerOpen = !pickerOpen" @keydown.space.prevent="pickerOpen = !pickerOpen" role="combobox" aria-haspopup="listbox" :aria-expanded="pickerOpen">
-            <template x-if="!shotForm.portafilterId || !getPortafilterById(shotForm.portafilterId)">
-              <span class="picker-selected">
-                <span class="picker-selected-name">None</span>
-              </span>
-            </template>
-            <template x-if="shotForm.portafilterId && getPortafilterById(shotForm.portafilterId)">
-              <span class="picker-selected">
-                <span class="picker-selected-name" x-text="getPortafilterLabel(shotForm.portafilterId)"></span>
-              </span>
-            </template>
-            <svg class="bean-picker-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>
-          </button>
-          <div class="bean-picker-dropdown portafilter-picker-dropdown" :class="{ show: pickerOpen }" role="listbox">
-            <div class="bean-picker-option" :class="{ selected: !shotForm.portafilterId }" @click="shotForm.portafilterId = ''; pickerOpen = false" role="option" :aria-selected="!shotForm.portafilterId" tabindex="0" @keydown.enter.prevent="shotForm.portafilterId = ''; pickerOpen = false">
-              <span class="bean-picker-info">
-                <span class="bean-picker-name">None</span>
-              </span>
-            </div>
-            <template x-for="portafilter in portafilters" :key="portafilter.id">
-              <div class="bean-picker-option" :class="{ selected: shotForm.portafilterId === portafilter.id }" @click="shotForm.portafilterId = portafilter.id; pickerOpen = false" role="option" :aria-selected="shotForm.portafilterId === portafilter.id" tabindex="0" @keydown.enter.prevent="shotForm.portafilterId = portafilter.id; pickerOpen = false">
-                <span class="bean-picker-info">
-                  <span class="bean-picker-name" x-text="portafilter.name"></span>
-                </span>
-              </div>
-            </template>
-            <div class="bean-picker-option add-new" @click="pickerOpen = false; openPortafilterManager(); startAddingPortafilter()" role="option" aria-selected="false" tabindex="0" @keydown.enter.prevent="pickerOpen = false; openPortafilterManager(); startAddingPortafilter()">
-              <span class="bean-picker-add-icon">+</span>
-              <span class="bean-picker-info">
-                <span class="bean-picker-name">Add a new portafilter</span>
-              </span>
-            </div>
-          </div>
-        </div>
-        <div x-show="showPortafilterManager" class="portafilter-manager" data-testid="portafilter-manager">
-          <div class="portafilter-manager-header">
-            <span class="portafilter-manager-title">Manage Portafilters</span>
-            <button x-show="editingPortafilterId === null" type="button" class="btn btn-secondary-solid portafilter-add-btn" data-testid="portafilter-add" @click="startAddingPortafilter()">+ Add</button>
-          </div>
-          <template x-if="editingPortafilterId === null">
-            <div>
-              <div x-show="portafilters.length === 0" class="portafilter-manager-empty">No portafilters added yet.</div>
-              <div class="portafilter-manager-list">
-                <template x-for="portafilter in portafilters" :key="portafilter.id">
-                  <div class="portafilter-manager-row">
-                    <span class="portafilter-manager-name" x-text="portafilter.name"></span>
-                    <button type="button" class="btn btn-ghost" :aria-label="'Edit ' + portafilter.name" @click="startEditingPortafilter(portafilter.id)">Edit</button>
-                  </div>
-                </template>
-              </div>
-            </div>
-          </template>
-          <template x-if="editingPortafilterId !== null">
-            <div class="portafilter-editor">
-              <label class="form-label" for="portafilter-name" x-text="editingPortafilterId ? 'Rename Portafilter' : 'New Portafilter'"></label>
-              <input id="portafilter-name" type="text" class="form-input" data-testid="portafilter-name" placeholder="Portafilter name" x-model="portafilterNameDraft" @keydown.enter.prevent="saveManagedPortafilter()">
-              <div x-show="portafilterFormError" class="portafilter-form-error" x-text="portafilterFormError"></div>
-              <div class="portafilter-editor-actions">
-                <button type="button" class="btn btn-ghost" @click="cancelPortafilterEdit()">Cancel</button>
-                <button type="button" class="btn btn-primary" data-testid="portafilter-save" @click="saveManagedPortafilter()">Save</button>
-              </div>
-            </div>
-          </template>
         </div>
       </div>
       <div class="form-group">
