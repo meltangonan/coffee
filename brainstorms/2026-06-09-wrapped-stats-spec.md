@@ -1,7 +1,7 @@
 # Spec: Wrapped-Style Stats — "Spotify Wrapped for your espresso"
 
 *Status: CLOSED 2026-06-10 — all success criteria verified, shipped to main. Kept as a
-decision record; the live source of truth for current behavior is CLAUDE.md.*
+decision record; the live source of truth for current behavior is AGENTS.md (imported by CLAUDE.md).*
 
 *History: v2 approved and implemented 2026-06-09. Post-ship review (same day): the Brew
 patterns, Superlatives, and Fun totals cards were removed at the user's request — shipped

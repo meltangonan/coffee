@@ -1,0 +1,131 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-07-12T00:00:00Z",
+  "title": "Design System: Coffee Journal",
+  "extensions": {
+    "colorMeta": {
+      "espresso": { "role": "primary", "displayName": "Espresso Ink", "canonical": "#2C1810", "tonalRamp": ["#1A0E09", "#2C1810", "#3D2820", "#57392C", "#7A5844", "#A08268", "#C9AE94", "#EBD9C6"] },
+      "amber": { "role": "secondary", "displayName": "Caramel Amber", "canonical": "#D4A574", "tonalRamp": ["#4A3520", "#6B4A2C", "#8F653C", "#B8864E", "#D4A574", "#E8C9A0", "#F3DFC4", "#FAF0E2"] },
+      "cream": { "role": "neutral", "displayName": "Steamed Cream", "canonical": "#F5F0E8", "tonalRamp": ["#4A4238", "#6B6153", "#8F8371", "#B3A793", "#D4CBB9", "#EDE6DA", "#F5F0E8", "#FBF8F3"] },
+      "freshness-resting": { "role": "tertiary", "displayName": "Resting Slate", "canonical": "#8B9DAF", "tonalRamp": ["#2A3340", "#3E4C5E", "#56687D", "#70849B", "#8B9DAF", "#A9B7C5", "#C8D1DB", "#E6EAEF"] },
+      "freshness-optimal": { "role": "tertiary", "displayName": "Peak Leaf", "canonical": "#7BA05B", "tonalRamp": ["#243119", "#3A4F28", "#526F39", "#66874A", "#7BA05B", "#9AB980", "#BFD4AB", "#E3EDD9"] },
+      "freshness-past": { "role": "tertiary", "displayName": "Past-Peak Clay", "canonical": "#A0695B", "tonalRamp": ["#33201B", "#4F332C", "#6F483F", "#8B5A4F", "#A0695B", "#BA8B7E", "#D5B2A8", "#EEDCD6"] },
+      "great-blue": { "role": "tertiary", "displayName": "Great Blue", "canonical": "#4F6FA5", "tonalRamp": ["#172131", "#26385A", "#354E7D", "#3F5A86", "#4F6FA5", "#7690BC", "#A3B4D4", "#D3DBEB"] }
+    },
+    "typographyMeta": {
+      "display": { "displayName": "Display", "purpose": "Tab page titles, one per screen. Playfair Display only appears on headings and bean names." },
+      "body": { "displayName": "Body", "purpose": "All data, numbers, buttons, labels. Inputs are 16px minimum to prevent iOS zoom-on-focus." }
+    },
+    "shadows": [
+      { "name": "rest", "value": "0 1px 3px rgba(44,24,16,0.06), 0 1px 2px rgba(44,24,16,0.04)", "purpose": "Cards at rest." },
+      { "name": "hover", "value": "0 2px 8px rgba(44,24,16,0.08), 0 1px 3px rgba(44,24,16,0.06)", "purpose": "Interactive lift, button hover." },
+      { "name": "raised", "value": "0 4px 16px rgba(44,24,16,0.10), 0 2px 6px rgba(44,24,16,0.06)", "purpose": "Card hover, dropdowns." },
+      { "name": "overlay", "value": "0 8px 30px rgba(44,24,16,0.14), 0 4px 10px rgba(44,24,16,0.08)", "purpose": "Modals and sheets only." }
+    ],
+    "motion": [
+      { "name": "ease-standard", "value": "all 0.2s ease", "purpose": "Default transition for hover, focus, and state changes." }
+    ],
+    "breakpoints": [
+      { "name": "shell-max", "value": "600px" },
+      { "name": "desktop-frame", "value": "768px" }
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "Espresso Ink on cream — the default action.",
+      "html": "<button class=\"ds-btn-primary\">Log Shot</button>",
+      "css": ".ds-btn-primary { display: inline-flex; align-items: center; justify-content: center; gap: 8px; padding: 12px 24px; min-height: 44px; border: none; border-radius: 10px; font-family: 'DM Sans', sans-serif; font-size: 15px; font-weight: 500; background: #2C1810; color: #F5F0E8; cursor: pointer; transition: all 0.2s ease; } .ds-btn-primary:hover { background: #3D2820; transform: translateY(-1px); box-shadow: 0 2px 8px rgba(44,24,16,0.08), 0 1px 3px rgba(44,24,16,0.06); } .ds-btn-primary:active { transform: translateY(0); }"
+    },
+    {
+      "name": "Amber Button",
+      "kind": "button",
+      "refersTo": "button-amber",
+      "description": "The warm CTA for add-bean and log-shot moments.",
+      "html": "<button class=\"ds-btn-amber\">Add Coffee Bean</button>",
+      "css": ".ds-btn-amber { display: inline-flex; align-items: center; justify-content: center; padding: 12px 24px; min-height: 44px; border: none; border-radius: 10px; font-family: 'DM Sans', sans-serif; font-size: 15px; font-weight: 600; background: #D4A574; color: #2C1810; cursor: pointer; transition: all 0.2s ease; } .ds-btn-amber:hover { background: #B8864E; color: #fff; }"
+    },
+    {
+      "name": "Ghost Button",
+      "kind": "button",
+      "refersTo": "button-ghost",
+      "description": "Quiet secondary action.",
+      "html": "<button class=\"ds-btn-ghost\">Cancel</button>",
+      "css": ".ds-btn-ghost { display: inline-flex; align-items: center; justify-content: center; padding: 12px 16px; min-height: 44px; border: none; border-radius: 10px; font-family: 'DM Sans', sans-serif; font-size: 15px; font-weight: 500; background: transparent; color: #6B5B4E; cursor: pointer; transition: all 0.2s ease; } .ds-btn-ghost:hover { background: rgba(44,24,16,0.04); }"
+    },
+    {
+      "name": "Text Input",
+      "kind": "input",
+      "refersTo": "input",
+      "description": "Card-white field with amber focus glow — the system's only glow.",
+      "html": "<input class=\"ds-input\" type=\"text\" placeholder=\"Bean name\">",
+      "css": ".ds-input { width: 100%; padding: 12px 14px; min-height: 44px; border: 1.5px solid rgba(44,24,16,0.12); border-radius: 10px; font-family: 'DM Sans', sans-serif; font-size: 16px; color: #2C1810; background: #fff; transition: border-color 0.2s ease, box-shadow 0.2s ease; } .ds-input:focus { outline: none; border-color: #D4A574; box-shadow: 0 0 0 3px rgba(212,165,116,0.15); } .ds-input::placeholder { color: #9B8B7E; }"
+    },
+    {
+      "name": "Stepper",
+      "kind": "custom",
+      "description": "Signature numeric input: [−][value][+] in one bordered container, 44px tap zones.",
+      "html": "<div class=\"ds-stepper\"><button class=\"ds-stepper-btn\">−</button><input class=\"ds-stepper-input\" value=\"18\"><button class=\"ds-stepper-btn\">+</button></div>",
+      "css": ".ds-stepper { display: flex; align-items: center; border: 1.5px solid rgba(44,24,16,0.12); border-radius: 10px; background: #fff; overflow: hidden; max-width: 160px; } .ds-stepper-btn { width: 44px; min-height: 44px; display: flex; align-items: center; justify-content: center; font-size: 18px; font-weight: 600; color: #2C1810; background: transparent; border: none; cursor: pointer; transition: background 0.15s ease; } .ds-stepper-btn:hover { background: rgba(44,24,16,0.06); } .ds-stepper-input { flex: 1; min-width: 0; padding: 12px 8px; border: none; border-left: 1.5px solid rgba(44,24,16,0.08); border-right: 1.5px solid rgba(44,24,16,0.08); font-family: 'DM Sans', sans-serif; font-size: 16px; color: #2C1810; background: transparent; text-align: center; }"
+    },
+    {
+      "name": "Bean Card",
+      "kind": "card",
+      "refersTo": "card",
+      "description": "One bean per card: serif name, sans metadata, freshness badge.",
+      "html": "<div class=\"ds-bean-card\"><div class=\"ds-bean-card-name\">Ethiopia Yirgacheffe</div><div class=\"ds-bean-card-roaster\">Heart Roasters</div><div class=\"ds-bean-card-date\">Roasted Jun 28</div><span class=\"ds-badge-optimal\">At Peak · Day 14</span></div>",
+      "css": ".ds-bean-card { position: relative; background: #fff; border-radius: 10px; padding: 16px; box-shadow: 0 1px 3px rgba(44,24,16,0.06), 0 1px 2px rgba(44,24,16,0.04); border: 1px solid rgba(44,24,16,0.07); cursor: pointer; transition: all 0.2s ease; font-family: 'DM Sans', sans-serif; } .ds-bean-card:hover { box-shadow: 0 4px 16px rgba(44,24,16,0.10), 0 2px 6px rgba(44,24,16,0.06); transform: translateY(-1px); } .ds-bean-card-name { font-family: 'Playfair Display', Georgia, serif; font-size: 18px; font-weight: 600; color: #2C1810; line-height: 1.3; } .ds-bean-card-roaster { font-size: 14px; color: #6B5B4E; } .ds-bean-card-date { font-size: 12px; color: #9B8B7E; margin: 2px 0 10px; } .ds-badge-optimal { display: inline-flex; align-items: center; gap: 5px; padding: 4px 10px; border-radius: 20px; font-size: 12px; font-weight: 500; background: rgba(123,160,91,0.12); color: #7BA05B; }"
+    },
+    {
+      "name": "Quality Badge",
+      "kind": "chip",
+      "refersTo": "badge",
+      "description": "State hue as text over the same hue at low opacity; label always names the state.",
+      "html": "<span class=\"ds-quality-great\">Great</span> <span class=\"ds-quality-perfect\">Perfect</span> <span class=\"ds-quality-okay\">Okay</span> <span class=\"ds-quality-bad\">Bad</span>",
+      "css": ".ds-quality-great, .ds-quality-perfect, .ds-quality-okay, .ds-quality-bad { display: inline-block; padding: 4px 10px; border-radius: 20px; font-family: 'DM Sans', sans-serif; font-size: 12px; font-weight: 500; } .ds-quality-great { background: rgba(79,111,165,0.14); color: #3F5A86; } .ds-quality-perfect { background: rgba(123,160,91,0.12); color: #7BA05B; } .ds-quality-okay { background: rgba(212,165,116,0.18); color: #B8864E; } .ds-quality-bad { background: rgba(160,105,91,0.12); color: #A0695B; }"
+    },
+    {
+      "name": "Tab Bar",
+      "kind": "nav",
+      "description": "Fixed bottom espresso bar; active tab glows amber.",
+      "html": "<nav class=\"ds-tabbar\"><button class=\"ds-tab ds-tab-active\">Home</button><button class=\"ds-tab\">Beans</button><button class=\"ds-tab\">Calendar</button><button class=\"ds-tab\">Stats</button></nav>",
+      "css": ".ds-tabbar { display: flex; justify-content: space-around; align-items: center; background: #2C1810; height: 64px; border-radius: 10px; box-shadow: 0 -2px 20px rgba(44,24,16,0.15); } .ds-tab { background: none; border: none; color: rgba(245,240,232,0.5); font-family: 'DM Sans', sans-serif; font-size: 11px; font-weight: 500; letter-spacing: 0.3px; padding: 8px 16px; min-width: 64px; cursor: pointer; transition: color 0.2s ease; } .ds-tab:hover { color: #E8C9A0; } .ds-tab-active { color: #D4A574; }"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Barista's Notebook",
+    "overview": "Coffee Journal looks and feels like a well-kept paper notebook that lives next to the espresso machine: warm pages, dark ink, exact numbers written in a steady hand. The palette is literal coffee — espresso ink on steamed-cream paper with caramel-amber accents — but the discipline is a working tool's, not a café's décor. Serif headings give the journal its handwritten warmth; DM Sans carries the data cleanly.",
+    "keyCharacteristics": [
+      "Warm, calm, precise — café warmth carried by type and color, not ornament",
+      "Mobile-first single column (max 600px), thumb-reachable, 44px minimum targets",
+      "Semantic color: hue = state, never mood",
+      "Paper-like depth: espresso-tinted shadows, cards resting on cream",
+      "Subtle grain: a faint SVG noise texture keeps the cream from feeling sterile"
+    ],
+    "rules": [
+      { "name": "The One-Hue-Ink Rule", "body": "All dark UI — text, nav, borders, shadows — derives from Espresso Ink (#2C1810). Pure black and cool gray are prohibited anywhere in the interface.", "section": "colors" },
+      { "name": "The Semantic Color Rule", "body": "Amber is the only color allowed to be 'just accent'. Slate, leaf, clay, and blue may appear only when they encode freshness, quality, or a calendar bean identity.", "section": "colors" },
+      { "name": "The Serif-Is-For-Names Rule", "body": "Playfair Display appears only on headings and bean names. Data, numbers, buttons, and labels are always DM Sans. A serif number in this app is a bug.", "section": "typography" },
+      { "name": "The Warm Shadow Rule", "body": "Shadow color is always rgba(44,24,16, α). A neutral black shadow is prohibited — it instantly cools the page and breaks the paper illusion.", "section": "elevation" }
+    ],
+    "dos": [
+      "Do derive every dark pixel from Espresso Ink (#2C1810) — text, borders, shadows, nav.",
+      "Do keep touch targets at 44px minimum and form text at 16px; the user is standing at a machine.",
+      "Do pair every state color with a text label (freshness and quality are never color-only).",
+      "Do use SVG icons drawn in the ink color; keep them at 20–22px.",
+      "Do keep stats copy observational — facts, no cheering.",
+      "Do respect prefers-reduced-motion: hover lifts and pane transitions collapse to instant state changes."
+    ],
+    "donts": [
+      "Don't ship fitness-app gamification: no streak flames, badges, confetti, progress rings, or records-to-beat.",
+      "Don't drift toward the generic SaaS dashboard: no cool grays, KPI hero cards, or sparklines-everywhere.",
+      "Don't go café-POS dense — one column, one card per record, generous padding.",
+      "Don't go Instagram-café twee: no script fonts, no decorative illustrations, no latte-art motifs.",
+      "Don't use emoji anywhere in the UI — icons are SVG, always.",
+      "Don't use pure black, cool-gray borders, or neutral black shadows; warmth is structural, not optional.",
+      "Don't remove substance while polishing: shot-card bars, blue 'Great', Home stat tiles, and portafilter-first ordering are intentional — restyle, never delete."
+    ]
+  }
+}

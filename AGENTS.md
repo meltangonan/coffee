@@ -1,6 +1,6 @@
-# CLAUDE.md
+# AGENTS.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+Canonical instructions for AI coding agents (Codex, Claude Code, etc.) working in this repository. `CLAUDE.md` imports this file — edit here, never there.
 
 ## Your Rules
 - Ask: "Would a senior engineer say this is overcomplicated?" If yes, simplify
@@ -11,6 +11,11 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## Project Overview
 
 Coffee Bean Tracker — a mobile-first single-page application for tracking espresso beans, dialing in shots, monitoring freshness windows, and logging daily brewing. Built as a zero-dependency, zero-build single HTML file using Alpine.js 3.x with localStorage persistence. PWA-enabled for home screen install. No backend, no authentication (single-user personal tool).
+
+## Design Context
+
+- `PRODUCT.md` — design strategy: register, users, positioning, brand personality, anti-references, design principles, accessibility baseline. Read before any UX/UI work.
+- `DESIGN.md` — the visual system: tokens (colors, typography, radii, spacing), component specs, named rules, do's and don'ts. Machine-readable extensions live in `.impeccable/design.json`.
 
 ## Running the App
 
@@ -30,11 +35,11 @@ Serve the directory and open:
 
 ## Architecture
 
-The entire application lives in `index.html` (~2,300 lines) with three inline sections:
+The entire application lives in `index.html` (~4,200 lines) with three inline sections:
 
-1. **CSS** (lines ~31-498): Design system with CSS variables, component styles, responsive layout, and spacing utilities. Uses "Warm Industrial Cafe" aesthetic with Playfair Display (headings) and DM Sans (body) fonts.
-2. **HTML** (lines ~500-1330): Alpine.js template directives. Root element uses `x-data="app()" x-init="init()"`. Tab-based navigation (Home, Beans, Calendar, Stats) with no routing library.
-3. **JavaScript** (lines ~1332-2301): Alpine components, helper functions, and main `app()` object.
+1. **CSS**: Design system with CSS variables, component styles, responsive layout, and spacing utilities. Uses "Warm Industrial Cafe" aesthetic with Playfair Display (headings) and DM Sans (body) fonts.
+2. **HTML**: Alpine.js template directives. Root element uses `x-data="app()" x-init="init()"`. Tab-based navigation (Home, Beans, Calendar, Stats) with no routing library.
+3. **JavaScript**: Alpine components, helper functions, and main `app()` object.
 
 ### File Structure
 
@@ -45,6 +50,10 @@ icons/              — App icons (SVG, PNG at 16/32/180/192/512px)
 tests.html          — Unit tests
 test-e2e.html       — Integration tests (iframe-based)
 brainstorms/        — Design docs and decision records
+AGENTS.md           — Canonical agent instructions (this file)
+CLAUDE.md           — Imports AGENTS.md for Claude Code
+PRODUCT.md          — Design strategy (who/what/why)
+DESIGN.md           — Visual design system spec
 ```
 
 ### Core Abstractions
@@ -64,6 +73,22 @@ brainstorms/        — Design docs and decision records
 const FRESHNESS_RESTING_DAYS = 7;   // Days 0-6: Resting
 const FRESHNESS_OPTIMAL_DAYS = 21;  // Days 7-21: At Peak
                                     // Days 22+: Past Peak
+
+// Espresso extraction standards (universal targets)
+const EXTRACTION_TIME_FAST = 22;           // Below: under-extracted
+const EXTRACTION_TIME_SLIGHTLY_FAST = 25;  // 22-24: slightly fast
+const EXTRACTION_TIME_STANDARD_MAX = 30;   // 25-30: standard range
+const EXTRACTION_TIME_SLIGHTLY_SLOW = 35;  // 31-35: slightly slow
+
+const BREW_RATIO_VERY_LOW = 1.5;           // Below: very low yield
+const BREW_RATIO_LOW = 1.8;               // 1.5-1.79: low yield
+const BREW_RATIO_STANDARD_MAX = 2.2;      // 1.8-2.2: standard range
+const BREW_RATIO_HIGH = 2.5;              // 2.21-2.5: high yield
+
+// Stats thresholds
+const STATS_HEATMAP_WEEKS = 13;        // 12 full Mon-start weeks + current week
+const STATS_SWEET_SPOT_MIN_SHOTS = 10; // sweet spot needs this many great/perfect shots
+const STATS_ZONES_MIN_SHOTS = 10;      // extraction zones need this many timed shots
 ```
 
 ### Key Functional Modules (all methods on the `app()` object)
@@ -74,11 +99,12 @@ const FRESHNESS_OPTIMAL_DAYS = 21;  // Days 7-21: At Peak
 - **Delete Confirmation**: `openDeleteBeanDialog`, `closeDeleteBeanDialog`, `confirmDeleteBean` — two-step confirmation via modal dialog before deleting a bean and its shots
 - **Shot Logging**: `saveShot`, `deleteShot`, `openShotForm`, `openShotFormForEdit`, `closeShotForm`, `getShotFormDefault`, `getShotsForBean`, `getLastShot`; shot form includes optional `shotDate` (date picker) for backdating
 - **Home / Daily Tracking**: `onDailyBeanSelect`, `openShotFormFromDaily`, `openShotFormFromBean`
-- **Helpers**: `getBeanById`, `getBeanOccurrence` (occurrence count for beans with same name+roaster), `shotQualityLabel`, `shotQualityClass`, `normalizeRating` (converts legacy numeric ratings to string labels)
+- **Helpers**: `getBeanById`, `getBeanOccurrence` (occurrence count for beans with same name+roaster), `shotQualityLabel`, `shotQualityClass`, `normalizeRating` (converts legacy numeric ratings to string labels), `getShotAssessment` (returns `{ status, label }` — evaluates shot against espresso standards for extraction time and brew ratio)
 - **Freshness**: `getFreshness` — returns `{ status, label, detail }`
 - **Tab Navigation**: `activateTab` (switches tab, resets beans view to list, scrolls to top), `tabPaneStyle` (controls visibility and swipe animation transforms)
 - **Tab Swipe (Touch)**: `onTabSwipeStart`, `onTabSwipeMove`, `onTabSwipeEnd`, `resetTabSwipe` — edge-initiated horizontal swipe gesture to navigate between tabs on touch devices. Includes axis lock (horizontal vs vertical), boundary resistance, and blocked-target detection (inputs, modals, existing swipe containers).
 - **Calendar**: `calendarWeeks`, `calendarBars`, `calendarBarsUnique`, `calendarBarsForWeek`, `getRangeBandStyle`
+- **Stats (pure compute + getters)**: pure top-level functions `computeShotCounts`, `computeMostPulledBeans`, `computeQualityBreakdown`, `computeBrewDayRuns`, `computeHeatmapWeeks`, `computeSweetSpot` (+ `getPercentileValue`), `computeExtractionTimeZones` (mirrors `getShotAssessment`'s time-branch boundaries), `computeMonthlyShotVolume`, `computeMonthlyRecap` (today-relative ones take `refDate = new Date()`), wired as `stats*` getters on `app()`; testable nodes use `data-testid="stats-*"`. All shot-date logic goes through `getShotStatsDate` (`shotDate || createdAt`); weeks start Monday via `getWeekStart`. Stats tab card order: Brew rhythm (heatmap + run facts) → Shots logged → Sweet spot (ratio/time quartile bands from great+perfect shots; hidden below `STATS_SWEET_SPOT_MIN_SHOTS`) → Extraction zones (time-band distribution; hidden below `STATS_ZONES_MIN_SHOTS`) → Monthly recap (opens with a 12-month volume bar chart, recap month highlighted; hidden if last completed month is empty) → Most pulled beans → Quality breakdown. Tone for stats copy is observational, never motivational: facts about the user, no records-to-beat, nudges, goals, or exclamation marks.
 - **Computed Properties**: `recentShots` (latest three shots across beans, ordered by pull date), `selectedBean`, `sortedBeans`, `currentBeans`, `archivedBeans`, `todayFormatted`, `calendarMonthLabel`; `getUniqueBeanSources()` for "Fill from previous bean" picker (de-duped by name+roaster, best representative; supports `{ archivedOnly: true }` option for the Home modal context)
 
 ### Data Model
@@ -117,8 +143,8 @@ Legacy localStorage/backups may contain `optimalGrindSize`, `optimalDoseIn`, `op
   beanId: string,          // foreign key to bean.id
   grindSize: number,       // typically 1-30
   doseIn: number,          // grams, typically 14-22
-  yieldOut: number|null,   // grams, typically 28-50
-  extractionTime: number|null, // seconds, typically 20-35
+  yieldOut: number,          // grams, typically 28-50
+  extractionTime: number,    // seconds, typically 20-35
   rating: string|null,     // 'bad'|'okay'|'great'|'perfect'
   notes: string,
   shotDate: string,        // ISO date "YYYY-MM-DD" — when the shot was made (defaults to today; backfill from createdAt if missing)
@@ -137,7 +163,7 @@ Legacy localStorage/backups may contain `optimalGrindSize`, `optimalDoseIn`, `op
 
 **Invariants:**
 - A bean always has `name` and `roaster` (enforced in `saveBean`)
-- A shot always has a valid `beanId` (enforced in `saveShot`)
+- A shot always has a valid `beanId`, `grindSize`, `doseIn`, `yieldOut`, and `extractionTime` (all > 0, enforced in `saveShot` via defaults and in `normalizeImportedShot` via validation/backfill)
 - Archived beans don't appear in `currentBeans` or the daily picker
 - Archiving a bean closes any open shot form referencing it
 - Shot form defaults respect edited values when editing (via `getShotFormDefault`)
@@ -186,7 +212,7 @@ Notes: Sweet with chocolate notes...        [Perfect]
 - Ratio calculated as `yieldOut / doseIn`, shown as `1:X.X`
 - Extraction time appended as `· Xs` (only if present)
 - Notes truncated with ellipsis, max 80 characters
-- Quality badge: Bad / Okay / Perfect
+- Quality badge: Bad / Okay / Great / Perfect
 
 **Bean Form — Two Contexts:**
 - **Beans tab** (`beansView = 'form'`): Inline form with "Fill from previous bean" showing all beans (current + archived)
@@ -199,7 +225,7 @@ Notes: Sweet with chocolate notes...        [Perfect]
 
 ### Design Tokens
 
-CSS variables define the full design system:
+CSS variables define the full design system (see `DESIGN.md` for the complete spec):
 
 ```css
 /* Colors */
@@ -262,7 +288,7 @@ Calendar bar colors are defined in JS `BAR_COLORS` array. Spacing utilities (`.m
 
 ### When Adding Extraction Time / New Shot Fields
 - Shot form defaults: grindSize=5, doseIn=18, yieldOut=36, extractionTime=25
-- New fields should be nullable (optional) — the app handles null gracefully in display
+- All four numeric shot fields (grindSize, doseIn, yieldOut, extractionTime) are required and always > 0 — new/edit shot saves resolve empty values to valid numbers, and imports backfill legacy missing values while rejecting explicit invalid numeric inputs
 - `init()` runs migrations on load to normalize new shot fields on existing data
 
 ### When Modifying Tab Navigation
@@ -273,6 +299,8 @@ Calendar bar colors are defined in JS `BAR_COLORS` array. Spacing utilities (`.m
 
 ## Documentation
 
+- `PRODUCT.md` — design strategy (users, positioning, personality, anti-references, principles)
+- `DESIGN.md` — visual design system spec (tokens, components, named rules)
 - `brainstorms/2026-01-25-coffee-bean-tracker-prd.md` — Product requirements
 - `brainstorms/2026-01-25-coffee-bean-tracker-brainstorm.md` — Design decisions
 - `brainstorms/2026-02-04-coffee-bean-tracker-audit.md` — PRD/design audit and next steps
@@ -281,10 +309,15 @@ Calendar bar colors are defined in JS `BAR_COLORS` array. Spacing utilities (`.m
 - `brainstorms/2026-02-06-today-add-bean-modal-brainstorm.md` — Add Bean modal from Today tab
 - `brainstorms/2026-02-06-cross-device-sync-code-brainstorm.md` — Cross-device sync (code approach)
 - `brainstorms/2026-02-06-cross-device-auth-brainstorm.md` — Cross-device auth considerations
+- `brainstorms/2026-06-09-wrapped-stats-spec.md` — Wrapped-style stats spec (closed; shipped June 2026 with post-ship revisions recorded in its header)
 
 ## Testing
 
-- `tests.html` — Unit tests for pure functions (date helpers, rating normalization, freshness logic)
+- `tests.html` — Unit tests for pure functions (date helpers, rating normalization, freshness logic, stats compute functions)
 - `test-e2e.html` — Integration tests that load the actual app and verify Alpine state/behavior
 
 Run by opening in browser after starting local server.
+
+`tests.html` does not import from the app — it carries verbatim copies of the pure helper
+functions (its script block is headed "Helper functions (extracted from app)"). When adding
+or changing a pure function in `index.html`, copy it into `tests.html` in the same change.

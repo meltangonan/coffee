@@ -98,7 +98,8 @@ coffee/
 ├── index.html                  # legacy single-file app (kept for fallback)
 ├── PRD.md
 ├── SPEC.md
-└── CLAUDE.md
+├── AGENTS.md                   # canonical agent instructions
+└── CLAUDE.md                   # imports AGENTS.md
 ```
 
 ## Data Model
