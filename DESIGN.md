@@ -9,14 +9,34 @@ colors:
   surface-white: "#FFFFFF"
   amber: "#D4A574"
   amber-light: "#E8C9A0"
-  amber-dark: "#B8864E"
+  amber-dark: "#7A542B"
   text-secondary: "#6B5B4E"
-  text-muted: "#9B8B7E"
-  freshness-resting: "#8B9DAF"
-  freshness-optimal: "#7BA05B"
-  freshness-past: "#A0695B"
+  text-muted: "#6E5D50"
+  freshness-resting: "#516779"
+  freshness-optimal: "#4E6F37"
+  freshness-past: "#824E43"
   great-blue: "#4F6FA5"
 typography:
+  chart-micro:
+    fontFamily: "DM Sans, Helvetica Neue, sans-serif"
+    fontSize: "9px"
+    fontWeight: 700
+    lineHeight: 1.2
+  chart-axis:
+    fontFamily: "DM Sans, Helvetica Neue, sans-serif"
+    fontSize: "10px"
+    fontWeight: 600
+    lineHeight: 1.2
+  micro-label:
+    fontFamily: "DM Sans, Helvetica Neue, sans-serif"
+    fontSize: "11px"
+    fontWeight: 600
+    lineHeight: 1.3
+  caption:
+    fontFamily: "DM Sans, Helvetica Neue, sans-serif"
+    fontSize: "12px"
+    fontWeight: 500
+    lineHeight: 1.4
   display:
     fontFamily: "Playfair Display, Georgia, serif"
     fontSize: "28px"
@@ -42,8 +62,61 @@ typography:
     fontSize: "13px"
     fontWeight: 500
     lineHeight: 1.4
+  metadata:
+    fontFamily: "DM Sans, Helvetica Neue, sans-serif"
+    fontSize: "14px"
+    fontWeight: 400
+    lineHeight: 1.5
+  input:
+    fontFamily: "DM Sans, Helvetica Neue, sans-serif"
+    fontSize: "16px"
+    fontWeight: 400
+    lineHeight: 1.5
+  datepicker-title:
+    fontFamily: "Playfair Display, Georgia, serif"
+    fontSize: "17px"
+    fontWeight: 600
+    lineHeight: 1.3
+  compact-title:
+    fontFamily: "Playfair Display, Georgia, serif"
+    fontSize: "20px"
+    fontWeight: 600
+    lineHeight: 1.3
+  panel-title:
+    fontFamily: "Playfair Display, Georgia, serif"
+    fontSize: "21px"
+    fontWeight: 600
+    lineHeight: 1.3
+  metric:
+    fontFamily: "Playfair Display, Georgia, serif"
+    fontSize: "24px"
+    fontWeight: 700
+    lineHeight: 1.2
+  empty-title:
+    fontFamily: "Playfair Display, Georgia, serif"
+    fontSize: "26px"
+    fontWeight: 600
+    lineHeight: 1.2
+  home-display:
+    fontFamily: "Playfair Display, Georgia, serif"
+    fontSize: "32px"
+    fontWeight: 700
+    lineHeight: 1.1
+  desktop-display:
+    fontFamily: "Playfair Display, Georgia, serif"
+    fontSize: "34px"
+    fontWeight: 700
+    lineHeight: 1.2
+  desktop-home-display:
+    fontFamily: "Playfair Display, Georgia, serif"
+    fontSize: "38px"
+    fontWeight: 700
+    lineHeight: 1.1
 rounded:
+  chart: "3px"
+  micro: "4px"
   sm: "6px"
+  counter: "9px"
   md: "10px"
   lg: "14px"
   pill: "20px"
@@ -113,19 +186,19 @@ Literal coffee tones as neutrals, with a small set of semantic hues that always 
 - **Espresso Ink** (#2C1810): The brand's dark brown — primary text, the tab bar, primary buttons, and heading color. It is the "ink" of the notebook; nearly every dark pixel in the app is this hue. Hover state lightens to **Warmed Espresso** (#3D2820).
 
 ### Secondary
-- **Caramel Amber** (#D4A574): The single accent. Active tab tint, focused input borders, the amber CTA button, and "Okay" quality tint. Ramp: **Light Caramel** (#E8C9A0) for hovers, **Toasted Caramel** (#B8864E) for text-on-light and active states.
+- **Caramel Amber** (#D4A574): The single accent. Active tab tint, focused input borders, the amber CTA button, and "Okay" quality tint. Ramp: **Light Caramel** (#E8C9A0) for hovers and **Deep Caramel** (#7A542B) for accessible text-on-light and active states.
 
 ### Tertiary (semantic state hues — never decorative)
-- **Resting Slate** (#8B9DAF): Freshness "Resting" (days 0–6). Cool and patient.
-- **Peak Leaf** (#7BA05B): Freshness "At Peak" (days 7–21) and "Perfect" shot quality.
-- **Past-Peak Clay** (#A0695B): Freshness "Past Peak" (day 22+), "Bad" shot quality, and destructive actions.
+- **Resting Slate** (#516779): Freshness "Resting" (days 0–6). Cool and patient.
+- **Peak Leaf** (#4E6F37): Freshness "At Peak" (days 7–21) and "Perfect" shot quality.
+- **Past-Peak Clay** (#824E43): Freshness "Past Peak" (day 22+), "Bad" shot quality, and destructive actions.
 - **Great Blue** (#4F6FA5): "Great" shot quality. Deliberately distinct from Peak Leaf so Great and Perfect never blur together. Each state hue has a matched 12–18% opacity tint for badge backgrounds.
 
 ### Neutral
 - **Steamed Cream** (#F5F0E8): The page background — the notebook's paper, textured with faint grain.
 - **Cream Shadow** (#EDE6DA): Recessed surfaces (legend wells, grouped lists).
 - **Card White** (#FFFFFF): Card and input surfaces, floating on the cream.
-- **Roast Brown** (#6B5B4E): Secondary text. **Faded Roast** (#9B8B7E): Muted text, placeholders, timestamps.
+- **Roast Brown** (#6B5B4E): Secondary text. **Muted Roast** (#6E5D50): timestamps, placeholders, and compact secondary information. Muted text remains WCAG-AA readable; hierarchy comes from size and weight rather than low contrast.
 - Borders are espresso at low alpha (rgba(44,24,16,0.06–0.15)), never gray.
 
 ### Named Rules
@@ -146,6 +219,7 @@ Literal coffee tones as neutrals, with a small set of semantic hues that always 
 - **Title / `.heading-md`** (600, 18px, 1.3): Card titles — bean names use this voice.
 - **Body** (400–500, 15–16px, ~1.5): DM Sans. Form inputs are 16px minimum (prevents iOS zoom-on-focus).
 - **Label** (500, 11–13px, +0.2–0.3px tracking): Badges, tab labels, timestamps, legend text — always DM Sans, never the serif.
+- **Compact data steps** (9, 10, 11, 12, 13, 14, 15, 16px): Used deliberately for chart axes, metadata, controls, and body copy. Reserve 9–10px for supplementary chart labels; touch controls and form inputs remain 14–16px.
 
 ### Named Rules
 **The Serif-Is-For-Names Rule.** Playfair Display appears only on headings and bean names. Data, numbers, buttons, and labels are always DM Sans. A serif number in this app is a bug.

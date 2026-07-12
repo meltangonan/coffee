@@ -526,7 +526,7 @@ async function runTests() {
       // Home header now leads with the current weekday instead of a static "Home" label
       assertEqual(doc.querySelector('[data-testid="home-heading"]').textContent.trim(), new Date().toLocaleDateString('en-US', { weekday: 'long' }));
       assertEqual(doc.querySelector('[data-testid="home-total-shots"]').textContent.trim(), '4');
-      assertEqual(doc.querySelector('[data-testid="home-current-streak"]').textContent.trim(), '4 days');
+      assertEqual(doc.querySelector('[data-testid="home-current-run"]').textContent.trim(), '4 days');
       assertEqual(doc.querySelectorAll('[data-testid="home-recent-shot"]').length, 3);
       assert(doc.querySelector('[data-testid="home-recent-shot-home-today"]').textContent.includes(app.formatDate(day(0))));
       assert(doc.querySelector('[data-testid="home-recent-shot-home-yesterday"]').textContent.includes(app.formatDate(day(-1))));
@@ -534,18 +534,18 @@ async function runTests() {
 
       app.shots = [makeShot('home-one-day', 'e2e-active-bean', 0)];
       await wait(20);
-      assertEqual(doc.querySelector('[data-testid="home-current-streak"]').textContent.trim(), '1 day');
+      assertEqual(doc.querySelector('[data-testid="home-current-run"]').textContent.trim(), '1 day');
 
       app.shots = [makeShot('home-expired', 'e2e-active-bean', -2)];
       await wait(20);
-      assertEqual(doc.querySelector('[data-testid="home-current-streak"]').textContent.trim(), '0 days');
+      assertEqual(doc.querySelector('[data-testid="home-current-run"]').textContent.trim(), '0 days');
 
       app.shots = [];
       app.dailySelectedBeanId = 'e2e-active-bean';
       app.onDailyBeanSelect();
       await wait(20);
       assertEqual(doc.querySelector('[data-testid="home-total-shots"]').textContent.trim(), '0');
-      assertEqual(doc.querySelector('[data-testid="home-current-streak"]').textContent.trim(), '0 days');
+      assertEqual(doc.querySelector('[data-testid="home-current-run"]').textContent.trim(), '0 days');
       assert(appWindow.getComputedStyle(doc.querySelector('[data-testid="home-empty-state"]')).display !== 'none', 'Empty state should remain visible after bean selection');
     } finally {
       app.shots = originalShots;
@@ -1577,13 +1577,19 @@ async function runTests() {
     assertEqual(invalidExtraction, null);
   });
 
-  await test('deleteShot removes shot', async () => {
+  await test('deleteShot removes shot and undoDeleteShot restores it', async () => {
     const shot = app.shots[0];
     const initialCount = app.shots.length;
     app.deleteShot(shot.id);
     assertEqual(app.shots.length, initialCount - 1);
     const deleted = app.shots.find(s => s.id === shot.id);
     assert(!deleted, 'Shot should be deleted');
+    assertEqual(app.shotDeleteNotice, 'Shot deleted');
+
+    app.undoDeleteShot();
+    assertEqual(app.shots.length, initialCount);
+    assert(app.shots.some(s => s.id === shot.id), 'Shot should be restored');
+    assertEqual(app.shotDeleteNotice, 'Shot restored');
   });
 
   await test('deleteBean removes bean and related shots', async () => {

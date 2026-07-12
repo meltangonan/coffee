@@ -197,7 +197,7 @@ The date picker uses a capture-phase document click listener for outside-click d
 - Disabled for archived beans
 
 **Confirmation Dialogs:**
-- **Shot deletion**: Local `confirmDelete` state — first tap shows "Delete?" confirmation, second tap deletes. Used in both Home and Bean detail views.
+- **Shot deletion**: Swipe reveals the Delete action; deleting shows a five-second global Undo notice. Used in both Home and Bean detail views.
 - **Bean deletion**: Modal dialog (`showDeleteBeanDialog`) with warning icon, bean name, shot count, Cancel/Delete buttons. Triggered from bean detail view.
 
 **Shot History Toggle:**
@@ -232,9 +232,11 @@ CSS variables define the full design system (see `DESIGN.md` for the complete sp
 --espresso: #2C1810        /* Dark brown, primary text */
 --cream: #F5F0E8           /* Background */
 --amber: #D4A574           /* Accent, highlights */
---freshness-resting: #8B9DAF
---freshness-optimal: #7BA05B
---freshness-past: #A0695B
+--amber-dark: #7A542B      /* Accessible links and active text */
+--text-muted: #6E5D50      /* AA-safe secondary metadata */
+--freshness-resting: #516779
+--freshness-optimal: #4E6F37
+--freshness-past: #824E43
 
 /* Typography */
 --font-heading: 'Playfair Display'

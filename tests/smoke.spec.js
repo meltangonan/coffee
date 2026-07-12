@@ -104,9 +104,10 @@ test('Home shows top stats and the three most recent shots with pull dates', asy
   await seedCoffeeData(page, { shots });
   await page.reload();
 
-  await expect(page.getByTestId('home-heading')).toHaveText('Home');
+  const expectedWeekday = await page.evaluate(() => new Date().toLocaleDateString('en-US', { weekday: 'long' }));
+  await expect(page.getByTestId('home-heading')).toHaveText(expectedWeekday);
   await expect(page.getByTestId('home-total-shots')).toHaveText('4');
-  await expect(page.getByTestId('home-current-streak')).toHaveText('4 days');
+  await expect(page.getByTestId('home-current-run')).toHaveText('4 days');
   await expect(page.getByTestId('home-recent-shot')).toHaveCount(3);
   await expect(page.getByTestId('home-recent-shot-home-shot-0')).toContainText(
     new Date(day(0) + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
