@@ -2,16 +2,17 @@
 name: Coffee Journal
 description: A lightweight local-first journal for home espresso — warm, calm, precise.
 colors:
-  espresso: "#2C1810"
-  espresso-light: "#3D2820"
-  cream: "#F5F0E8"
-  cream-dark: "#EDE6DA"
-  surface-white: "#FFFFFF"
-  amber: "#D4A574"
-  amber-light: "#E8C9A0"
-  amber-dark: "#7A542B"
-  text-secondary: "#6B5B4E"
-  text-muted: "#6E5D50"
+  espresso: "#2B1C17"
+  espresso-light: "#3A2923"
+  cream: "#F4F0E9"
+  cream-dark: "#EAE3D9"
+  surface-white: "#FFFDF9"
+  amber: "#B77A4A"
+  amber-light: "#D8B28D"
+  amber-dark: "#9A6840"
+  text-secondary: "#675850"
+  text-muted: "#6F6058"
+  rule: "#DDD4C8"
   freshness-resting: "#516779"
   freshness-optimal: "#4E6F37"
   freshness-past: "#824E43"
@@ -38,20 +39,20 @@ typography:
     fontWeight: 500
     lineHeight: 1.4
   display:
-    fontFamily: "Playfair Display, Georgia, serif"
+    fontFamily: "Newsreader, Georgia, serif"
     fontSize: "28px"
-    fontWeight: 700
-    lineHeight: 1.2
+    fontWeight: 600
+    lineHeight: 1.15
   headline:
-    fontFamily: "Playfair Display, Georgia, serif"
+    fontFamily: "Newsreader, Georgia, serif"
     fontSize: "22px"
     fontWeight: 600
-    lineHeight: 1.3
+    lineHeight: 1.2
   title:
-    fontFamily: "Playfair Display, Georgia, serif"
+    fontFamily: "Newsreader, Georgia, serif"
     fontSize: "18px"
     fontWeight: 600
-    lineHeight: 1.3
+    lineHeight: 1.25
   body:
     fontFamily: "DM Sans, Helvetica Neue, sans-serif"
     fontSize: "15px"
@@ -73,42 +74,42 @@ typography:
     fontWeight: 400
     lineHeight: 1.5
   datepicker-title:
-    fontFamily: "Playfair Display, Georgia, serif"
+    fontFamily: "Newsreader, Georgia, serif"
     fontSize: "17px"
     fontWeight: 600
     lineHeight: 1.3
   compact-title:
-    fontFamily: "Playfair Display, Georgia, serif"
+    fontFamily: "Newsreader, Georgia, serif"
     fontSize: "20px"
     fontWeight: 600
     lineHeight: 1.3
   panel-title:
-    fontFamily: "Playfair Display, Georgia, serif"
+    fontFamily: "Newsreader, Georgia, serif"
     fontSize: "21px"
     fontWeight: 600
     lineHeight: 1.3
   metric:
-    fontFamily: "Playfair Display, Georgia, serif"
+    fontFamily: "DM Sans, Helvetica Neue, sans-serif"
     fontSize: "24px"
     fontWeight: 700
     lineHeight: 1.2
   empty-title:
-    fontFamily: "Playfair Display, Georgia, serif"
+    fontFamily: "Newsreader, Georgia, serif"
     fontSize: "26px"
     fontWeight: 600
     lineHeight: 1.2
   home-display:
-    fontFamily: "Playfair Display, Georgia, serif"
+    fontFamily: "Newsreader, Georgia, serif"
     fontSize: "32px"
     fontWeight: 700
     lineHeight: 1.1
   desktop-display:
-    fontFamily: "Playfair Display, Georgia, serif"
+    fontFamily: "Newsreader, Georgia, serif"
     fontSize: "34px"
     fontWeight: 700
     lineHeight: 1.2
   desktop-home-display:
-    fontFamily: "Playfair Display, Georgia, serif"
+    fontFamily: "Newsreader, Georgia, serif"
     fontSize: "38px"
     fontWeight: 700
     lineHeight: 1.1
@@ -116,8 +117,10 @@ rounded:
   chart: "3px"
   micro: "4px"
   sm: "6px"
+  control: "8px"
   counter: "9px"
   md: "10px"
+  panel: "12px"
   lg: "14px"
   pill: "20px"
 spacing:
@@ -152,10 +155,10 @@ components:
     padding: "12px 14px"
     height: "44px"
   card:
-    backgroundColor: "{colors.surface-white}"
+    backgroundColor: "transparent"
     textColor: "{colors.espresso}"
-    rounded: "{rounded.md}"
-    padding: "16px"
+    rounded: "0"
+    padding: "14px 0"
   badge:
     rounded: "{rounded.pill}"
     padding: "4px 10px"
@@ -165,28 +168,29 @@ components:
 
 ## 1. Overview
 
-**Creative North Star: "The Barista's Notebook"**
+**Creative North Star: "The Quiet Logbook"**
 
-Coffee Journal looks and feels like a well-kept paper notebook that lives next to the espresso machine: warm pages, dark ink, exact numbers written in a steady hand. The palette is literal coffee — espresso ink on steamed-cream paper with caramel-amber accents — but the discipline is a working tool's, not a café's décor. Serif headings (Playfair Display) give the journal its handwritten warmth; DM Sans carries the data cleanly. Density is generous: one column, big touch targets, room to breathe, because the user has one free hand and ten seconds.
+Coffee Journal feels like a precise countertop logbook: warm enough to belong beside the espresso machine, disciplined enough to disappear while the user records a shot. The interface does not imitate paper. Its character comes from warm mineral surfaces, espresso ink, a quiet serif for names, aligned measurements, and fine rules that make records easy to scan. Newsreader carries page titles and bean names; DM Sans carries controls, data, and every number.
 
 The system explicitly rejects the four anti-references from PRODUCT.md: fitness-app gamification, café-POS density, the generic cool-gray SaaS dashboard, and Instagram-café twee. Color is never decorative cheer; every non-neutral hue in the system means something (freshness state, shot quality, a bean's calendar ribbon).
 
 **Key Characteristics:**
-- Warm, calm, precise — café warmth carried by type and color, not ornament
+- Warm, calm, precise — café warmth carried by type and color, never costume
 - Mobile-first single column (max 600px), thumb-reachable, 44px minimum targets
 - Semantic color: hue = state, never mood
-- Paper-like depth: espresso-tinted shadows, cards resting on cream
-- Subtle grain: a faint SVG noise texture on the body background keeps the cream from feeling sterile
+- Open-ledger structure: whitespace and hairlines group records before containers do
+- Bound sections only where containment helps interaction, comparison, or focus
+- No paper grain, café illustration, ornamental texture, or decorative elevation
 
 ## 2. Colors
 
-Literal coffee tones as neutrals, with a small set of semantic hues that always carry meaning.
+Coffee-derived neutrals remain recognizable, but the palette is less yellow and more mineral. Non-neutral hues always carry meaning.
 
 ### Primary
-- **Espresso Ink** (#2C1810): The brand's dark brown — primary text, the tab bar, primary buttons, and heading color. It is the "ink" of the notebook; nearly every dark pixel in the app is this hue. Hover state lightens to **Warmed Espresso** (#3D2820).
+- **Espresso Ink** (#2B1C17): The brand's dark brown — primary text, the tab bar, primary buttons, and heading color. It is the logbook's ink; nearly every dark pixel in the app derives from this hue. Hover state lightens to **Warmed Espresso** (#3A2923).
 
 ### Secondary
-- **Caramel Amber** (#D4A574): The single accent. Active tab tint, focused input borders, the amber CTA button, and "Okay" quality tint. Ramp: **Light Caramel** (#E8C9A0) for hovers and **Deep Caramel** (#7A542B) for accessible text-on-light and active states.
+- **Deep Caramel** (#9A6840): The single brand accent. It marks primary actions, active navigation, links, and focus. It is deliberately rarer and deeper than the previous amber. **Caramel** (#B77A4A) fills primary warm actions; **Light Caramel** (#D8B28D) supports restrained hover and dark-surface states.
 
 ### Tertiary (semantic state hues — never decorative)
 - **Resting Slate** (#516779): Freshness "Resting" (days 0–6). Cool and patient.
@@ -195,11 +199,11 @@ Literal coffee tones as neutrals, with a small set of semantic hues that always 
 - **Great Blue** (#4F6FA5): "Great" shot quality. Deliberately distinct from Peak Leaf so Great and Perfect never blur together. Each state hue has a matched 12–18% opacity tint for badge backgrounds.
 
 ### Neutral
-- **Steamed Cream** (#F5F0E8): The page background — the notebook's paper, textured with faint grain.
-- **Cream Shadow** (#EDE6DA): Recessed surfaces (legend wells, grouped lists).
-- **Card White** (#FFFFFF): Card and input surfaces, floating on the cream.
-- **Roast Brown** (#6B5B4E): Secondary text. **Muted Roast** (#6E5D50): timestamps, placeholders, and compact secondary information. Muted text remains WCAG-AA readable; hierarchy comes from size and weight rather than low contrast.
-- Borders are espresso at low alpha (rgba(44,24,16,0.06–0.15)), never gray.
+- **Warm Mineral** (#F4F0E9): The untextured page background. Warm, but not yellow, parchment-like, or faux-paper.
+- **Inset Mineral** (#EAE3D9): Recessed and grouped surfaces.
+- **Soft White** (#FFFDF9): Inputs, dropdowns, overlays, and the few bound sections that need separation.
+- **Roast Brown** (#675850): Secondary text. **Muted Roast** (#6F6058): timestamps, placeholders, and compact secondary information. Muted text remains WCAG-AA readable; hierarchy comes from size and weight rather than low contrast.
+- **Rule** (#DDD4C8): The default hairline between ledger rows and sections. Borders no longer depend on many slightly different alpha values.
 
 ### Named Rules
 **The One-Hue-Ink Rule.** All dark UI — text, nav, borders, shadows — derives from Espresso Ink (#2C1810). Pure black and cool gray are prohibited anywhere in the interface.
@@ -208,63 +212,64 @@ Literal coffee tones as neutrals, with a small set of semantic hues that always 
 
 ## 3. Typography
 
-**Display Font:** Playfair Display (with Georgia, serif)
+**Display Font:** Newsreader (with Georgia, serif)
 **Body Font:** DM Sans (with Helvetica Neue, sans-serif)
 
-**Character:** A classic serif-over-sans pairing: Playfair gives headings the warmth of a hand-lettered menu board; DM Sans keeps numbers and metadata legible at arm's length on a phone. The contrast axis (high-contrast serif vs. low-contrast geometric sans) is what makes the pairing read as deliberate.
+**Character:** Newsreader is literary without feeling like a menu or fashion masthead. It gives titles and bean names a quiet logbook voice. DM Sans keeps measurements and controls legible at arm's length. Their contrast is deliberate, but the serif stays rare enough to remain meaningful.
 
 ### Hierarchy
-- **Display / `.heading-xl`** (700, 28px, 1.2): Tab page titles. One per screen.
-- **Headline / `.heading-lg`** (600, 22px, 1.3): Section and modal titles.
-- **Title / `.heading-md`** (600, 18px, 1.3): Card titles — bean names use this voice.
+- **Display / `.heading-xl`** (600, 28px, 1.15): Tab page titles. One per screen.
+- **Headline / `.heading-lg`** (600, 22px, 1.2): Modal titles and bean-detail names.
+- **Title / `.heading-md`** (600, 18px, 1.25): Major section titles and bean names.
 - **Body** (400–500, 15–16px, ~1.5): DM Sans. Form inputs are 16px minimum (prevents iOS zoom-on-focus).
 - **Label** (500, 11–13px, +0.2–0.3px tracking): Badges, tab labels, timestamps, legend text — always DM Sans, never the serif.
 - **Compact data steps** (9, 10, 11, 12, 13, 14, 15, 16px): Used deliberately for chart axes, metadata, controls, and body copy. Reserve 9–10px for supplementary chart labels; touch controls and form inputs remain 14–16px.
 
 ### Named Rules
-**The Serif-Is-For-Names Rule.** Playfair Display appears only on headings and bean names. Data, numbers, buttons, and labels are always DM Sans. A serif number in this app is a bug.
+**The Serif-Is-For-Names Rule.** Newsreader appears only on page titles, modal titles, empty-state titles, and bean names. Section labels, data, numbers, buttons, and controls are always DM Sans. A serif metric is a bug.
+
+**The Measurement-Grid Rule.** A recipe is not a decorative sentence. When space allows, show Grind, Dose, Yield, and Time as aligned labeled fields. Compact fallbacks use commas or natural-language arrows, never dot-separated fragments.
 
 ## 4. Elevation
 
-Depth is ambient and paper-like: white cards rest on the cream background the way loose pages rest on a counter. Every shadow is tinted with Espresso Ink (rgba(44,24,16,…)) at low opacity — never gray-black — so elevation feels warm and barely-there. Hover lifts a card 1px with a slightly deeper shadow; press settles it back down. Modals get the one deep shadow in the system.
+The default interface is flat. Whitespace, rules, and surface contrast establish hierarchy before shadows do. Ordinary records, bean rows, shot rows, calendars, and stats sections do not float. Elevation is functional: dropdowns, date pickers, sheets, modals, toasts, and the sticky shot-form action may rise above content.
 
 ### Shadow Vocabulary
-- **Rest** (`--shadow-sm`: 0 1px 3px rgba(44,24,16,0.06), 0 1px 2px rgba(44,24,16,0.04)): Cards at rest.
-- **Hover** (`--shadow`: 0 2px 8px rgba(44,24,16,0.08), 0 1px 3px rgba(44,24,16,0.06)): Interactive lift, button hover.
-- **Raised** (`--shadow-lg`: 0 4px 16px rgba(44,24,16,0.10), 0 2px 6px rgba(44,24,16,0.06)): Card hover, dropdowns.
-- **Overlay** (`--shadow-xl`: 0 8px 30px rgba(44,24,16,0.14), 0 4px 10px rgba(44,24,16,0.08)): Modals and sheets only.
+- **None** (`--shadow-sm`: none): Records, cards, grouped report sections, and passive surfaces.
+- **Raised** (`--shadow`: 0 2px 8px rgba(43,28,23,0.10)): Dropdowns and sticky actions.
+- **Overlay** (`--shadow-xl`: 0 12px 32px rgba(43,28,23,0.18)): Modals, sheets, toasts, and date pickers only.
 
 ### Named Rules
-**The Warm Shadow Rule.** Shadow color is always rgba(44,24,16, α). A neutral black shadow (rgba(0,0,0,…)) is prohibited — it instantly cools the page and breaks the paper illusion.
+**The Earned-Elevation Rule.** A shadow must explain stacking or movement. Passive content never receives elevation merely to look polished. When elevation is necessary, its color derives from Espresso Ink.
 
 ## 5. Components
 
-Tactile and unhurried: everything is sized for one thumb at a hot machine — 44px minimum targets, gentle 10px radii, soft transitions around 0.2s ease.
+Quiet and direct: everything is sized for one thumb at a hot machine—44px minimum targets, 8–10px control radii, and short state transitions. Familiar controls should look familiar.
 
 ### Buttons
 - **Shape:** Gently rounded (10px radius), 44px minimum height, 12px × 24px padding.
-- **Primary:** Espresso Ink background, Steamed Cream text. Hover warms to #3D2820, lifts 1px with the Hover shadow; active settles flat.
-- **Amber:** Caramel Amber background, Espresso Ink text, weight 600 — the "warm CTA" for add-bean and log-shot moments.
+- **Primary:** Espresso Ink background, Warm Mineral text. Hover warms to #3A2923; active darkens without lifting.
+- **Caramel:** Caramel background, Espresso Ink text, weight 600—the warm CTA for add-bean and log-shot moments. Use at most one prominent caramel action per view.
 - **Ghost:** Transparent, Roast Brown text; hover gets a 4% espresso wash. **Secondary-solid:** 8% espresso wash. **Danger:** Past-Peak Clay, transparent until hover.
 
 ### Chips / Badges
 - **Style:** Pill-shaped (20px radius), 4px × 10px padding, 12px 500-weight DM Sans.
 - **State:** Each quality/freshness badge pairs its state hue as text with the same hue at 12–18% opacity as background — colored, but quiet. Color is never the only signal; the label text always names the state.
 
-### Cards / Containers
-- **Corner Style:** 10px radius.
-- **Background:** Card White on Steamed Cream.
-- **Shadow Strategy:** Rest shadow + 1px espresso border at 7% opacity; hover raises to the Raised shadow with a 1px lift (pointer devices only).
-- **Internal Padding:** 16px. Cards are list rows, not dashboards — one bean or one shot per card, quality badge pinned to the top-right corner.
+### Ledger Rows / Bound Sections
+- **Ledger row:** Transparent background, 14–16px vertical padding, Rule hairline beneath. Used for beans, recent shots, shot history, facts, and ranked lists.
+- **Bound section:** Soft White background, 1px Rule border, 8–10px radius, no shadow. Used only when several controls or comparisons need a shared boundary: active-bean recall, forms, and report groups.
+- **Overlay surface:** Soft White with Overlay shadow. Used for dropdowns, date pickers, sheets, dialogs, and toasts.
+- **No nested cards:** Inside a bound section, use spacing, columns, and rules—not smaller filled cards.
 
 ### Inputs / Fields
-- **Style:** Card White background, 1.5px espresso border at 12% opacity, 10px radius, 16px text (iOS zoom guard), 44px minimum height.
-- **Focus:** Border turns Caramel Amber with a soft 3px amber glow ring (rgba(212,165,116,0.15)) — the system's only glow.
+- **Style:** Soft White background, 1px Rule border, 8px radius, 16px text (iOS zoom guard), 44px minimum height.
+- **Focus:** Border turns Deep Caramel with a restrained 2px focus ring—the system's only glow.
 - **Stepper (signature input):** A three-part control — [−][value][+] — sharing one bordered container; 44px square tap zones, centered value. Empty steppers show the smart default as a placeholder; the first tap adopts it.
 
 ### Navigation
 - **Style:** Fixed bottom tab bar in Espresso Ink (the one large dark surface), four items, safe-area aware, 64px tall.
-- **States:** Inactive labels are cream at 50% opacity; the active tab is Caramel Amber. 22px SVG icons — always SVG, never emoji.
+- **States:** Inactive labels are Warm Mineral at 62% opacity; the active tab is Light Caramel. 22px SVG icons—always SVG, never emoji.
 - **Mobile:** Edge-initiated horizontal swipe switches tabs with axis-lock and boundary resistance; swipe is disabled while any overlay is open.
 
 ## 6. Do's and Don'ts
@@ -275,13 +280,19 @@ Tactile and unhurried: everything is sized for one thumb at a hot machine — 44
 - **Do** pair every state color with a text label (freshness and quality are never color-only).
 - **Do** use SVG icons drawn in the ink color; keep them at 20–22px.
 - **Do** keep stats copy observational — facts, no cheering (per PRODUCT.md's voice).
-- **Do** respect `prefers-reduced-motion`: hover lifts and pane transitions collapse to instant state changes.
+- **Do** group repeated records with rules and alignment before reaching for cards.
+- **Do** format recipe values as aligned labeled measurements whenever space allows.
+- **Do** respect `prefers-reduced-motion`: pane transitions collapse to instant state changes.
 
 ### Don't:
 - **Don't** ship fitness-app gamification: no streak flames, badges, confetti, progress rings, or records-to-beat.
-- **Don't** drift toward the generic SaaS dashboard: no cool grays, KPI hero cards, or sparklines-everywhere. Stat tiles exist (Home), but they speak in the app's warm palette and observational voice.
-- **Don't** go café-POS dense — one column, one card per record, generous padding.
+- **Don't** drift toward the generic SaaS dashboard: no cool grays, KPI hero cards, or sparklines-everywhere. Home stat tiles remain, but read as one ruled summary rather than two floating cards.
+- **Don't** go café-POS dense—one column, aligned records, and enough room to operate one-handed.
 - **Don't** go Instagram-café twee: no script fonts, no decorative illustrations, no latte-art motifs.
+- **Don't** imitate paper: no grain, torn edges, tape, ruled-paper backgrounds, or faux physical texture.
+- **Don't** put every section in a white rounded card or pair passive content with a decorative shadow.
+- **Don't** use tiny uppercase tracked headings as the default section cadence.
+- **Don't** separate recipe fragments with centered dots.
 - **Don't** use emoji anywhere in the UI — icons are SVG, always.
 - **Don't** use pure black, cool-gray borders, or neutral black shadows; warmth is structural, not optional.
-- **Don't** remove substance while polishing: the shot-card bars, blue "Great", Home stat tiles, and portafilter-first ordering are intentional decisions — restyle them if needed, never delete them.
+- **Don't** remove substance while polishing: the shot-card bars, blue "Great", Home stat tiles, Calendar ribbons, and portafilter-first ordering are intentional decisions—restyle them if needed, never delete them.

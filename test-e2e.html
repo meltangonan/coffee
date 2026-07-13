@@ -1239,7 +1239,7 @@ async function runTests() {
     assertEqual(guidance.recipe.grindSize, 6);
     assertEqual(guidance.recipe.extractionTime, 24);
     assert(guidance.assessment.label.includes('Slightly under-extracted'), 'Expected existing assessment engine output');
-    assertEqual(app.formatShotRecipe(guidance.recipe), 'Grind 6 \u00b7 18g -> 36g (1:2.0) \u00b7 24s');
+    assertEqual(app.formatShotRecipe(guidance.recipe), 'Grind 6, 18g to 36g (1:2.0), 24s');
   });
 
   await test('Home shot history shortcut appears at two shots and opens bean detail', async () => {
