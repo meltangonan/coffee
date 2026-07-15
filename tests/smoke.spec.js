@@ -271,6 +271,84 @@ test('shot visualizer and assessment chips render in daily log and shot form', a
   await expect(shotForm.locator('.shot-assessment-chip')).toContainText('Well-extracted');
 });
 
+test('Home selection can be cleared and the shot form keeps its close control visible', async ({ page }) => {
+  await page.setViewportSize({ width: 375, height: 640 });
+  await page.goto('/');
+  await seedCoffeeData(page, { shots: [{ id: 'shot-1' }] });
+  await page.reload();
+
+  await page.locator('.bean-picker-trigger').click();
+  await page.locator('.bean-picker-option').filter({ hasText: 'Ethiopia Guji' }).first().click();
+  await expect(page.getByTestId('daily-clear-bean')).toBeVisible();
+  await expect(page.locator('.daily-guidance-card')).toBeVisible();
+
+  await page.getByTestId('daily-log-shot').click();
+  const panel = page.locator('.shot-form-panel');
+  const header = panel.locator('.shot-form-header');
+  await panel.evaluate(element => { element.scrollTop = element.scrollHeight; });
+  await expect(header.getByRole('button', { name: 'Close shot form' })).toBeVisible();
+  const [panelBox, headerBox] = await Promise.all([panel.boundingBox(), header.boundingBox()]);
+  expect(headerBox.y).toBeGreaterThanOrEqual(panelBox.y);
+  expect(headerBox.y).toBeLessThan(panelBox.y + 8);
+  await header.getByRole('button', { name: 'Close shot form' }).click();
+
+  await page.locator('.bean-picker-trigger').click();
+  await page.locator('.bean-picker-option').filter({ hasText: 'Ethiopia Guji' }).first().click();
+  await page.getByTestId('daily-clear-bean').click();
+  await expect(page.locator('.daily-guidance-card')).toHaveCount(0);
+  await expect(page.locator('.bean-picker-trigger')).toContainText('Choose a coffee bean');
+});
+
+test('Bean detail keeps ratings high, separates quality from recipe, and exposes desktop history actions', async ({ page }) => {
+  await page.setViewportSize({ width: 1000, height: 720 });
+  await page.goto('/');
+  const shots = Array.from({ length: 7 }, (_, index) => ({
+    id: `detail-shot-${index}`,
+    shotDate: `2026-07-${String(15 - index).padStart(2, '0')}`,
+    createdAt: new Date(2026, 6, 15 - index).toISOString()
+  }));
+  await seedCoffeeData(page, { shots });
+  await page.reload();
+
+  const newestShot = page.getByTestId('home-recent-shot-detail-shot-0');
+  const desktopDelete = newestShot.getByRole('button', { name: 'Delete shot' });
+  await expect(desktopDelete).toBeVisible();
+  await desktopDelete.click();
+  await expect(newestShot).toBeVisible();
+  const confirmDelete = newestShot.getByRole('button', { name: 'Confirm delete shot' });
+  await expect(confirmDelete).toContainText('Delete?');
+  await confirmDelete.click();
+  await expect(newestShot).toHaveCount(0);
+  const undoNotice = page.getByRole('status');
+  await expect(undoNotice).toContainText('Shot deleted');
+  await undoNotice.getByRole('button', { name: 'Undo' }).click();
+  await expect(newestShot).toBeVisible();
+
+  await page.locator('.tab-bar').getByRole('button', { name: 'Beans' }).click();
+  await page.locator('#current-beans-panel .bean-card').filter({ hasText: 'Ethiopia Guji' }).click();
+
+  const rating = page.locator('.bean-detail-stars');
+  const history = page.getByTestId('bean-shot-history');
+  const [ratingBox, historyBox] = await Promise.all([rating.boundingBox(), history.boundingBox()]);
+  expect(ratingBox.y).toBeLessThan(historyBox.y);
+  const fourStarRating = rating.getByRole('button', { name: 'Rate bean 4 stars' });
+  await expect(fourStarRating).toHaveAttribute('aria-pressed', 'false');
+  await fourStarRating.click();
+  await expect(fourStarRating).toHaveAttribute('aria-pressed', 'true');
+
+  const firstShot = history.locator('.bean-shot-swipe-row').first();
+  const badgeBox = await firstShot.locator('.shot-quality-badge').boundingBox();
+  const recipeBox = await firstShot.locator('.recipe-measurements').boundingBox();
+  expect(badgeBox.y + badgeBox.height).toBeLessThanOrEqual(recipeBox.y);
+  await expect(firstShot.getByRole('button', { name: 'Delete shot' })).toBeVisible();
+
+  const expand = page.getByTestId('shot-history-expand');
+  await expect(expand).toHaveText('View 2 more shots');
+  await expand.click();
+  await expect(history.locator('.bean-shot-swipe-row')).toHaveCount(7);
+  await expect(expand).toHaveText('Show recent 5 shots');
+});
+
 test('portafilter can be created while logging and appears on the saved shot', async ({ page }) => {
   const pageErrors = [];
   page.on('pageerror', error => pageErrors.push(error.message));

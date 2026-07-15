@@ -195,14 +195,19 @@ The date picker uses a capture-phase document click listener for outside-click d
 - Touch gesture on shot cards: 36px threshold reveals a 72px delete action area
 - Uses `touch-action: pan-y` on swipe containers to prevent scroll conflicts
 - Disabled for archived beans
+- Fine-pointer desktop/web layouts show an explicit trash control on each editable shot; its first click reveals an inline `Delete?` confirmation and its second click deletes. Swipe remains the mobile shortcut
 
 **Confirmation Dialogs:**
-- **Shot deletion**: Swipe reveals the Delete action; deleting shows a five-second global Undo notice. Used in both Home and Bean detail views.
+- **Shot deletion**: Mobile swipe reveals Delete, while desktop/web uses a two-click trash → `Delete?` confirmation; deleting shows a five-second global Undo notice. Used in both Home and Bean detail views.
 - **Bean deletion**: Modal dialog (`showDeleteBeanDialog`) with warning icon, bean name, shot count, Cancel/Delete buttons. Triggered from bean detail view.
 
 **Shot History Toggle:**
-- Bean detail shows first 5 shots with a "View all X shots" button to expand
+- Bean detail shows the first 5 shots with a full-width button that names the hidden-shot count; after expansion it can collapse back to the recent 5
 - Local `showAllShots` state in `x-data`
+
+**Bean Rating:**
+- Bean detail keeps the editable 1–5 star rating directly under the bean name and roaster
+- Stars are real buttons with `aria-pressed` state; archived-bean rating controls are disabled
 
 **Shot Card Display Format:**
 ```
