@@ -145,6 +145,7 @@ Legacy localStorage/backups may contain `optimalGrindSize`, `optimalDoseIn`, `op
   doseIn: number,          // grams, typically 14-22
   yieldOut: number,          // grams, typically 28-50
   extractionTime: number,    // seconds, typically 20-35
+  innerBurrSetting: number,  // Breville inner burr setting, 1-10; advanced metadata, defaults to 5 for legacy shots
   rating: string|null,     // 'bad'|'okay'|'great'|'perfect'
   notes: string,
   shotDate: string,        // ISO date "YYYY-MM-DD" — when the shot was made (defaults to today; backfill from createdAt if missing)
@@ -163,11 +164,12 @@ Legacy localStorage/backups may contain `optimalGrindSize`, `optimalDoseIn`, `op
 
 **Invariants:**
 - A bean always has `name` and `roaster` (enforced in `saveBean`)
-- A shot always has a valid `beanId`, `grindSize`, `doseIn`, `yieldOut`, and `extractionTime` (all > 0, enforced in `saveShot` via defaults and in `normalizeImportedShot` via validation/backfill)
+- A shot always has a valid `beanId`, `grindSize`, `doseIn`, `yieldOut`, and `extractionTime` (all > 0) plus an `innerBurrSetting` from 1-10. Existing and legacy-imported shots backfill inner burr 5.
 - Archived beans don't appear in `currentBeans` or the daily picker
 - Archiving a bean closes any open shot form referencing it
 - Shot form defaults respect edited values when editing (via `getShotFormDefault`)
 - Portafilters are optional shot metadata; create/rename keeps stable IDs and never changes shot recipe defaults
+- Inner burr is hidden advanced shot metadata: it appears only inside the collapsed Advanced settings disclosure in the log/edit form, never on shot cards, guidance, history, trends, or stats
 - Deleting a bean requires confirmation via the delete dialog modal
 - Bean names are validated for uniqueness (case-insensitive) when adding from the Home picker flow
 - Tab swipe gestures are blocked when overlays (shot form, bean modal, delete dialog) are open
@@ -272,6 +274,7 @@ Calendar bar colors are defined in JS `BAR_COLORS` array. Spacing utilities (`.m
 - `saveShot()` resolves untouched `null` numeric fields to `getShotFormDefault(field)` so placeholder defaults are persisted
 - Shot form includes `shotDate` (defaults to today for new shots; existing shots use `shotDate || createdAt` for display/filtering)
 - Portafilter selection is record-only; do not route it through `getShotNumericDefaults()` or change numeric placeholders when it changes
+- Inner burr defaults globally from the most recent shot by `shotDate` (with `createdAt` as the same-day tie-breaker) rather than from the selected bean; changing it never converts or modifies `grindSize`
 - Always call `closeShotForm()` to close — it handles cleanup for both tabs
 
 ### When Adding New Freshness-Related Logic

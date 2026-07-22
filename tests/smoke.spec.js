@@ -299,6 +299,51 @@ test('Home selection can be cleared and the shot form keeps its close control vi
   await expect(page.locator('.bean-picker-trigger')).toContainText('Choose a coffee bean');
 });
 
+test('inner burr stays hidden until Advanced settings is opened and persists for editing', async ({ page }) => {
+  await page.setViewportSize({ width: 375, height: 812 });
+  await page.goto('/');
+  await seedCoffeeData(page);
+  await page.reload();
+
+  await page.locator('.bean-picker-trigger').click();
+  await page.locator('.bean-picker-option').filter({ hasText: 'Ethiopia Guji' }).first().click();
+  await page.getByTestId('daily-log-shot').click();
+
+  const advanced = page.getByTestId('shot-advanced-settings');
+  const innerBurr = page.getByTestId('inner-burr-input');
+  await expect(advanced).not.toHaveAttribute('open', '');
+  await expect(innerBurr).toBeHidden();
+
+  await page.getByTestId('shot-advanced-toggle').click();
+  await expect(advanced).toHaveAttribute('open', '');
+  await expect(innerBurr).toBeVisible();
+  await expect(innerBurr).toHaveAttribute('min', '1');
+  await expect(innerBurr).toHaveAttribute('max', '10');
+  await expect(innerBurr).toHaveValue('5');
+  await innerBurr.fill('1');
+  await page.getByRole('button', { name: 'Save Shot' }).click();
+
+  const recentShot = page.locator('.today-shot-item').first();
+  await expect(recentShot).toBeVisible();
+  await expect(recentShot).not.toContainText('Inner burr');
+  expect(await page.evaluate(() => JSON.parse(localStorage.getItem('coffee_shots'))[0].innerBurrSetting)).toBe(1);
+
+  await recentShot.locator('.today-shot-content').click();
+  const editAdvanced = page.getByTestId('shot-advanced-settings');
+  await expect(editAdvanced).not.toHaveAttribute('open', '');
+  await page.getByTestId('shot-advanced-toggle').click();
+  await expect(page.getByTestId('inner-burr-input')).toHaveValue('1');
+});
+
+test('legacy shots are migrated to inner burr 5', async ({ page }) => {
+  await page.goto('/');
+  await seedCoffeeData(page, { shots: [{ id: 'legacy-inner-burr-shot' }] });
+  await page.reload();
+
+  const migrated = await page.evaluate(() => JSON.parse(localStorage.getItem('coffee_shots'))[0]);
+  expect(migrated.innerBurrSetting).toBe(5);
+});
+
 test('Bean detail keeps ratings high, separates quality from recipe, and exposes desktop history actions', async ({ page }) => {
   await page.setViewportSize({ width: 1000, height: 720 });
   await page.goto('/');

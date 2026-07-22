@@ -138,6 +138,7 @@ function seedTestFixture() {
       doseIn: 18,
       yieldOut: 36,
       extractionTime: 25,
+      innerBurrSetting: 5,
       rating: 'great',
       notes: 'Fixture shot',
       shotDate: today,
@@ -1123,6 +1124,40 @@ async function runTests() {
     assertEqual(savedShot.doseIn, 18);
     assertEqual(savedShot.yieldOut, 36);
     assertEqual(savedShot.extractionTime, 25);
+    assertEqual(savedShot.innerBurrSetting, 5);
+  });
+
+  await test('inner burr defaults globally and editing an older shot preserves the latest setting', async () => {
+    const bean = app.beans.find(b => !b.isArchived);
+
+    app.openShotForm(bean.id);
+    assertEqual(app.shotForm.innerBurrSetting, 5);
+    app.shotForm.innerBurrSetting = 3;
+    app.saveShot();
+    const burrThreeShot = app.shots[app.shots.length - 1];
+    assertEqual(burrThreeShot.innerBurrSetting, 3);
+
+    app.openShotForm(bean.id);
+    assertEqual(app.shotForm.innerBurrSetting, 3);
+    app.shotForm.innerBurrSetting = 1;
+    app.saveShot();
+    const burrOneShot = app.shots[app.shots.length - 1];
+    assertEqual(burrOneShot.innerBurrSetting, 1);
+
+    app.openShotForm(bean.id);
+    app.shotForm.innerBurrSetting = 2;
+    app.shotForm.shotDate = '2020-01-01';
+    app.saveShot();
+    assertEqual(app.getLastUsedInnerBurrSetting(), 1, 'A backdated shot should not replace the current global setting');
+
+    app.openShotFormForEdit(burrThreeShot);
+    assertEqual(app.shotForm.innerBurrSetting, 3);
+    app.shotForm.innerBurrSetting = 4;
+    app.saveShot();
+
+    app.openShotForm(bean.id);
+    assertEqual(app.shotForm.innerBurrSetting, 1, 'Editing an older shot should not replace the current global setting');
+    app.closeShotForm();
   });
 
   await test('saveShot untouched ignores legacy best dial-in defaults', async () => {
@@ -1504,7 +1539,7 @@ async function runTests() {
     const importedShot = {
       id: 'import-portafilter-shot', beanId: importedBean.id, grindSize: 6, doseIn: 18,
       yieldOut: 36, extractionTime: 25, rating: 'great', notes: '', shotDate: '2026-06-01',
-      portafilterId: 'import-portafilter', createdAt: '2026-06-01T08:05:00.000Z'
+      innerBurrSetting: 3, portafilterId: 'import-portafilter', createdAt: '2026-06-01T08:05:00.000Z'
     };
     const preview = app.prepareBackupImportPreview(JSON.stringify({
       data: {
@@ -1517,6 +1552,7 @@ async function runTests() {
     assertEqual(preview.newShots, 1);
     assertEqual(preview.newPortafilters, 1);
     assertEqual(preview.shotsToImport[0].portafilterId, 'import-portafilter');
+    assertEqual(preview.shotsToImport[0].innerBurrSetting, 3);
 
     app.backupImportPreview = preview;
     app.confirmBackupImport();
@@ -1525,10 +1561,11 @@ async function runTests() {
 
     const legacyPreview = app.prepareBackupImportPreview(JSON.stringify({ data: {
       beans: [{ ...importedBean, id: 'legacy-backup-bean', name: 'Legacy Backup Bean' }],
-      shots: [{ ...importedShot, id: 'legacy-backup-shot', beanId: 'legacy-backup-bean', portafilterId: undefined }]
+      shots: [{ ...importedShot, id: 'legacy-backup-shot', beanId: 'legacy-backup-bean', innerBurrSetting: undefined, portafilterId: undefined }]
     } }), 'legacy.json');
     assertEqual(legacyPreview.newPortafilters, 0);
     assertEqual(legacyPreview.shotsToImport[0].portafilterId, '');
+    assertEqual(legacyPreview.shotsToImport[0].innerBurrSetting, 5);
 
     const unknownPreview = app.prepareBackupImportPreview(JSON.stringify({ data: {
       beans: [{ ...importedBean, id: 'unknown-portafilter-bean', name: 'Unknown Portafilter Bean' }],
@@ -1573,8 +1610,19 @@ async function runTests() {
       extractionTime: 0,
       createdAt: '2026-01-15T08:00:00.000Z'
     });
+    const invalidInnerBurr = app.normalizeImportedShot({
+      id: appWindow.crypto.randomUUID(),
+      beanId: bean.id,
+      grindSize: 6,
+      doseIn: 18,
+      yieldOut: 36,
+      extractionTime: 25,
+      innerBurrSetting: 11,
+      createdAt: '2026-01-15T08:00:00.000Z'
+    });
     assertEqual(invalidYield, null);
     assertEqual(invalidExtraction, null);
+    assertEqual(invalidInnerBurr, null);
   });
 
   await test('deleteShot removes shot and undoDeleteShot restores it', async () => {

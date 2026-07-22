@@ -319,6 +319,15 @@ textarea.form-input { min-height: 80px; resize: vertical; line-height: 1.5; }
 .shot-recipe-fields > .form-group:last-child,
 .shot-dose-yield-grid .form-group { margin-bottom: 0; }
 .shot-dose-yield-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 20px; }
+.shot-advanced-settings { margin-top: 14px; border-top: 1px solid var(--rule); }
+.shot-advanced-settings > summary { min-height: 44px; display: flex; align-items: center; justify-content: flex-end; gap: 6px; list-style: none; color: var(--amber-dark); font-family: var(--font-body); font-size: 13px; font-weight: 600; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+.shot-advanced-settings > summary::-webkit-details-marker { display: none; }
+.shot-advanced-settings > summary:hover { color: var(--espresso); }
+.shot-advanced-settings > summary:focus-visible { outline: 2px solid var(--amber-dark); outline-offset: 2px; border-radius: var(--radius-sm); }
+.shot-advanced-chevron { width: 16px; height: 16px; flex: 0 0 auto; transition: transform 0.18s ease-out; }
+.shot-advanced-settings[open] .shot-advanced-chevron { transform: rotate(180deg); }
+.shot-advanced-content { padding-top: 8px; }
+.shot-advanced-content .form-group { margin-bottom: 0; }
 /* Date pickers in modals/forms: use fixed positioning centered on screen */
 .shot-date-picker .custom-datepicker,
 .panel .date-picker-group .custom-datepicker,
@@ -1803,6 +1812,22 @@ textarea.form-input { min-height: 80px; resize: vertical; line-height: 1.5; }
           <button type="button" class="stepper-btn" aria-label="Increase" :disabled="stVal() !== null && stVal() >= stMax" @click="stInc()">+</button>
         </div>
       </div>
+      <details class="shot-advanced-settings" data-testid="shot-advanced-settings">
+        <summary data-testid="shot-advanced-toggle">
+          <span>Advanced settings</span>
+          <svg class="shot-advanced-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>
+        </summary>
+        <div class="shot-advanced-content">
+          <div class="form-group" x-data="stepper()" x-init="stInit('innerBurrSetting', 1, 10, getShotFormDefault('innerBurrSetting'))">
+            <label class="form-label" for="inner-burr-setting">Inner Burr</label>
+            <div class="stepper">
+              <button type="button" class="stepper-btn" aria-label="Decrease inner burr setting" :disabled="stVal() !== null && stVal() <= stMin" @click="stDec()">−</button>
+              <input id="inner-burr-setting" type="number" inputmode="numeric" class="stepper-input" data-testid="inner-burr-input" aria-label="Inner burr setting" :min="stMin" :max="stMax" :value="stVal() === null ? stDefault : stVal()" @input="stOnInput($event)" @focus="stOnFocus($event)">
+              <button type="button" class="stepper-btn" aria-label="Increase inner burr setting" :disabled="stVal() !== null && stVal() >= stMax" @click="stInc()">+</button>
+            </div>
+          </div>
+        </div>
+      </details>
       </div>
       <div class="shot-visualizer form-preview" x-data="{ get shot() { return getShotFormPreviewShot() }, get metrics() { return getShotMetrics(this.shot) } }" x-show="metrics">
         <div class="shot-visualizer-row">
@@ -2856,7 +2881,10 @@ function normalizeRating(r) {
 const TAB_ORDER = ['today', 'beans', 'calendar', 'stats'];
 const FRESHNESS_SORT_ORDER = { optimal: 0, resting: 1, past: 2, unknown: 3 };
 const SHOT_DEFAULTS = { grindSize: 5, doseIn: 18, yieldOut: 36, extractionTime: 25 };
-const BACKUP_FORMAT_VERSION = 2;
+const INNER_BURR_DEFAULT = 5;
+const INNER_BURR_MIN = 1;
+const INNER_BURR_MAX = 10;
+const BACKUP_FORMAT_VERSION = 3;
 const BACKUP_LAST_EXPORTED_KEY = 'coffee_backup_last_exported_at';
 const BACKUP_LAST_IMPORTED_KEY = 'coffee_backup_last_imported_at';
 
@@ -2879,7 +2907,7 @@ function app() {
     dailySelectedBeanId: '', dailyLastShot: null,
     _pendingDuplicateBean: null,
     beanForm: { name: '', roaster: '', roastDate: '', notes: '' },
-    shotForm: { grindSize: null, doseIn: null, yieldOut: null, extractionTime: null, rating: null, notes: '', shotDate: '', portafilterId: '' },
+    shotForm: { grindSize: null, doseIn: null, yieldOut: null, extractionTime: null, innerBurrSetting: INNER_BURR_DEFAULT, rating: null, notes: '', shotDate: '', portafilterId: '' },
     backupLastExportedAt: '',
     backupLastImportedAt: '',
     backupNoticeType: '',
@@ -2915,6 +2943,14 @@ function app() {
               shotsDirty = true;
             }
           });
+          const innerBurrSetting = this.toNullableInt(s.innerBurrSetting);
+          if (innerBurrSetting == null || innerBurrSetting < INNER_BURR_MIN || innerBurrSetting > INNER_BURR_MAX) {
+            s.innerBurrSetting = INNER_BURR_DEFAULT;
+            shotsDirty = true;
+          } else if (s.innerBurrSetting !== innerBurrSetting) {
+            s.innerBurrSetting = innerBurrSetting;
+            shotsDirty = true;
+          }
         });
         if (shotsDirty) this.saveShots();
       } else {
@@ -3003,16 +3039,20 @@ function app() {
       const doseIn = this.toNullableInt(rawShot.doseIn);
       const parsedYieldOut = this.toNullableInt(rawShot.yieldOut);
       const parsedExtractionTime = this.toNullableInt(rawShot.extractionTime);
+      const parsedInnerBurrSetting = this.toNullableInt(rawShot.innerBurrSetting);
       if (!id || !beanId || grindSize == null || grindSize <= 0 || doseIn == null || doseIn <= 0) return null;
 
       const hasYieldOutInput = rawShot.yieldOut != null && !(typeof rawShot.yieldOut === 'string' && rawShot.yieldOut.trim() === '');
       const hasExtractionTimeInput = rawShot.extractionTime != null && !(typeof rawShot.extractionTime === 'string' && rawShot.extractionTime.trim() === '');
+      const hasInnerBurrInput = rawShot.innerBurrSetting != null && !(typeof rawShot.innerBurrSetting === 'string' && rawShot.innerBurrSetting.trim() === '');
       if ((hasYieldOutInput && (parsedYieldOut == null || parsedYieldOut <= 0))
-        || (hasExtractionTimeInput && (parsedExtractionTime == null || parsedExtractionTime <= 0))) return null;
+        || (hasExtractionTimeInput && (parsedExtractionTime == null || parsedExtractionTime <= 0))
+        || (hasInnerBurrInput && (parsedInnerBurrSetting == null || parsedInnerBurrSetting < INNER_BURR_MIN || parsedInnerBurrSetting > INNER_BURR_MAX))) return null;
 
       // Legacy backups may have missing yield/time; backfill app defaults instead of dropping the shot.
       const yieldOut = parsedYieldOut ?? SHOT_DEFAULTS.yieldOut;
       const extractionTime = parsedExtractionTime ?? SHOT_DEFAULTS.extractionTime;
+      const innerBurrSetting = parsedInnerBurrSetting ?? INNER_BURR_DEFAULT;
 
       const createdAt = this.normalizeIsoDateTime(rawShot.createdAt) || new Date().toISOString();
       return {
@@ -3022,6 +3062,7 @@ function app() {
         doseIn,
         yieldOut,
         extractionTime,
+        innerBurrSetting,
         rating: normalizeRating(rawShot.rating),
         notes: typeof rawShot.notes === 'string' ? rawShot.notes : '',
         shotDate: this.normalizeIsoDateOnly(rawShot.shotDate) || createdAt.slice(0, 10),
@@ -3484,6 +3525,19 @@ function app() {
         .filter(({ shot }) => validIds.has(shot.portafilterId))
         .sort((a, b) => (new Date(b.shot.createdAt) - new Date(a.shot.createdAt)) || (b.index - a.index))[0];
       return latest?.shot.portafilterId || '';
+    },
+    getLastUsedInnerBurrSetting() {
+      const latest = this.shots
+        .map((shot, index) => ({
+          shot,
+          index,
+          value: this.toNullableInt(shot.innerBurrSetting),
+          orderDate: getShotStatsDate(shot)?.getTime() || getShotCreatedAtTime(shot),
+          orderCreatedAt: getShotCreatedAtTime(shot)
+        }))
+        .filter(({ value }) => value >= INNER_BURR_MIN && value <= INNER_BURR_MAX)
+        .sort((a, b) => (b.orderDate - a.orderDate) || (b.orderCreatedAt - a.orderCreatedAt) || (b.index - a.index))[0];
+      return latest?.value ?? INNER_BURR_DEFAULT;
     },
     openPortafilterManager() {
       this.showPortafilterManager = true;
@@ -4016,6 +4070,7 @@ function app() {
         doseIn: null,
         yieldOut: null,
         extractionTime: null,
+        innerBurrSetting: this.getLastUsedInnerBurrSetting(),
         rating: null, notes: '', shotDate: today,
         portafilterId: this.getLastUsedPortafilterId()
       };
@@ -4034,6 +4089,7 @@ function app() {
         doseIn: shot.doseIn,
         yieldOut: shot.yieldOut,
         extractionTime: shot.extractionTime ?? null,
+        innerBurrSetting: this.toNullableInt(shot.innerBurrSetting) ?? INNER_BURR_DEFAULT,
         rating: normalizeRating(shot.rating),
         notes: shot.notes ?? '',
         shotDate: shotDate,
@@ -4076,6 +4132,7 @@ function app() {
       if (field === 'grindSize' || field === 'doseIn' || field === 'yieldOut' || field === 'extractionTime') {
         return this.getShotNumericDefaults(this.shotFormBeanId)[field];
       }
+      if (field === 'innerBurrSetting') return this.getLastUsedInnerBurrSetting();
       return SHOT_DEFAULTS[field];
     },
 
@@ -4092,11 +4149,19 @@ function app() {
         if (fallback != null && fallback > 0) return fallback;
         return SHOT_DEFAULTS[field];
       };
+      const resolveInnerBurrSetting = () => {
+        const parsed = this.toNullableInt(this.shotForm.innerBurrSetting);
+        if (parsed >= INNER_BURR_MIN && parsed <= INNER_BURR_MAX) return parsed;
+        const existing = this.toNullableInt(editingShot?.innerBurrSetting);
+        if (existing >= INNER_BURR_MIN && existing <= INNER_BURR_MAX) return existing;
+        return this.getLastUsedInnerBurrSetting();
+      };
       const shotData = {
         grindSize: resolveShotValue('grindSize'),
         doseIn: resolveShotValue('doseIn'),
         yieldOut: resolveShotValue('yieldOut'),
         extractionTime: resolveShotValue('extractionTime'),
+        innerBurrSetting: resolveInnerBurrSetting(),
         rating: this.shotForm.rating,
         notes: this.shotForm.notes || '',
         shotDate: this.shotForm.shotDate || localDateStr(),
